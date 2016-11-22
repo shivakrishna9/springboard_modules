@@ -42,6 +42,10 @@ function springboard_target_form($target_id = NULL) {
       return $form;
     }
     $target = $target->data;
+    $form['affiliate_id'] = array(
+      '#type' => 'value',
+      '#default_value' => $target->affiliate_id,
+    );
   }
 
   // Set up the form. Use containers to facilitate styling.
@@ -307,14 +311,6 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'hidden',
     '#value' => 'Target',
   );
-
-  if (!empty($target)) {
-    $form['target'] = array(
-      '#type' => 'value',
-      '#value' => $target,
-    );
-  }
-
   return $form;
 }
 

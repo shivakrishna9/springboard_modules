@@ -57,9 +57,9 @@ function springboard_target_group_form($group_id = NULL) {
     '#attributes' => array('class' => array('group-add', 'group-name')),
   );
 
-  $form['group'] = array(
+  $form['affiliate_id'] = array(
     '#type' => 'value',
-    '#default_value' => $group,
+    '#default_value' => !empty($group->affiliate_id) ? $group->affiliate_id : NULL,
   );
 
   $form['data']['group_id'] = array(
@@ -86,7 +86,7 @@ function springboard_target_group_form_validate($form, &$form_state) {
     'recipients' => '',
     'name' => '',
     'is_template' => 1,
-    'affiliate_id' => isset($values['affiliate_id']) ? $values['affiliate_id'] : '',
+    'affiliate_id' => !empty($values['affiliate_id']) ? $values['affiliate_id'] : NULL,
   );
   $errors = FALSE;
   if(isset($values['group_group_name']) && $values['group_group_name'] != '') {
