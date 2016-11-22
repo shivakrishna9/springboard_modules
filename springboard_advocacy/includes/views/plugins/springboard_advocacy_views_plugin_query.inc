@@ -148,6 +148,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
             $items[$item->id] = new stdClass();
             $items[$item->id]->group_name = $item->name;
             $items[$item->id]->id = $item->id;
+            $items[$item->id]->affiliate_id = $item->affiliate_id;
             $items[$item->id]->matching_targets = sba_target_search_process_matches($item->matching_targets);
             $items[$item->id]->created_at = date('m/j/Y', strtotime($item->created_at));
             $items[$item->id]->updated_at = date('m/j/Y', strtotime($item->updated_at));
