@@ -46,6 +46,15 @@ function salesforce_ngoc_entity_info() {
 }
 
 /**
+ * Implements hook_entity_property_info_alter().
+ */
+function salesforce_ngoc_entity_property_info_alter(&$info) {
+  $properties = &$info['salesforce_ngoc_sync_map']['properties'];
+  $properties['lasted_polled']['type'] = 'date';
+  $properties['created']['type'] = 'date';
+}
+
+/**
  * Implements hook_menu().
  */
 function salesforce_ngoc_menu() {
