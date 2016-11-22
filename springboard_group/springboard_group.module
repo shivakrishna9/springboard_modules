@@ -18,6 +18,7 @@ require_once __DIR__ . '/includes/springboard_group.pages_default.inc';
 require_once __DIR__ . '/includes/springboard_group.page_wrappers.inc';
 require_once __DIR__ . '/includes/springboard_group.permissions.inc';
 require_once __DIR__ . '/includes/springboard_group.rules.inc';
+require_once __DIR__ . '/includes/springboard_group.tokens.inc';
 require_once __DIR__ . '/includes/springboard_group.webform.inc';
 require_once __DIR__ . '/includes/springboard_group.webform_ab.inc';
 require_once __DIR__ . '/includes/springboard_group.wrappers_common.inc';
