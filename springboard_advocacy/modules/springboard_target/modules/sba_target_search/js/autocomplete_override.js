@@ -102,15 +102,19 @@
         }
         this.timer = setTimeout(function () {
             db.owner.setStatus('begin');
-            var states = '';
-            if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
-                states = Drupal.settings.sbaAllowedStates;
+            var affiliate = '';
+            if (typeof(Drupal.settings.sbaSubscriptionLevel) !== "undefined") {
+                if (typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
+                    affiliate = '/' + Drupal.settings.sbaSubscriptionLevel + '/' + Drupal.settings.sbaAllowedStates;
+                }
             }
             $.ajax({
                 type: 'GET',
-                url: db.uri + '/' + Drupal.encodePath(searchString) + '/' + Drupal.settings.sbaSubscriptionLevel + '/' + states,
+                url: db.uri + '/' + Drupal.encodePath(searchString) + affiliate,
                 dataType: 'json',
                 success: function (matches) {
+                    console.log(matches);
+
                     if (typeof matches.status == 'undefined' || matches.status != 0) {
                         //db.cache[searchString] = matches;
                         if (db.searchString == searchString) {

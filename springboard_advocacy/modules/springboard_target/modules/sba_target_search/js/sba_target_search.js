@@ -977,7 +977,7 @@
                     parties.push(v);
                 }
                 else if (nm.indexOf('state') != -1) {
-                    if (Drupal.settings.sbaSubscriptionIsGrouped && this.value == "All") {
+                    if (typeof(Drupal.settings.sbaSubscriptionIsGrouped) !== "undefined" && Drupal.settings.sbaSubscriptionIsGrouped && this.value == "All") {
                         allowedStates = Drupal.settings.sbaAllowedStates;
                         $(allowedStates).each(function(){
                             states.push(this);

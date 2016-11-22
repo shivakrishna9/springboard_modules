@@ -84,7 +84,11 @@ function _sba_target_search_committee_autocomplete($name, $state, $chamber, $sub
           $filter_committee_list += preg_grep($state_pattern, $committee_list);
         }
         break;
+
     }
+  }
+  else {
+    $filter_committee_list = $committee_list;
   }
 
   $matches = array();
