@@ -14,6 +14,12 @@ function springboard_group_advocacy_form_springboard_target_create_custom_groups
   springboard_group_advocacy_create_og_form_elements($form);
 }
 
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add the extra form element to hte message entity form.
+ */
 function springboard_group_advocacy_form_sba_message_edit_form_alter(&$form, &$form_state) {
   $session_gid = springboard_group_get_group_context();
   $form['affiliate_id'] = array(
@@ -62,19 +68,15 @@ function springboard_group_advocacy_create_og_form_elements(&$form) {
   // Check which form we're on.
   if (strpos($form['#form_id'], 'custom_targets') !== FALSE) {
     $type = 'target';
-    if (!empty($form[$type]['#value']->affiliate_id)) {
-      $gid = $form[$type]['#value']->affiliate_id;
-    }
-    // @todo make this unecessary somehow.
-    unset($form[$type]);
   }
   else {
     $type = 'group';
-    if (!empty($form[$type]['#default_value']->affiliate_id)) {
-      $gid = $form[$type]['#default_value']->affiliate_id;
-    }
-    unset($form[$type]);
   }
+
+  if (!empty($form['affiliate_id']['#default_value'])) {
+    $gid = $form['affiliate_id']['#default_value'];
+  }
+
   // If this is an edit form get the API object's affiliate_id (group id).
   if (!empty($gid)) {
     if ($gid != $session_gid && !is_null($session_gid) && ($session_gid != '_none' && $session_gid != '_all')) {
@@ -106,6 +108,7 @@ function springboard_group_advocacy_create_og_form_elements(&$form) {
       );
     }
   }
+
   $form['affiliate_id'] = array(
     '#type' => 'value',
     '#value' => $gid,
