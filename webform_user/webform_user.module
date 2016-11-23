@@ -533,6 +533,13 @@ function webform_user_webform_validate($form, &$form_state) {
 
 /**
  * Submit the results of a webform with webform user.
+ *
+ * @todo Could this be refactored to happen inside
+ * hook_webform_submission_presave()? That way, we would not have to update the
+ * webform_submission record that has just been written to the database
+ * with the newly created user's uid, which in turn fires all the webform
+ * submission related hooks over again. see
+ * salesforce_ngoc_has_unsyncd_parents().
  */
 function webform_user_webform_submit($form, &$form_state) {
   global $user;

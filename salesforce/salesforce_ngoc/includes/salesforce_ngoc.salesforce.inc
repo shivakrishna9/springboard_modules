@@ -66,7 +66,6 @@ function salesforce_ngoc_salesforce_mapping_destination_queue_alter(&$queue_name
 function salesforce_ngoc_salesforce_sync_save_map_alter($record) {
   if ($record->object_type == 'rC_Connect__Batch_Upload__c') {
     if ($record->is_new == TRUE) {
-      // @todo Can we save uid and did here?
       // Save record in salesforce_ngoc_sync_map.
       $ngoc_record = array(
         'batch_upload_sfid' => $record->sfid,
@@ -117,18 +116,20 @@ function salesforce_ngoc_has_unsyncd_parents($item, $drupal_object){
   // If this is an object with known parents that are created
   if (isset($salesforce_ngoc_parent_objects[$object_type])) {
     foreach ($salesforce_ngoc_parent_objects[$object_type] as $parent_object_type => $delta) {
-      // Gotta find the drupal_id of the parent object.
+      // Find the drupal_id of the parent object. It can be a uid or a did.
+      $parent_drupal_id = 0;
       if ($parent_object_type == 'Contact') {
         if (!empty($drupal_object->uid)) {
-          $drupal_id = $drupal_object->uid;
+          $parent_drupal_id = $drupal_object->uid;
         }
       }
       elseif ($parent_object_type == 'Opportunity') {
         if (!empty($drupal_object->uid)) {
-          $drupal_id = $drupal_object->uid;
+          $parent_drupal_id = $drupal_object->did;
         }
       }
-      if(!empty($drupal_id) && !empty($delta) && !empty($parent_object_type)) {
+      // Look for the parent object in salesforce_sync_map.
+      if (!empty($parent_drupal_id) && !empty($delta) && !empty($parent_object_type)) {
         $result = db_query('SELECT sfid FROM {salesforce_sync_map} WHERE
           object_type = :parent_object_type AND
           delta = :delta AND
@@ -136,12 +137,30 @@ function salesforce_ngoc_has_unsyncd_parents($item, $drupal_object){
           array(
             ':parent_object_type' => $parent_object_type,
             ':delta' => $delta,
-            ':drupal_id' => $drupal_id,
+            ':drupal_id' => $parent_drupal_id,
           )
         );
+        // If ZERO rows were returned, then the parent object must not have
+        // been created by the batch_upload process yet.
         if ($result->rowCount() == 0) {
-          $unsyncd_parents_found[] = array($parent_object_type => $drupal_id);
+          $unsyncd_parents_found[] = array($parent_object_type => $parent_drupal_id);
         }
+      }
+      else {
+        // $parent_drupal_id is not found. Making a BIG assumption here: We
+        // assume that this is missing because the webform submission was just
+        // saved, and webform_user_webform_submit() will come by and update it
+        // in a moment to change the webform_sumission record uid to that of the
+        // newly created user by calling webform_submission_update(). That
+        // update causes salesforce_genmap_webform_submission_update() to fire
+        // and this record to re-queue. However,
+        // once salesforce_genmap_send_object_to_queue() instantiates $queue,
+        // the queue name cannot be changed. We have to get it right the first
+        // time.
+        // This would be unnecessary if webform_user_webform_submit() didn't
+        // create users and update webform_submission records in the same
+        // request.
+        $unsyncd_parents_found[] = array($parent_object_type => $parent_drupal_id);
       }
       unset($result);
     }
