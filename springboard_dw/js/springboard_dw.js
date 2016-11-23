@@ -5,6 +5,30 @@
 
 Drupal.behaviors.springboardDataWarehouseViews = {
   attach: function(context) { (function($) {
+    // Place filters within the advanced or basic filter fieldsets:
+    var filterGroups = $('#edit-filter-groups');
+    $('#views-exposed-form-springboard-dw-donations-report-page').prepend(filterGroups);
+    $('.views-exposed-widget').each(function () {
+      if ($(this).hasClass('views-widget-filter-donation_id') || $(this).hasClass('views-widget-filter-email')
+        || $(this).hasClass('views-widget-filter-transaction_date') || $(this).hasClass('views-submit-button') 
+        || $(this).hasClass('views-reset-button')) {
+        filterGroups.find('#edit-basic-filters .fieldset-wrapper').append($(this));
+      }
+      else {
+        filterGroups.find('#edit-advanced-filters .fieldset-wrapper').append($(this));
+      }
+    });
+
+    // Expand the advanced filters field set if any of its values are populated:
+    $('#edit-advanced-filters .views-exposed-widget input.form-text').each(function () {
+      if ($(this).val() != '') {
+        $('#edit-advanced-filters').removeClass('collapsed');
+        $('#edit-advanced-filters .fieldset-wrapper').show();
+        
+        return false;
+      }
+    });
+
     // Attach help popup to the right of the submit button:
     var submitButton = $('#views-exposed-form-springboard-dw-donations-report-page .views-submit-button input');
     var donationsReportTable = $('.view-springboard-dw-donations-report table.views-table');
@@ -75,70 +99,64 @@ Drupal.behaviors.springboardDataWarehouseViews = {
     });
     $('#sb-dw-items-per-page').append('per page');
 
-    // Add a description to the keyword search exposed filter's value until somebody types or the form is submitted:
-    var searchFilter = $('#views-exposed-form-springboard-dw-donations-report-page .form-item-dw-global-search input');
-    var searchFilterBlurb = 'Search for report values here';
-    if (searchFilter.val() == '') {
-      searchFilter.val(searchFilterBlurb);
-    }
-    searchFilter.focus(function () {
-      if ($(this).val() == searchFilterBlurb) {
-        $(this).val('');
+    // Add inline labels; this displays exposed filter titles as filter content until user starts typing:
+    $('#views-exposed-form-springboard-dw-donations-report-page .views-exposed-widget').each(function () {
+      if ($(this).hasClass('views-widget-filter-transaction_date')) {
+        return;
       }
-    });
-    searchFilter.blur(function () {
-      if ($(this).val() == '') {
-        $(this).val(searchFilterBlurb);
+      $(this).children('label').hide();
+      var widgetLabel = $(this).children('label').text();
+      widgetLabel = $.trim(widgetLabel);
+      var textField = $(this).find('input.form-text');
+      textField.attr('label_value', widgetLabel);
+      if (textField.val() == '') {
+        textField.val(widgetLabel);
       }
+      textField.focus(function () {
+        if ($(this).val() == $(this).attr('label_value')) {
+          $(this).val('');
+        }
+      });
+      textField.blur(function () {
+        if ($(this).val() == '') {
+          $(this).val($(this).attr('label_value'));
+        }
+      });
     });
     $('#views-exposed-form-springboard-dw-donations-report-page').submit(function () {
-      if (searchFilter.val() == searchFilterBlurb) {
-        searchFilter.val('');
-      }
+      $('#views-exposed-form-springboard-dw-donations-report-page .views-exposed-widget').each(function () {
+        var textField = $(this).find('input.form-text');
+        if (textField.val() == textField.attr('label_value')) {
+          textField.val('');
+        }
+      });
     });
 
     // Inline date picker label behavior:
-    var subIDAFilter = $('#views-exposed-form-springboard-dw-donations-report-page input#edit-transaction-date-min-datepicker-popup-0');
-    var subIDABlurb = 'mm/dd/yy';
-    if (subIDAFilter.val() == '') {
-      subIDAFilter.val(subIDABlurb);
-    } 
-    subIDAFilter.focus(function () { 
-      if ($(this).val() == subIDABlurb) {
-        $(this).val('');
-      }
-    });
-    subIDAFilter.blur(function () {
+    var dateLabel = 'mm/dd/yy';
+    $('#views-exposed-form-springboard-dw-donations-report-page input#edit-transaction-date-min-datepicker-popup-0,' +
+      '#views-exposed-form-springboard-dw-donations-report-page input#edit-transaction-date-max-datepicker-popup-0').each(function () {
       if ($(this).val() == '') {
-        $(this).val(subIDABlurb);
+        $(this).val(dateLabel);
       }
+      $(this).focus(function () {
+        if ($(this).val() == dateLabel) {
+          $(this).val('');
+        }
+      });
+      $(this).blur(function () {
+        if ($(this).val() == '') {
+          $(this).val(dateLabel);
+        }
+      });
     });
     $('#views-exposed-form-springboard-dw-donations-report-page').submit(function () {
-      if (subIDAFilter.val() == subIDABlurb) {
-        subIDAFilter.val('');
-      }
+      $('#views-exposed-form-springboard-dw-donations-report-page input#edit-transaction-date-min-datepicker-popup-0,' +
+        '#views-exposed-form-springboard-dw-donations-report-page input#edit-transaction-date-max-datepicker-popup-0').each(function () {
+        if ($(this).val() == dateLabel) {
+          $(this).val('');
+        }
+      });
     });
-    var subIDBFilter = $('#views-exposed-form-springboard-dw-donations-report-page input#edit-transaction-date-max-datepicker-popup-0');
-    var subIDBBlurb = 'mm/dd/yy';
-    if (subIDBFilter.val() == '') {
-      subIDBFilter.val(subIDBBlurb);
-    }
-    subIDBFilter.focus(function () {
-      if ($(this).val() == subIDBBlurb) {
-        $(this).val('');
-      }
-    });
-    subIDBFilter.blur(function () {
-      if ($(this).val() == '') {
-        $(this).val(subIDBBlurb);
-      }
-    });
-    $('#views-exposed-form-springboard-dw-donations-report-page').submit(function () {
-      if (subIDBFilter.val() == subIDBBlurb) {
-        subIDBFilter.val('');
-      }
-    });
-
-
   })(jQuery); }
 }

@@ -32,6 +32,15 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
     $start = microtime(TRUE);
     $method = 'GET';
     $params = array();
+$view->result = array();
+return;
+    // Disable data fetch during view edit preview (drupal_get_path() returns other during view preview):
+    $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    if (strpos($current_path, 'admin/structure/views') !== FALSE) {
+      $view->result = array();
+      drupal_set_message('View output disabled during preview.');
+      return;
+    } 
 
     // Determine endpoint based on whether there's a donation_id contextual filter:
     if (isset($view->args[0]) && is_numeric($view->args[0])) {

@@ -225,8 +225,32 @@ function springboard_dw_views_handlers() {
  * Implements hook_form_alter()
  */
 function springboard_dw_form_views_exposed_form_alter(&$form, &$form_state) {
-  if (isset($form['#id']) && $form['#id'] == 'views-exposed-form-springboard-dw-donations-report-page') {
-    // Attached CSS and jQuery related to the exposed filters:
+  if (!isset($form['#id']) || $form['#id'] != 'views-exposed-form-springboard-dw-donations-report-page') {
+    return;
+  }
+
+  // Group filters into basic and advanced fieldsets:
+  $filter_groups = array(
+    '#type' => 'container',
+    '#weight' => -9999
+  );
+  $filter_groups['basic_filters'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Basic Filters'),
+  ); 
+  $filter_groups['advanced_filters'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advanced Filters'),
+    '#attributes' => array('class' => array('collapsible', 'collapsed')),
+  );
+  $form['filter_groups'] = $filter_groups;
+  $form['#attached']['js'][] = 'misc/collapse.js';
+  $form['#attached']['js'][] = 'misc/form.js';
+
+
+  // Attached CSS and jQuery related to the exposed filters unless this is view preview output:
+  $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ''; // (drupal_get_path() returns nothing during view preview.)
+  if (strpos($current_path, 'admin/structure/views') === FALSE) {
     drupal_add_css('//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css', array('type' => 'external'));
     $form['#attached']['css'][] = drupal_get_path('module', 'springboard_dw') . '/css/springboard_dw.css';
     $form['#attached']['js'][] = drupal_get_path('module', 'springboard_dw') . '/js/springboard_dw.js';
