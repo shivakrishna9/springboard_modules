@@ -637,7 +637,7 @@ function braintree_vault_payment_method_make_default($payment_method, $context =
     return $result;
   }
 
-  $error_message = braintree_result_error_message($result);
+  $error_message = braintree_report_error($result);
   return FALSE;
 }
 

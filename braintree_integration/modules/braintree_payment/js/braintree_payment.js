@@ -146,7 +146,6 @@
       }
       if (paymentMethod == 'credit' && parent.creditEnabled()) {
         parent.createHostedFields(parent.clientInstance);
-        parent.disablePaypalFieldsSubmit().resetHostedFieldsSubmit();
       }
       else if (paymentMethod == 'paypal' && parent.paypalEnabled()) {
         parent.createPaypalFields(parent.clientInstance);
@@ -196,13 +195,37 @@
       return this;
     };
 
+    var fEnableHostedFieldsSubmit = false;
     this.enableHostedFieldsSubmit = function() {
-      parent.$form.on('submit.braintree_hosted', parent.submitHostedFields);
+      // When the form is submitted when the credit payment type is used, we
+      // have to wait for an async response from Braintree to determine if the
+      // fields validated successfully or not, and to get a token. Therefore, we
+      // need to temporarily remove the submit handlers already attached to the
+      // form, add ours, and add them back if the form validated correctly.
+      var submitHandlers = $.data(parent.$form[0], 'events')['submit'];
+      parent.callbacks = $.extend(true, [], submitHandlers);
+      var guid = 0; // Some arbitrary number.
+      if (undefined !== submitHandlers && submitHandlers.length > 0 && submitHandlers[0]) {
+        guid = submitHandlers[0].guid - 1;
+      }
+      submitHandlers.splice(0, submitHandlers.length, {
+        data: null,
+        guid: guid,
+        handler: parent.submitHostedFields,
+        namespace: '',
+        origType: 'submit',
+        quick: null,
+        selector: null,
+        type: 'submit'
+      });
+      fEnableHostedFieldsSubmit = true;
       return this;
     };
 
     this.disableHostedFieldsSubmit = function() {
-      parent.$form.off('submit.braintree_hosted', parent.submitHostedFields);
+      if (fEnableHostedFieldsSubmit) {
+        $.data(parent.$form[0], 'events')['submit'] = parent.callbacks;
+      }
       return this;
     };
 
@@ -227,6 +250,15 @@
           return;
         }
         parent.hostedFieldsInstance = hostedFieldsInstance;
+        if (parent.settings.currentPaymentMethod == 'paypal') {
+          parent.disablePaypalFieldsSubmit();
+        }
+        else if (undefined !== paymentMethods[parent.settings.currentPaymentMethod]
+          && paymentMethods[parent.settings.currentPaymentMethod].isEnabled()
+          && undefined !== paymentMethods[paymentMethod].disableFieldsSubmit
+        ) {
+          paymentMethods[paymentMethod].disableFieldsSubmit.call(this);
+        }
         parent.resetHostedFieldsSubmit();
         parent.enableHostedFieldsEvents();
         parent.hostedFieldsCreated = true;
@@ -272,8 +304,10 @@
             parent.$submit.show().next('.donation-processing-wrapper').remove();
             return;
           }
+
           parent.$nonce.val(payload.nonce);
-          parent.$form.off('submit.braintree_hosted').submit();
+          $.data(parent.$form[0], 'events')['submit'] = parent.callbacks;
+          parent.$form.submit();
         });
       }
 
@@ -301,13 +335,14 @@
       return this;
     }
 
+    var fEnablePaypalFieldsSubmit = false;
     this.enablePaypalFieldsSubmit = function() {
       // When autofill is enabled, we only want to validate the amount field.
       // Since the donation validation submission handler is already on the
       // queue, we need to insert our submission handler function before the
       // donation validation.
       if (parent.settings.autofill == 'if_blank' || parent.settings.autofill == 'always') {
-        parent.callbacks = $.data(parent.$form[0], 'events')['submit'];
+        parent.callbacks = $.extend(true, [], $.data(parent.$form[0], 'events')['submit']);
         var guid = 128;
         if (undefined !== parent.callbacks && parent.callbacks.length) {
           guid = parent.callbacks[0].guid - 1;
@@ -322,6 +357,7 @@
           selector: null,
           type: 'submit'
         });
+        fEnablePaypalFieldsSubmit = true;
       }
       else {
         parent.$form.on('submit.braintree_paypal', parent.submitPaypalFields);
@@ -330,7 +366,12 @@
     };
 
     this.disablePaypalFieldsSubmit = function() {
-      parent.$form.off('submit.braintree_paypal', parent.submitPaypalFields);
+      if (fEnablePaypalFieldsSubmit) {
+        $.data(parent.$form[0], 'events')['submit'] = parent.callbacks;
+      }
+      else {
+        parent.$form.off('submit.braintree_paypal', parent.submitPaypalFields);
+      }
       return this;
     };
 

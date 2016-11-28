@@ -40,7 +40,7 @@
         // queue, we need to insert our submission handler function before the
         // donation validation.
         if (BI.settings.autofill == 'if_blank' || BI.settings.autofill == 'always') {
-          BIAP.callbacks = $.data(BI.$form[0], 'events')['submit'];
+          BIAP.callbacks = $.extend(true, [], $.data(BIAP.$form[0], 'events')['submit']);
           var guid = 128;
           if (undefined !== BIAP.callbacks && BIAP.callbacks.length) {
             guid = BIAP.callbacks[0].guid - 1;
