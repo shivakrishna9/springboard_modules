@@ -35,7 +35,30 @@
       };
 
       BIAP.enableFieldsSubmit = function() {
-        BI.$form.on('submit.braintree_applepay', BIAP.submitFields);
+        // When autofill is enabled, we only want to validate the amount field.
+        // Since the donation validation submission handler is already on the
+        // queue, we need to insert our submission handler function before the
+        // donation validation.
+        if (BI.settings.autofill == 'if_blank' || BI.settings.autofill == 'always') {
+          BIAP.callbacks = $.data(BI.$form[0], 'events')['submit'];
+          var guid = 128;
+          if (undefined !== BIAP.callbacks && BIAP.callbacks.length) {
+            guid = BIAP.callbacks[0].guid - 1;
+          }
+          $.data(BI.$form[0], 'events')['submit'].splice(0, BIAP.callbacks.length, {
+            data: null,
+            guid: guid,
+            handler: BIAP.submitFields,
+            namespace: '',
+            origType: 'submit',
+            quick: null,
+            selector: null,
+            type: 'submit'
+          });
+        }
+        else {
+          parent.$form.on('submit.braintree_paypal', BIAP.submitFields);
+        }
         return BIAP;
       };
 
@@ -54,11 +77,18 @@
           return;
         }
 
+        if (Drupal.settings.fundraiser.donationValidate.element('#edit-submitted-donation-other-amount') === false) {
+          $('#edit-submitted-donation-other-amount').focus();
+          event.stopImmediatePropagation();
+          event.preventDefault();
+          return;
+        }
+
         if (!BI.$nonce.val().length) {
           event.preventDefault();
           var paymentRequest = BIAP.applePayInstance.createPaymentRequest({
             total: {
-              label: 'Jackson River',
+              label: BI.settings.storeName,
               amount: BI.amount
             }
           });
@@ -66,7 +96,6 @@
           var session = new ApplePaySession(1, paymentRequest);
 
           session.onvalidatemerchant = function(event) {
-            console.log(event);
             BIAP.applePayInstance.performValidation({
               validationURL: event.validationURL,
               displayName: 'Jackson River'
@@ -94,6 +123,8 @@
               session.completePayment(ApplePaySession.STATUS_SUCCESS);
 
               BI.$nonce.val(payload.nonce);
+
+              $.data(BI.$form[0], 'events')['submit'] = BIAP.callbacks;
 
               BI.$form.submit();
               BI.$form.off('submit.braintree_applepay');
