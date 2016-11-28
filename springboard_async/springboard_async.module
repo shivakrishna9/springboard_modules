@@ -1,0 +1,126 @@
+<?php
+
+/**
+ * @file
+ * Add asynchronous form behavior to Springboard
+ */
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function springboard_async_cron_queue_info() {
+  return array(
+    'springboard_async_form_submit_queue' => array(
+      'worker callback' => 'springboard_async_form_submit_queue_callback',
+      'time' => variable_get('springboard_async_form_submit_queue_time', 60),
+    ),
+  );
+}
+
+/**
+ * Implements callback_queue_worker().
+ */
+function springboard_async_form_submit_queue_callback($queue_item_data) {
+  // Copy some data into local variables.
+  $form = &$queue_item_data['form'];
+  $form_state = &$queue_item_data['form_state'];
+
+  watchdog('springboard_async', t('Processing form build ID !build_id', array(
+    '!build_id' => $form_state['input']['form_build_id'],
+  )));
+
+  // Run the saved submit handlers from the original form build.
+  if (!empty($form['#springboard_async_submit'])) {
+    foreach ($form['#springboard_async_submit'] as $submit_handler) {
+      if (function_exists($submit_handler)) {
+        watchdog('springboard_async', t('Running !submit_handler submit handler for form build ID !build_id.', array(
+          '!submit_handler' => $submit_handler,
+          '!build_id' => $form_state['input']['form_build_id'],
+        )));
+
+        // Call the submit handler with the saved $form/$form_state arrays.
+        $submit_handler($form, $form_state);
+      }
+      else {
+        watchdog('springboard_async', t('Skipping !submit_handler submit handler for form build ID !build_id because function could not be found.', array(
+          '!submit_handler' => $submit_handler,
+          '!build_id' => $form_state['input']['form_build_id'],
+        )), 'error');
+      }
+    }
+  }
+}
+
+/**
+ * Add a form submission to the submit queue.
+ */
+function springboard_async_form_enqueue($form, $form_state) {
+  $data = array(
+    'form' => $form,
+    'form_state' => $form_state,
+    'created' => REQUEST_TIME,
+  );
+  $queue = DrupalQueue::get('springboard_async_form_submit_queue');
+  if ($result = $queue->createItem($data)) {
+    return $result;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_fundraiser_donation_form().
+ */
+function springboard_async_fundraiser_donation_form($form, $form_state) {
+  // Move the submit handlers into our handler array.
+  $form['#springboard_async_submit'] = $form['#submit'];
+
+  // @todo: identify the submit handler that handles payment info and sanitizes
+  // the input/form_state values, and make sure that it's still one of the
+  // synchronous submit handlers.
+
+  // Replace the submit handlers with our submit handler.
+  $form['#submit'] = array(
+    '_springboard_async_fundraiser_donation_form_submit',
+  );
+
+  return $form;
+}
+
+/**
+ * Submit handler for asynchronous donation forms.
+ */
+function _springboard_async_fundraiser_donation_form_submit(&$form, &$form_state) {
+  // Enqueue the submission.
+  $result = springboard_async_form_enqueue($form, $form_state);
+  if ($result) {
+    // @todo: redirect to a real thank you page.
+    drupal_set_message(t('Your submission has been queued for asynchronous processing.'));
+  }
+  else {
+    watchdog('springboard_async', t('Something went wrong adding a queue object for form build ID !build_id.', array(
+      '!build_id' => $form_state['input']['form_build_id'],
+    )), 'error');
+
+    // @todo: gracefully handle a failure to add this submission to the queue.
+    // A graceful failure would probably run the submit handlers normally,
+    // synchronously.
+  }
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function springboard_async_module_implements_alter(&$implementations, $hook) {
+  switch ($hook) {
+    case 'form_alter':
+    case 'fundraiser_donation_form':
+      // Make sure our hook_form_alter() callback runs last so it can capture
+      // all the submit callbacks.
+      if (isset($implementations['springboard_async'])) {
+        $group = $implementations['springboard_async'];
+        unset($implementations['springboard_async']);
+        $implementations['springboard_async'] = $group;
+      }
+      break;
+  }
+}

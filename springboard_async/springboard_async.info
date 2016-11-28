@@ -1,0 +1,5 @@
+name = Springboard Async
+description = Add asynchronous form behavior to Springboard.
+package = Jackson River Springboard - extras
+core = 7.x
+version = 7.x-4.x
