@@ -456,6 +456,14 @@ function sba_target_search_views_default_views() {
   $handler->display->display_options['fields']['committee_memberships']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['committee_memberships']['hide_empty'] = TRUE;
   $handler->display->display_options['fields']['committee_memberships']['empty_zero'] = TRUE;
+  /* Field: Advocacy: Matching targets */
+  $handler->display->display_options['fields']['matching_targets']['id'] = 'matching_targets';
+  $handler->display->display_options['fields']['matching_targets']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['matching_targets']['field'] = 'matching_targets';
+  /* Field: Advocacy: Group Name */
+  $handler->display->display_options['fields']['group_name']['id'] = 'group_name';
+  $handler->display->display_options['fields']['group_name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['group_name']['field'] = 'group_name';
   /* Field: Advocacy: Target Actions */
   $handler->display->display_options['fields']['target_actions']['id'] = 'target_actions';
   $handler->display->display_options['fields']['target_actions']['table'] = 'advocacy';
@@ -468,10 +476,6 @@ function sba_target_search_views_default_views() {
     'edit' => 0,
     'delete' => 0,
   );
-  /* Field: Advocacy: Group Name */
-  $handler->display->display_options['fields']['group_name']['id'] = 'group_name';
-  $handler->display->display_options['fields']['group_name']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['group_name']['field'] = 'group_name';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Advocacy: Search Multiple Target Fields by Keywords */

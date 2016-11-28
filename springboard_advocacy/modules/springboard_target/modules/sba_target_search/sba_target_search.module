@@ -108,48 +108,71 @@ function sba_target_search_preprocess_views_exposed_form(&$vars, $hook) {
 /**
  * Implements hook_preprocess_views_view_table().
  *
- * Change the table output of the Target search when only custom groups are searched.
+ * Change the table output of the Target search based on class type of search
+ * result.
  */
 
 function sba_target_search_preprocess_views_view_table(&$vars) {
-  $view = $vars['view'];
-  $fields = &$view->field;
-  $columns = $view->style_plugin->options['columns'];
-  $classes = isset($view->filter['search_class_name']->value) ? $view->filter['search_class_name']->value : '';
-  if($view->name == 'targets' && $view->current_display == 'block_3' && in_array('Group', $classes)) {
-    $group_fields = array('last_name', 'group_name', 'target_actions');
-    foreach($vars['header'] as $key => $head) {
-      if(!in_array($key, $group_fields)) {
-        unset($vars['header'][$key]);
 
+  $view = $vars['view'];
+  if ($view->name == 'targets' && $view->current_display == 'block_3') {
+    $fields = &$view->field;
+    $columns = $view->style_plugin->options['columns'];
+    $classes = isset($view->filter['search_class_name']->value) ? $view->filter['search_class_name']->value : [];
+    $omit_fields = [];
+    if (!in_array('Group', $classes)) {
+      $omit_fields = array_merge($omit_fields, array('matching_targets'));
+    }
+    if (!in_array('Legislator', $classes)) {
+      $omit_fields = array_merge($omit_fields, array(
+        'district_code',
+        'committee_memberships',
+        'role',
+      ));
+    }
+    if (count($classes) == 1 && in_array('Group', $classes)) {
+      $omit_fields = array_merge($omit_fields, array(
+        'salutation',
+        'first_name',
+        'email',
+        'party',
+        'title',
+        'organization',
+        'role',
+        'state',
+        'district_code',
+        'committee_memberships',
+      ));
+    }
+
+    foreach ($vars['header'] as $key => $head) {
+      if (in_array($key, $omit_fields)) {
+        unset($vars['header'][$key]);
       }
     }
-    foreach($columns as $key => $column) {
-      if(!in_array($key, $group_fields)) {
-        // prevent headers from being rebuilt in springboard_advocacy_preprocess_views_view_table().
+    foreach ($columns as $key => $column) {
+      if (in_array($key, $omit_fields)) {
+        // Prevent headers from being rebuilt in
+        // springboard_advocacy_preprocess_views_view_table().
         unset($columns[$key]);
       }
     }
-    foreach($fields as $key=> $field) {
-      if(!in_array($key, $group_fields)) {
+    foreach ($fields as $key => $field) {
+      if (in_array($key, $omit_fields)) {
         unset($fields[$key]);
       }
     }
     $vars['view']->style_plugin->options['columns'] = $columns;
     $vars['view']->style_options['columns'] = $columns;
     $vars['options']['columns'] = $columns;
-    foreach($vars['rows'] as $key => $row) {
-      foreach($row as $field_name => $value) {
-        if(!in_array($field_name, $group_fields)) {
+    foreach ($vars['rows'] as $key => $row) {
+      foreach ($row as $field_name => $value) {
+        if (in_array($field_name, $omit_fields)) {
           unset($vars['rows'][$key][$field_name]);
         }
       }
     }
-
-    $header = $vars['header'];
-    $rows = $vars['rows'];
   }
-
 }
 
 
