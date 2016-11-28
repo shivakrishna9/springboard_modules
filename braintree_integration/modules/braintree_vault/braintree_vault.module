@@ -609,8 +609,8 @@ function braintree_vault_payment_method_make_default($payment_method, $context =
     // Braintree makeDefault method only changes default payment method for
     // future payment. For existing subscriptions, we need update payment
     // method token of subscription manually.
-    if (module_exists('braintree_subscription')) {
-      $customer = braintree_customer_load_by_account($user);
+    $customer = braintree_customer_load_by_account($user);
+    if (module_exists('braintree_subscription') && $customer !== FALSE) {
       $subscriptions = braintree_customer_subscriptions($customer);
 
       foreach ($subscriptions as $subscription) {
