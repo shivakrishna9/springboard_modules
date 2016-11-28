@@ -111,7 +111,11 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       $fields['offset'] = $this->offset;
 
       if (isset($this->orderby)) {
-        $fields['sort'] = $this->orderby[0]['field'];
+        $sort_field = $this->orderby[0]['field'];
+        if ($sort_field == 'group_name') {
+          $sort_field = 'name';
+        }
+        $fields['sort'] = $sort_field;
         $fields['direction'] = $this->orderby[0]['direction'];
       }
 
