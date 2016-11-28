@@ -150,7 +150,10 @@
       }
       else if (paymentMethod == 'paypal' && parent.paypalEnabled()) {
         parent.createPaypalFields(parent.clientInstance);
-        parent.disableHostedFieldsSubmit().resetPaypalFieldsSubmit();
+        // No need to reset the submission handler for Paypal, as that is done
+        // in the `createPaypalFields` function. Just need to disable the hosted
+        // fields submission handler.
+        parent.disableHostedFieldsSubmit();
       }
       else if (undefined !== paymentMethods[paymentMethod] && paymentMethods[paymentMethod].isEnabled()) {
         paymentMethods[paymentMethod].createFields(parent.clientInstance);
@@ -199,7 +202,7 @@
     };
 
     this.disableHostedFieldsSubmit = function() {
-      parent.$form.off('submit.braintree_hosted');
+      parent.$form.off('submit.braintree_hosted', parent.submitHostedFields);
       return this;
     };
 
@@ -299,12 +302,35 @@
     }
 
     this.enablePaypalFieldsSubmit = function() {
-      parent.$submit.on('click.braintree_paypal', parent.submitPaypalFields);
+      // When autofill is enabled, we only want to validate the amount field.
+      // Since the donation validation submission handler is already on the
+      // queue, we need to insert our submission handler function before the
+      // donation validation.
+      if (parent.settings.autofill == 'if_blank' || parent.settings.autofill == 'always') {
+        parent.callbacks = $.data(parent.$form[0], 'events')['submit'];
+        var guid = 128;
+        if (undefined !== parent.callbacks && parent.callbacks.length) {
+          guid = parent.callbacks[0].guid - 1;
+        }
+        $.data(parent.$form[0], 'events')['submit'].splice(0, parent.callbacks.length, {
+          data: null,
+          guid: guid,
+          handler: parent.submitPaypalFields,
+          namespace: '',
+          origType: 'submit',
+          quick: null,
+          selector: null,
+          type: 'submit'
+        });
+      }
+      else {
+        parent.$form.on('submit.braintree_paypal', parent.submitPaypalFields);
+      }
       return this;
     };
 
     this.disablePaypalFieldsSubmit = function() {
-      parent.$submit.off('click.braintree_paypal');
+      parent.$form.off('submit.braintree_paypal', parent.submitPaypalFields);
       return this;
     };
 
@@ -341,6 +367,9 @@
       }
 
       if (Drupal.settings.fundraiser.donationValidate.element('#edit-submitted-donation-other-amount') === false) {
+        $('#edit-submitted-donation-other-amount').focus();
+        event.stopImmediatePropagation();
+        event.preventDefault();
         return;
       }
 
@@ -373,6 +402,7 @@
           // Auto-submit the form if no fields were auto-filled from the values
           // in the payload object.
           if (!autofilled) {
+            $.data(parent.$form[0], 'events')['submit'] = parent.callbacks;
             parent.$form.submit();
           }
 
