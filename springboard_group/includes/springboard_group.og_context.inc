@@ -34,7 +34,6 @@ function springboard_group_og_context_handler($item = NULL) {
     unset($_SESSION['og_context']);
   }
   if (strpos($path, '/edit') !== FALSE && strpos($path, 'advocacy/target' !== FALSE)) {
-    // @todo get the group from the target ID.
     //return array('node' => array($gid);
   }
   global $user;
@@ -114,6 +113,8 @@ function springboard_group_get_group_context() {
     // @todo - deal with node/add.
   }
 
+  // If we've gotten this far, we should be dealing with a pre-defined path
+  // only.
   $paths = springboard_group_context_menu_paths();
   $has_path = FALSE;
   foreach ($paths as $path) {

@@ -188,6 +188,7 @@ function springboard_group_entity_settings_form() {
 
   $disallowed = array(
     'sba_message:sba_message_action_message',
+    'sba_message:sba_social_action_twitter_message',
     'taxonomy_term:tags',
     'taxonomy_term:sba_legislative_issues',
     'taxonomy_term:sba_organization_issues',
