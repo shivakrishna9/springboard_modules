@@ -312,7 +312,8 @@ function sba_target_search_process_matches($matches) {
   }
   elseif (!empty($matches)) {
     // @todo show in modal?
-    $output = t('More than 10 targets in this group matched this search.');
+    $count = count($matches);
+    $output = t('@count targets in this group matched this search.', array('@count' => $count));
   }
   return $output;
 }
