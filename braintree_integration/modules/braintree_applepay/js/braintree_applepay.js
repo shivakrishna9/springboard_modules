@@ -57,7 +57,7 @@
           });
         }
         else {
-          parent.$form.on('submit.braintree_paypal', BIAP.submitFields);
+          BI.$form.on('submit.braintree_applepay', BIAP.submitFields);
         }
         return BIAP;
       };
@@ -98,7 +98,7 @@
           session.onvalidatemerchant = function(event) {
             BIAP.applePayInstance.performValidation({
               validationURL: event.validationURL,
-              displayName: 'Jackson River'
+              displayName: BI.settings.storeName
             }, function (validationErr, merchantSession) {
               if (validationErr) {
                 // You should show an error to the user, e.g. 'Apple Pay failed to
@@ -153,6 +153,7 @@
           var promise = ApplePaySession.canMakePaymentsWithActiveCard(applePayInstance.merchantIdentifier);
           promise.then(function(canMakePaymentsWithActiveCard) {
             if (canMakePaymentsWithActiveCard) {
+              BIAP.disableHostedFieldsSubmit().disablePaypalFieldsSubmit();
               BIAP.resetFieldsSubmit();
               BIAP.applepayFieldsCreated = true;
             }

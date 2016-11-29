@@ -228,6 +228,18 @@ function commerce_braintree_applepay_settings_form($settings = array()) {
   else {
     $form['production']['domain_association_file']['#markup'] = t('Your Domain Association File was found in the correct location.');
   }
+
+  $form['autofill'] = array(
+    '#type' => 'radios',
+    '#title' => t("Populate User and Billing fields with data from the donor's Apple Pay account?"),
+    '#options' => array(
+      'never' => t('Never'),
+      'if_blank' => t('Only if all User/Billing fields are blank'),
+      'always' => t('Always'),
+    ),
+    '#default_value' => isset($settings['autofill']) ? $settings['autofill'] : 'if_blank',
+  );
+
   return $form;
 }
 

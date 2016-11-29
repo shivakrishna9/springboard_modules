@@ -13,6 +13,8 @@ function braintree_payment_braintree_payment_form__applepay__alter(&$context) {
     return;
   }
 
+  $form = &$context['form'];
+
   if (empty($form['braintree']['new']['paypal']['nonce'])) {
     $form['braintree']['new']['applepay']['nonce'] = array(
       '#type' => 'hidden',

@@ -68,6 +68,9 @@
           parent.amount = $(this).val();
         });
       }
+      else {
+        parent.$otherAmount.off('blur.updateAmount');
+      }
     };
 
     /**
@@ -100,7 +103,9 @@
 
       parent.updateAmount();
       parent.$amount.on('change', parent.updateAmount);
-      parent.$otherAmount.on('focus', parent.updateAmount('other'));
+      parent.$otherAmount.on('focus', function() {
+        parent.updateAmount('other');
+      });
 
       for (paymentMethod in paymentMethods) {
         if (undefined !== paymentMethod.postboot) {
@@ -162,10 +167,6 @@
       }
       else if (undefined !== paymentMethods[paymentMethod] && paymentMethods[paymentMethod].isEnabled()) {
         paymentMethods[paymentMethod].createFields(parent.clientInstance);
-        parent.disableHostedFieldsSubmit().disablePaypalFieldsSubmit();
-        if (undefined !== paymentMethods[paymentMethod].resetFieldsSubmit) {
-          paymentMethods[paymentMethod].resetFieldsSubmit.call(this);
-        }
       }
 
       parent.resetDeviceData();
