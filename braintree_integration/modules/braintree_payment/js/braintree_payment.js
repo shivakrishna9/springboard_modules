@@ -12,6 +12,7 @@
     this.hostedFieldsInstance = null;
     this.paypalInstance = null;
     this.$amount = this.$form.find('input[name="submitted[donation][amount]"]');
+    this.$otherAmount = this.$form.find('input[name="submitted[donation][other_amount]"]');
     this.amount = 0;
     this.deviceDataInstance = null;
     this.$deviceDataInput = $('<input name="device_data" type="hidden"/>');
@@ -45,21 +46,25 @@
       $input.parent('.form-item').remove();
     };
 
-    this.updateAmount = function() {
-      var checked = parent.$amount.filter(':checked');
-      if (!checked.length) {
-        parent.amount = 0;
-        return;
+    this.updateAmount = function(checkedOption) {
+      if (undefined === checkedOption) {
+        var checked = parent.$amount.filter(':checked');
+        if (!checked.length) {
+          parent.amount = 0;
+          return;
+        }
+
+        parent.amount = checked.val();
+        if (undefined == parent.amount) {
+          return;
+        }
       }
-
-      parent.amount = checked.val();
-
-      if (undefined == parent.amount) {
-        return;
+      else {
+        parent.amount = checkedOption;
       }
 
       if (parent.amount == 'other') {
-        $('input[name="submitted[donation][other_amount]"]').on('change', function() {
+        parent.$otherAmount.off('blur.updateAmount').on('blur.updateAmount', function() {
           parent.amount = $(this).val();
         });
       }
@@ -95,6 +100,7 @@
 
       parent.updateAmount();
       parent.$amount.on('change', parent.updateAmount);
+      parent.$otherAmount.on('focus', parent.updateAmount('other'));
 
       for (paymentMethod in paymentMethods) {
         if (undefined !== paymentMethod.postboot) {
