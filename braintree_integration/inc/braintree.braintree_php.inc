@@ -83,7 +83,7 @@ function braintree_transaction_sale(&$sale_data, &$context) {
   drupal_alter('braintree_transaction_sale_data', $sale_data, $context);
 
   if (empty($context['order'])) {
-    return FALSE;
+    return array(FALSE, FALSE);
   }
 
   try {
@@ -102,7 +102,7 @@ function braintree_transaction_sale(&$sale_data, &$context) {
 
   list($approved, $message) = braintree_check_fraud($context);
   if (!$approved) {
-    return $message;
+    return array(FALSE, $message);
   }
 
   if ($context['result']->success) {
@@ -114,8 +114,7 @@ function braintree_transaction_sale(&$sale_data, &$context) {
     return array(TRUE, $context['result']);
   }
 
-  $error_message = braintree_report_result($result);
-  return array(FALSE, $error_message);
+  return array(FALSE, $context['result']);
 }
 
 /**
