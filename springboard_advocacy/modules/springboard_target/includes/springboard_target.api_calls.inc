@@ -148,6 +148,10 @@ function _springboard_target_api_build_chambers($unstructured_chambers) {
         $unstructured_chambers[$chamber_id]['keywords'][$field_name] = $value;
         unset($unstructured_chambers[$chamber_id][$field_name]);
       }
+      if ($field_name == 'role') {
+        $unstructured_chambers[$chamber_id]['chamber'] = $value;
+        unset($unstructured_chambers[$chamber_id]['role']);
+      }
     }
   }
   return $unstructured_chambers;
