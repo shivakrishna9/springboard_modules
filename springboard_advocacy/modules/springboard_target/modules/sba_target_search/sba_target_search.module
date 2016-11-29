@@ -291,9 +291,18 @@ function sba_target_search_convert_recipients($group) {
   return json_encode($recipients);
 }
 
+/**
+ * Process the matching targets for display.
+ *
+ * @param array $matches
+ *   An array of targets matching the keyword.
+ *
+ * @return null|string
+ *   The matching targets, formatted for display.
+ */
 function sba_target_search_process_matches($matches) {
   $output = '';
-  if (!empty($matches)) {
+  if (!empty($matches) && count($matches) < 11) {
     $output = '';
     $names = array();
     foreach ($matches as $match) {
@@ -301,9 +310,22 @@ function sba_target_search_process_matches($matches) {
     }
     $output .= check_plain(implode(' | ', $names));
   }
+  elseif (!empty($matches)) {
+    // @todo show in modal?
+    $output = t('More than 10 targets in this group matched this search.');
+  }
   return $output;
 }
 
+/**
+ * Display info about the target.
+ *
+ * @param object $match
+ *   A target object.
+ *
+ * @return string
+ *   The formatted target.
+ */
 function sba_target_search_match_details($match) {
   $output = array();
   $target = (array) $match;
