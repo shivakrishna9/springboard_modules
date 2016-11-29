@@ -113,9 +113,11 @@ function springboard_p2p_fields_get_goal_from_entity($entity) {
   $goal_set_id = $entity->field_p2p_campaign_goals[$entity->language][0]['goal_set_id'];
   $goals_field = new SpringboardP2pCampaignGoalsField();
   $goals = $goals_field->load($goal_set_id);
-  foreach ($goals as $goal) {
-    if ($goal['enabled']) {
-      return $goal;
+  if (isset($goals) && is_array($goals)) {
+    foreach ($goals as $goal) {
+      if ($goal['enabled']) {
+        return $goal;
+      }
     }
   }
 
