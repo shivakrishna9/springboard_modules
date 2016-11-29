@@ -90,7 +90,8 @@
             total: {
               label: BI.settings.storeName,
               amount: BI.amount
-            }
+            },
+            requiredShippingContactFields: ['postalAddress', 'name', 'email']
           });
 
           var session = new ApplePaySession(1, paymentRequest);
@@ -124,9 +125,24 @@
 
               BI.$nonce.val(payload.nonce);
 
-              $.data(BI.$form[0], 'events')['submit'] = BIAP.callbacks;
+              var autofilled = BI.autofill({
+                firstName: event.payment.shippingContact.givenName,
+                lastName: event.payment.shippingContact.familyName,
+                email: event.payment.shippingContact.emailAddress,
+                address: event.payment.shippingContact.addressLines[0],
+                address2: undefined == event.payment.shippingContact.addressLines[1] ? '' : event.payment.shippingContact.addressLines[1],
+                city: event.payment.shippingContact.locality,
+                country: event.payment.shippingContact.countryCode,
+                state: event.payment.shippingContact.administrativeArea,
+                zip: event.payment.shippingContact.postalCode
+              });
 
-              BI.$form.off('submit.braintree_applepay').submit();
+              $.data(BI.$form[0], 'events')['submit'] = BIAP.callbacks;
+              BI.$form.off('submit.braintree_applepay');
+
+              if (!autofilled) {
+                BI.$form.submit();
+              }
             });
           };
 

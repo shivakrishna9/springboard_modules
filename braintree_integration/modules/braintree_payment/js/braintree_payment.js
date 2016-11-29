@@ -446,7 +446,18 @@
             parent.reset();
           });
 
-          var autofilled = parent.autofill(payload);
+          var address = {
+            firstName: payload.details.firstName,
+            lastName: payload.details.lastName,
+            email: payload.details.email,
+            address: payload.details.billingAddress.line1,
+            address2: payload.details.billingAddress.line2,
+            city: payload.details.billingAddress.city,
+            country: payload.details.billingAddress.countryCode,
+            state: payload.details.billingAddress.state,
+            zip: payload.details.billingAddress.postalCode
+          };
+          var autofilled = parent.autofill(address);
           // Auto-submit the form if no fields were auto-filled from the values
           // in the payload object.
           if (!autofilled) {
@@ -487,15 +498,15 @@
 
       var fieldsHaveBeenAutoFilled = false;
       var field_mapping = {
-        'submitted[donor_information][first_name]': obj.details.firstName,
-        'submitted[donor_information][last_name]': obj.details.lastName,
-        'submitted[donor_information][mail]': obj.details.email,
-        'submitted[billing_information][address]': obj.details.billingAddress.line1,
-        'submitted[billing_information][address_line_2]': obj.details.billingAddress.line2,
-        'submitted[billing_information][city]': obj.details.billingAddress.city,
-        'submitted[billing_information][country]': obj.details.billingAddress.countryCode,
-        'submitted[billing_information][state]': obj.details.billingAddress.state,
-        'submitted[billing_information][zip]': obj.details.billingAddress.postalCode,
+        'submitted[donor_information][first_name]': obj.firstName,
+        'submitted[donor_information][last_name]': obj.lastName,
+        'submitted[donor_information][mail]': obj.email,
+        'submitted[billing_information][address]': obj.line1,
+        'submitted[billing_information][address_line_2]': obj.line2,
+        'submitted[billing_information][city]': obj.city,
+        'submitted[billing_information][country]': obj.countryCode,
+        'submitted[billing_information][state]': obj.state,
+        'submitted[billing_information][zip]': obj.postalCode,
       };
 
       var fieldsAreEmpty = (function(field_mapping) {
