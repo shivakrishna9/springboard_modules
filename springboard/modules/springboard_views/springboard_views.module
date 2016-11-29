@@ -491,7 +491,9 @@ function springboard_views_views_query_alter(&$view, &$query) {
     return;
   }
 
-  // Apply drush-based filters fom the drush sb-export-donations-csv (drush sb-edc) command:
+  // Apply drush-base
+
+  // Apply sort and order from the drush sb-export-donations-csv (drush sb-edc) command:
   if (isset($view->drush_order) && isset($view->drush_sort)) {
     $sort = $view->drush_sort;
     $order_by = $view->drush_order;
@@ -499,6 +501,177 @@ function springboard_views_views_query_alter(&$view, &$query) {
       'field' => $order_by,
       'direction' => $sort,
     ));
+  }
+
+  // Apply filters from the drush sb-export-donations-csv (drush sb-edc) command:
+  if (isset($view->drush_filters) && is_array($view->drush_filters)) {
+    foreach ($view->drush_filters as $filter_key => $filter_value) {
+      switch ($filter_key) {
+        case 'amount':
+          $query->add_where(1, 'fundraiser_donation.amount', $filter_value, '=');
+          break;
+        case 'currency':
+          $query->add_where(1, 'fundraiser_donation.currency', $filter_value, '=');
+          break;
+        case 'field_fundraiser_internal_name_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'node_fundraiser_donation__field_data_field_fundraiser_internal_name.field_fundraiser_internal_name_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => LIKE,
+          );
+          break;
+        case 'gateway':
+          $query->add_where(1, 'fundraiser_donation.gateway', '%' . $filter_value . '%', 'LIKE');
+          break;
+        case 'hostname':
+          $query->add_where(1, 'commerce_order_fundraiser_donation.hostname', '%' . $filter_value . '%', 'LIKE');
+          break;
+        case 'nid':
+          $query->add_where(1, 'fundraiser_donation.nid', $filter_value, '=');
+          break;
+        case 'mail':
+          $query->add_where(1, 'commerce_order_fundraiser_donation.mail', '%' . $filter_value . '%', 'LIKE');
+          break;
+        case 'sbp_device_browser_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_device_browser.sbp_device_browser_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => 'LIKE',
+          );
+          break;
+        case 'sbp_device_name_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_device_name.sbp_device_name_value',
+            'value' => $filter_value,
+            'operator' => '=',
+          );
+          break;
+        case 'sbp_device_os_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_device_os.sbp_device_os_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => 'LIKE',
+          );
+          break;
+        case 'sbp_device_type_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_device_type.sbp_device_type_value',
+            'value' => $filter_value,
+            'operator' => '=',
+          );
+          break;
+        case 'sbp_address_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_address.sbp_address_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => LIKE,
+          );
+          break;
+        case 'sbp_address_line_2_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_address_line_2.sbp_address_line_2_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => LIKE,
+          );
+          break;
+        case 'sbp_city_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_city.sbp_city_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => LIKE,
+          );
+          break;
+        case 'sbp_country_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_country.sbp_country_value',
+            'value' => $filter_value,
+            'operator' => '=',
+          );
+          break;
+        case 'sbp_first_name_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_first_name.sbp_first_name_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => LIKE,
+          );
+          break;
+        case 'sbp_last_name_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_last_name.sbp_last_name_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => LIKE,
+          );
+          break;
+        case 'sbp_state_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_state.sbp_state_value',
+            'value' => $filter_value,
+            'operator' => '=',
+          );
+          break;
+        case 'sbp_zip_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_zip.sbp_zip_value',
+            'value' => $filter_value,
+            'operator' => '=', 
+          );
+          break;
+        case 'sbp_referrer_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_referrer.sbp_referrer_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => 'LIKE',
+          );
+          break;
+        case 'sbp_initial_referrer_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_initial_referrer.sbp_initial_referrer_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => 'LIKE',
+          );
+          break;
+        case 'sbp_search_engine_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_search_engine.sbp_search_engine_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => 'LIKE',
+          );
+          break;
+        case 'sbp_search_string_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_search_string.sbp_search_string_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => 'LIKE',
+          );
+          break;
+        case 'sbp_user_agent_value':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'users_fundraiser_donation__field_data_sbp_user_agent.sbp_user_agent_value',
+            'value' => '%' . $filter_value . '%',
+            'operator' => 'LIKE',
+          );
+          break;
+        case 'status':
+          $query->add_where(1, 'fundraiser_donation.status', $filter_value, '=');
+          break;
+        case 'txn_id':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'fundraiser_donation.txn_id',
+            'value' => $filter_value,
+            'operator' => '=',
+          );
+          break;
+      }  
+    }
+  } 
+
+
+  print_r($query);
+  // Remove query filters set to %%, which were added to the view to allow query-based filtering to work:
+  foreach ($query->where[1]['conditions'] as $key => $condition_data) {
+    if ($condition_data['value'] == '%%' || $condition_data['value'] == '') {
+      unset($query->where[1]['conditions'][$key]);
+    }
   }
 
   $min_date = ''; $max_date = '';

@@ -42,7 +42,7 @@ function springboard_views_drush_export_donations_csv() {
   $output_path = variable_get('springboard_dw_reports_export_path', 'temporary://'); // Default output path if it is not overwritten.
   $current_page = 0;
   $total_results = 0;
-  $items_per_page = variable_get('springboard_dw_reports_batch_count', 30); // This determines the number of results per file.
+  $items_per_page = variable_get('springboard_dw_reports_batch_count', 2000); // This determines the number of results per file.
   $max_page = 100; // Primarily for testing; secondarily to avoid an infinite loop.
   $debug = FALSE; // Set this to true to prevent CSV export file generation.
 
@@ -70,6 +70,7 @@ function springboard_views_drush_export_donations_csv() {
     $view->set_offset($current_page * $items_per_page);
 
     // Apply filtering, sorting, and ordering:
+    $view->drush_filters = array();
     $sort = 'asc';
     unset($order_by);
     foreach ($drush_options as $option_name => $option_value) {
@@ -131,7 +132,8 @@ function springboard_views_drush_export_donations_csv() {
           echo '"' . $option_value . '"';
         }
         $filter_key = $dw_drupal_key_map[$option_name];
-        $view->exposed_input[$filter_key] = $option_value;
+        //$view->exposed_input[$filter_key] = $option_value;
+        $view->drush_filters[$filter_key] = $option_value;
       }
       else {
         echo json_encode(array('error' => 'Bad filter \'' . $option_name . '\'; aborting'));
@@ -213,18 +215,37 @@ $output_path = '/tmp';
  */
 function _springboard_views_drush_export_donations_dw_key_map() {
   return array(
+    'address'          => 'sbp_address_value',
+    'address_line_2'   => 'sbp_address_line_2_value',
     'amount'           => 'amount',
+    'city'             => 'sbp_city_value',
+    'contact_id'       => 'sbp_salesforce_contact_id_value',
+    'country'          => 'sbp_country_value',
     'currency'         => 'currency',
     'created_at'       => 'created',
+    'device_browser'   => 'sbp_device_browser_value',
+    'device_name'      => 'sbp_device_name_value',
+    'device_os'        => 'sbp_device_os_value',
+    'device_type'      => 'sbp_device_type_value',
     'email'            => 'mail',
+    'first_name'       => 'sbp_first_name_value',
+    'last_name'        => 'sbp_last_name_value',
     'form_id'          => 'nid',
     'gateway'          => 'gateway',
     'internal_name'    => 'field_fundraiser_internal_name_value',
+    'ip_address'       => 'hostname',
     'order_id'         => 'order_id',
+    'referrer'         => 'sbp_referrer_value',
+    'initial_referrer' => 'sbp_initial_referrer_value',
+    'search_engine'    => 'sbp_search_engine_value',
+    'search_string'    => 'sbp_search_string_value',
+    'state'            => 'sbp_state_value',
     'status'           => 'status',
     'transaction_id'   => 'txn_id',
     'transaction_date' => 'transaction_date',
     'updated_at'       => 'changed',
+    'user_agent'       => 'sbp_user_agent_value',
+    'zip'              => 'sbp_zip_value',
   );
 }
 
