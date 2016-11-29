@@ -169,7 +169,7 @@
           var promise = ApplePaySession.canMakePaymentsWithActiveCard(applePayInstance.merchantIdentifier);
           promise.then(function(canMakePaymentsWithActiveCard) {
             if (canMakePaymentsWithActiveCard) {
-              BIAP.disableHostedFieldsSubmit().disablePaypalFieldsSubmit();
+              BI.disableHostedFieldsSubmit().disablePaypalFieldsSubmit();
               BIAP.resetFieldsSubmit();
               BIAP.applepayFieldsCreated = true;
             }

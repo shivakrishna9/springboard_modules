@@ -501,12 +501,12 @@
         'submitted[donor_information][first_name]': obj.firstName,
         'submitted[donor_information][last_name]': obj.lastName,
         'submitted[donor_information][mail]': obj.email,
-        'submitted[billing_information][address]': obj.line1,
-        'submitted[billing_information][address_line_2]': obj.line2,
+        'submitted[billing_information][address]': obj.address,
+        'submitted[billing_information][address_line_2]': obj.address2,
         'submitted[billing_information][city]': obj.city,
         'submitted[billing_information][country]': obj.countryCode,
         'submitted[billing_information][state]': obj.state,
-        'submitted[billing_information][zip]': obj.postalCode,
+        'submitted[billing_information][zip]': obj.zip,
       };
 
       var fieldsAreEmpty = (function(field_mapping) {
