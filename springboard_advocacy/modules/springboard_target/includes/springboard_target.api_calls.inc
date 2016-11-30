@@ -208,8 +208,8 @@ function _springboard_target_api_get_target_group($group_id) {
 /**
  * Prevent infinite recursion of group parentage.
  *
- * @param int $group_id
- *   The group id.
+ * @param int $child_id
+ *   The child group id.
  * @param int $parent_id
  *   The parent group id.
  * @param string $parent_name
@@ -219,16 +219,28 @@ function _springboard_target_api_get_target_group($group_id) {
  *   Whether the group can be nested.
  */
 function _springboard_target_api_check_group_recursion($child_id, $parent_id, $parent_name = '') {
-  $child_group = _springboard_target_api_get_target_group($child_id);
-  if (isset($child_group->data->groups)) {
-    foreach ($child_group->data->groups as $child_group_group) {
-      if ($child_group_group->target_group_group_id == $parent_id) {
-        drupal_set_message('The custom group "' . ($parent_name != '' ? $parent_name : $child_group->data->name) . '" cannot be added to this group because it contains this group as a member.', 'error');
-        return TRUE;
-      }
-      else {
-        return _springboard_target_api_check_group_recursion($child_group_group->target_group_group_id, $parent_id, ($parent_name != '' ? $parent_name : $child_group->data->name));
+  // In case a recursion already got into the system somehow, prevent *this*
+  // function from infinitely looping by using a static variable.
+  static $gids = [];
+  if (!in_array($child_id, $gids)) {
+    $gids[] = $child_id;
+    $child_group = _springboard_target_api_get_target_group($child_id);
+    if (isset($child_group->data->groups)) {
+      foreach ($child_group->data->groups as $child_group_group) {
+        if ($child_group_group->target_group_group_id == $parent_id) {
+          drupal_set_message('The custom group "' . ($parent_name != '' ? $parent_name : $child_group->data->name) . '" cannot be added to this group because it contains this group as a member.', 'error');
+          return TRUE;
+        }
+        else {
+          return _springboard_target_api_check_group_recursion($child_group_group->target_group_group_id, $parent_id, ($parent_name != '' ? $parent_name : $child_group->data->name));
+        }
       }
     }
+  }
+  else {
+    // We found a pre-existing recursion. It's possible that it might not
+    // involve the top-level group, so we need a different error message.
+    drupal_set_message('The custom group "' . $parent_name . '" cannot be added to this group because it contains a child group which is invalid.', 'error');
+    return TRUE;
   }
 }
