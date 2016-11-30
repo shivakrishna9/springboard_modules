@@ -538,7 +538,12 @@
 
       var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]');
       if ($paymentMethod.length) {
-        settings.currentPaymentMethod = $paymentMethod.filter(':checked').val();
+        if ($paymentMethod.is('[type=hidden]')) {
+          settings.currentPaymentMethod = $paymentMethod.val();
+        }
+        else {
+          settings.currentPaymentMethod = $paymentMethod.filter(':checked').val();
+        }
 
         // Get the available payment methods.
         settings.availableMethods = $paymentMethod.map(function() {
