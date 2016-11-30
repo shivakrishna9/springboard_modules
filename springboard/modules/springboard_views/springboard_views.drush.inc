@@ -201,7 +201,7 @@ function springboard_views_drush_export_donations_csv() {
     $export_summary['file_gen_disabled'] = 1;
     echo "\n\n";
     print_r($export_summary);
-    echo "\n\n"; */
+    echo "\n\n";
   }
 
   // Return the job summary.
