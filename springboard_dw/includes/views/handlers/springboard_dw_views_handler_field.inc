@@ -84,7 +84,7 @@ class springboard_dw_views_handler_field extends views_handler_field
       $donation_node_data = db_query("SELECT nid, type FROM {node} WHERE title = :title", array(':title' => $value))
         ->fetchObject();
       if ($donation_node_data && fundraiser_is_donation_type($donation_node_data->type)) {
-        $value = l('Form ' . $donation_node_data->nid, 'node/' . $donation_node_data->nid) . ':' . $value;
+        $value = l($value, 'node/' . $donation_node_data->nid);
       }
     }
     elseif ($alias == 'recurs_monthly') {
