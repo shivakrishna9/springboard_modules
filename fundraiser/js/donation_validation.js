@@ -126,10 +126,11 @@
         var formIsValid = function() {
           // If we are using Braintree, both the braintree form and the drupal
           // fields must validate.
-          if (undefined === Drupal.braintreeInstance) {
-            return Drupal.settings.fundraiser.donationValidate.form();
+          var standardFormValid = Drupal.settings.fundraiser.donationValidate.form();
+          if (!standardFormValid) {
+            return false;
           }
-          else {
+          else if (undefined !== Drupal.braintreeInstance) {
             if (Drupal.settings.braintree.currentPaymentMethod == 'paypal' || Drupal.settings.braintree.currentPaymentMethod == 'applepay') {
               var $nonce = $('input[name=payment_method_nonce]');
               var $checkedAmounts = $('input[type="radio"][name$="[amount]"]:checked');
@@ -151,9 +152,11 @@
                 return returnValue;
               };
 
-              return Drupal.settings.fundraiser.donationValidate.form() && braintreeFieldsAreValid();
+              return braintreeFieldsAreValid();
             }
           }
+
+          return true;
         };
 
         // On submission hide the button and replace it with a new value.
