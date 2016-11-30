@@ -310,9 +310,13 @@
           e.preventDefault();
           $.ajax({
             type: 'POST',
-            url: "/sbv-export-queue-ajax",
+            url: '/sbv-export-queue-ajax',
             dataType: 'json',
-            data: {"export_params" : Drupal.settings.sbvDonationsExport},
+            data: {
+              'export_params' : Drupal.settings.sbvDonationsExport,
+              'date_range_min' : $('.form-item-date-filter-min-date input').val(),
+              'date_range_max' : $('.form-item-date-filter-max-date input').val(),
+            },
             context: document.body,
             success: function(data) {
               if (data.status == 'success') {

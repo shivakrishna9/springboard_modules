@@ -683,12 +683,22 @@ function springboard_views_views_query_alter(&$view, &$query) {
  * sbv_donations data export queue AJAX callback.
  */
 function _springboard_views_data_export_queue() {
-  if (!isset($_POST['export_params'])) {
+  if (!isset($_POST) || empty($_POST)) {
     drupal_json_output(array('status' => 'fail'));
     return;
   }
 
   $data = $_POST['export_params'];
+
+  if (isset($_POST['date_range_min'])) {
+    $data['transaction_date']['min'] = $_POST['date_range_min'];
+  }
+  if (isset($_POST['date_range_max'])) {
+    $data['transaction_date']['max'] = $_POST['date_range_max'];
+  }
+
+  watchdog('springboard_views', 'CSV export request: ' . json_encode($data));
+
   $recipients = array(
     'josh.estep@jacksonriver.com',
   );

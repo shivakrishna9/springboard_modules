@@ -39,15 +39,58 @@ function springboard_views_form_views_exposed_form_alter(&$form, &$form_state) {
       $dw_drupal_key_map = _springboard_views_drush_export_donations_dw_key_map();
       $dw_drupal_key_map = array_flip($dw_drupal_key_map);
       $view_data = array();
+ 
       foreach ($vals as $drupal_field_key => $value) {
         if (empty($value)) {
           continue;
         }
 
-        // Handle date filtering:
+        // Date filtering is captured via JS:
         if ($drupal_field_key == 'date_filter') {
+          continue;
         }
-  
+ 
+        // Handling sorting:
+        if ($drupal_field_key == 'order') {
+          switch ($value) {
+            case 'order_id_1':
+              $view_data['order'] = 'order_id';
+              break;
+            case 'created':
+              $view_data['order'] = 'created_at';
+              break;
+            case 'commerce_order_total':
+              $view_data['order'] = 'amount';
+              break;
+            case 'status':
+              $view_data['order'] = 'status';
+              break;
+            case 'gateway':
+              $view_data['order'] = 'gateway';
+              break;
+            case 'sbp_first_name_1':
+              $view_data['order'] = 'sbp_first_name_1';
+              break;
+            case 'sbp_last_name_1':
+              $view_data['order'] = 'last_name';
+              break;
+            case 'mail':
+              $view_data['order'] = 'email';
+              break;
+            case 'title':
+              $view_data['order'] = 'internal_name';
+              break;
+            case 'remote_addr':
+              $view_data['order'] = 'ip_address';
+              break;
+          }
+          continue;
+        } 
+        
+        if ($drupal_field_key == 'sort') {
+          $view_data['sort'] = $value;
+        }
+ 
         // Account for status option select behavior:
         if ($drupal_field_key == 'status' && $value == 'All') {
           $value = '';
