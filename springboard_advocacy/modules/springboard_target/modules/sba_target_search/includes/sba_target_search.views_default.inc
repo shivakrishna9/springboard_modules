@@ -456,6 +456,10 @@ function sba_target_search_views_default_views() {
   $handler->display->display_options['fields']['committee_memberships']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['committee_memberships']['hide_empty'] = TRUE;
   $handler->display->display_options['fields']['committee_memberships']['empty_zero'] = TRUE;
+  /* Field: Advocacy: Child Groups */
+  $handler->display->display_options['fields']['child_groups']['id'] = 'child_groups';
+  $handler->display->display_options['fields']['child_groups']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['child_groups']['field'] = 'child_groups';
   /* Field: Advocacy: Matching targets */
   $handler->display->display_options['fields']['matching_targets']['id'] = 'matching_targets';
   $handler->display->display_options['fields']['matching_targets']['table'] = 'advocacy';

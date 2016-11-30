@@ -121,7 +121,7 @@ function sba_target_search_preprocess_views_view_table(&$vars) {
     $classes = isset($view->filter['search_class_name']->value) ? $view->filter['search_class_name']->value : [];
     $omit_fields = [];
     if (!in_array('Group', $classes)) {
-      $omit_fields = array_merge($omit_fields, array('matching_targets'));
+      $omit_fields = array_merge($omit_fields, array('matching_targets', 'child_groups'));
     }
     if (!in_array('Legislator', $classes)) {
       $omit_fields = array_merge($omit_fields, array(
@@ -317,6 +317,34 @@ function sba_target_search_process_matches($matches) {
   }
   return $output;
 }
+
+/**
+ * Process the matching targets for display.
+ *
+ * @param array $matches
+ *   An array of targets matching the keyword.
+ *
+ * @return null|string
+ *   The matching targets, formatted for display.
+ */
+function sba_target_search_process_groups($groups) {
+  $output = '';
+  if (!empty($groups) && count($groups) < 21) {
+    $output = '';
+    $names = array();
+    foreach ($groups as $group) {
+      $names[] = $group->name;
+    }
+    $output .= check_plain(implode(' | ', $names));
+  }
+  elseif (!empty($groups)) {
+    // @todo show in modal?
+    $count = count($groups);
+    $output = t('@count targets in this group matched this search.', array('@count' => $count));
+  }
+  return $output;
+}
+
 
 /**
  * Display info about the target.

@@ -182,6 +182,15 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  $data['advocacy']['child_groups'] = array(
+    'title' => t('Child Groups'),
+    'help' => t('Display child groups of a group.'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
+
   // Organization title returned by the API request.
   $data['advocacy']['title'] = array(
     'title' => t('Organization title'),

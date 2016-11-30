@@ -637,6 +637,10 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['group_name']['table'] = 'advocacy';
   $handler->display->display_options['fields']['group_name']['field'] = 'group_name';
   $handler->display->display_options['fields']['group_name']['element_label_colon'] = FALSE;
+  /* Field: Advocacy: Child Groups */
+  $handler->display->display_options['fields']['child_groups']['id'] = 'child_groups';
+  $handler->display->display_options['fields']['child_groups']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['child_groups']['field'] = 'child_groups';
   /* Field: Advocacy: Matching targets */
   $handler->display->display_options['fields']['matching_targets']['id'] = 'matching_targets';
   $handler->display->display_options['fields']['matching_targets']['table'] = 'advocacy';
