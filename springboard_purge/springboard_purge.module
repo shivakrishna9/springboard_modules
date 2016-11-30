@@ -14,22 +14,25 @@
  */
 
  // Cache constants for expensive queries.
-define("SBP_CACHE_PERSIST", 60*60);
-define("SBP_CACHE_ENTRIES", 5000);
+define("SPRINGBOARD_PURGE_DEFAULT_CACHE_PERSIST", 60 * 60);
+define("SPRINGBOARD_PURGE_DEFAULT_CACHE_ENTRIES", 5000);
 
+/**
+ *
+ */
 function springboard_purge_get_user_whitelist($days_old, $protected_roles) {
   // Create an array of users that we do not want deleted.
   $users_to_keep = array_merge(
-    springboard_purge_get_privileged_users($protected_roles),
-    springboard_purge_get_sustainers(),
-    springboard_purge_get_active_users($days_old),
-    springboard_purge_get_queued_users(),
-		springboard_purge_get_non_synced_users(),
-    springboard_purge_get_node_authors(),
-		springboard_purge_get_content_authors(),
-    springboard_purge_get_og_members(),
-		springboard_purge_get_recent_submissions_users($days_old)
-  );
+        springboard_purge_get_privileged_users($protected_roles),
+        springboard_purge_get_sustainers(),
+        springboard_purge_get_active_users($days_old),
+        springboard_purge_get_queued_users(),
+        springboard_purge_get_non_synced_users(),
+        springboard_purge_get_node_authors(),
+        springboard_purge_get_content_authors(),
+        springboard_purge_get_og_members(),
+        springboard_purge_get_recent_submissions_users($days_old)
+    );
   $users_to_keep = array_unique($users_to_keep);
   // Add in the anonymous user for safekeeping.
   $users_to_keep[] = 0;
@@ -51,12 +54,12 @@ function springboard_purge_get_privileged_users($protected_roles = array()) {
     'Springboard administrator',
     'Springboard editor',
     'Springboard P2P campaigner',
-  	'administrator',
-  	'Customer Service',
-  	'Site Administrator',
-  	'Site Contributor',
-  	'Site Editor',
-  	'Site UberEditor',
+    'administrator',
+    'Customer Service',
+    'Site Administrator',
+    'Site Contributor',
+    'Site Editor',
+    'Site UberEditor',
   );
   $privileged_roles = array_merge($privileged_roles, $protected_roles);
 
@@ -85,18 +88,19 @@ function springboard_purge_get_active_users($days_old) {
   // @TODO I think we need to look at created date here, too. We don't want to
   // delete a user that was just created but they have not yet had the chance
   // to log in.
-	$timestamp = time() - ($days_old * 86400);
+  $timestamp = time() - ($days_old * 86400);
   return db_query('SELECT uid FROM {users} WHERE DATEDIFF(from_unixtime(unix_timestamp()), from_unixtime(login)) < :days OR created > :timestamp', array(':days' => $days_old, ':timestamp' => $timestamp))->fetchCol();
 }
 
 /**
- * Returns ids of all users that have submitted webforms in the last X number of days.
+ * Returns ids of users that have submitted webforms in the last X days.
+ *
  * @param int $days_old
  *   The number of days old the submission should be older than.
  */
 function springboard_purge_get_recent_submissions_users($days_old) {
-	$timestamp = time() - ($days_old * 86400);
-	return db_query("SELECT distinct(uid) FROM {webform_submissions} WHERE submitted > :timestamp", array(':timestamp' => $timestamp))->fetchCol();
+  $timestamp = time() - ($days_old * 86400);
+  return db_query("SELECT distinct(uid) FROM {webform_submissions} WHERE submitted > :timestamp", array(':timestamp' => $timestamp))->fetchCol();
 }
 
 /**
@@ -110,24 +114,23 @@ function springboard_purge_get_queued_users() {
  * Returns the ids of all users that haven't been synced to Salesforce.
  */
 function springboard_purge_get_non_synced_users() {
-	$mapped_users = db_query("SELECT distinct(drupal_id) from {salesforce_sync_map} where module = 'user' and object_type = 'Contact'")->fetchCol();
-	$users = db_query("SELECT distinct(uid) from {users}")->fetchCol();
-	return array_diff($users, $mapped_users);
+  $mapped_users = db_query("SELECT distinct(drupal_id) from {salesforce_sync_map} where module = 'user' and object_type = 'Contact'")->fetchCol();
+  $users = db_query("SELECT distinct(uid) from {users}")->fetchCol();
+  return array_diff($users, $mapped_users);
 }
 
 /**
  * Returns ids of all users that have node authorship.
- * 
  */
 function springboard_purge_get_node_authors() {
-  return db_query("SELECT DISTINCT(uid) FROM {node}")->fetchCol();	
+  return db_query("SELECT DISTINCT(uid) FROM {node}")->fetchCol();
 }
 
 /**
  * Returns ids of users that are set as content authors.
  */
 function springboard_purge_get_content_authors() {
-	return db_query("SELECT DISTINCT(field_author_target_id) FROM field_data_field_author")->fetchCol();
+  return db_query("SELECT DISTINCT(field_author_target_id) FROM field_data_field_author")->fetchCol();
 }
 
 /**
@@ -207,15 +210,15 @@ function springboard_purge_delete_users($days_old, $batch_size, $protected_roles
 function springboard_purge_get_old_submisions($days_old, $batch_size, $excluded_submissions) {
   $timestamp = time() - ($days_old * 86400);
   $query = db_select('webform_submissions', 's');
-	$query->innerJoin('salesforce_sync_map', 'm', 'm.drupal_id = s.sid');
+  $query->innerJoin('salesforce_sync_map', 'm', 'm.drupal_id = s.sid');
   $query->condition('s.submitted', $timestamp, '<')
-		->condition('m.module', 'webform');
+        ->condition('m.module', 'webform');
   if (!empty($excluded_submissions)) {
     $query->condition('s.sid', $excluded_submissions, 'NOT IN');
   }
   $query->fields('s', array('nid', 'sid', 'submitted'))
-    ->range(0, $batch_size)
-    ->orderBy('s.submitted', 'ASC');
+        ->range(0, $batch_size)
+        ->orderBy('s.submitted', 'ASC');
   $count = $query->countQuery()->execute()->fetchField();
   drush_print($count . ' submissions marked for deletion.');
   return $query->execute()->fetchAll();
@@ -235,20 +238,19 @@ function springboard_purge_get_old_submisions($days_old, $batch_size, $excluded_
  */
 function springboard_purge_get_submissions_with_active_order($days_old, $excluded_statuses) {
   $timestamp = time() - ($days_old * 86400);
-	$status_keep = array('pending_future_payment');
-	if (!empty($excluded_statuses)) {
-		$status_keep = array_merge($status_keep, $excluded_statuses);
-	}
+  $status_keep = array('pending_future_payment');
+  if (!empty($excluded_statuses)) {
+    $status_keep = array_merge($status_keep, $excluded_statuses);
+  }
   $query = db_select('fundraiser_donation', 'd')
     ->fields('d', array('sid'));
-	$or = db_or()->condition('d.status', $status_keep, 'IN');
-	$or->condition('d.changed', $timestamp, '>');
-	$query->condition($or);
-	$query->distinct();
-	//print strtr((string) $query, $query->arguments());
-	//exit();
+  $or = db_or()->condition('d.status', $status_keep, 'IN');
+  $or->condition('d.changed', $timestamp, '>');
+  $query->condition($or);
+  $query->distinct();
   $count = $query->countQuery()->execute()->fetchField();
-  drush_print(dt('@count submissions found with @status_keep status. These will be protected from deletion.', array('@count' => $count, '@status_keep' => implode(',', $status_keep))));
+  drush_print(dt('@count submissions found with @status_keep status. These will be protected from deletion.',
+    array('@count' => $count, '@status_keep' => implode(',', $status_keep))));
   return $query->execute()->fetchCol();
 }
 
@@ -267,41 +269,43 @@ function springboard_purge_delete_webform_submissions($days_old, $batch_size, $e
   if ($dry_run) {
     foreach ($submissions_to_delete as $submission) {
       drush_print($submission->nid . ',' . $submission->sid);
-			springboard_purge_get_sid_info($submission->nid, $submission->sid);
+      springboard_purge_get_sid_info($submission->nid, $submission->sid);
     }
     return;
   }
   foreach ($submissions_to_delete as $submission) {
     $node = node_load($submission->nid);
     $form_submission = webform_get_submission($submission->nid, $submission->sid);
-		// If the submission is empty, delete the entry in the webform_submissions table.
-		if (empty($form_submission)) {
-			springboard_purge_delete_webform_submission_orphans($submission->sid);
-		}
-		else {
-			webform_submission_delete($node, $form_submission);
-		}
+    // If the submission is empty, delete the entry in the webform_submissions
+    // table.
+    if (empty($form_submission)) {
+      springboard_purge_delete_webform_submission_orphans($submission->sid);
+    }
+    else {
+      webform_submission_delete($node, $form_submission);
+    }
   }
 }
 
 /**
  * Get information about a donation submission.
+ *
  * @param int $nid
  *   The nid of the form.
  * @param int $sid
  *   The sid of the submission.
  */
 function springboard_purge_get_sid_info($nid, $sid) {
-	$query = db_select('fundraiser_donation', 'd')
-	  ->fields('d', array('did','sid','status', 'changed'))
-		->condition('d.sid', $sid)
-		->execute();
-	$results = $query->fetchAll();
-	foreach ($results as $row) {
-		$row->changed = date('Y-m-d', $row->changed);
-		$line = (array)$row;
-		drush_print(implode(',', $line));
-	}
+  $query = db_select('fundraiser_donation', 'd')
+    ->fields('d', array('did', 'sid', 'status', 'changed'))
+    ->condition('d.sid', $sid)
+    ->execute();
+  $results = $query->fetchAll();
+  foreach ($results as $row) {
+    $row->changed = date('Y-m-d', $row->changed);
+    $line = (array) $row;
+    drush_print(implode(',', $line));
+  }
 }
 
 /**
@@ -316,15 +320,17 @@ function springboard_purge_check_webform_confirmations_submissions_purge_enabled
 }
 
 /**
- * Remove any rows in the webform_submissions table that have no associated data.
+ * Remove rows in the webform_submissions table that have no associated data.
+ *
  * @param int $sid
  *   The sid of the row to delete.
  */
 function springboard_purge_delete_webform_submission_orphans($sid) {
-	db_delete('webform_submissions')
-		->condition('sid', $sid)
-		->execute();
+  db_delete('webform_submissions')
+    ->condition('sid', $sid)
+    ->execute();
 }
+
 /**
  * Gets list of donations that are in an active donation series.
  *
@@ -343,81 +349,85 @@ function springboard_purge_get_donations_in_nonexpired_series() {
 
 /**
  * Get a list of dids from sustainer series that have been completed.
+ *
  * @return array
  *   array of dids that belong to inactive sustainer series.
  */
 function springboard_purge_get_expired_series_donations($batch_size, $timestamp) {
-	$cache_size = variable_get('sbp_cache_entries', SBP_CACHE_ENTRIES);
-	$skip_cache = variable_get('sbp_cache_disable', TRUE);
-	if (!$skip_cache) {
-		if ($cache = cache_get('sbp_expired_series_dids')) {
-			if (!empty($cache->data)) { 
-				$expired_series_dids = $cache->data;
-			}
-		}
-	}
-	if (!isset($expired_series_dids)) {
-		// Use an aggregate query to find master_dids where all donations in the series
-		// are 'complete', i.e. they've all been canceled, failed, or processed.
-		$expired_masters = db_query("select master_did,sum(if((gateway_resp is not null and gateway_resp not in ('retry', 'processing', 'locked')), 0,1)) as pending from fundraiser_sustainers group by master_did having pending = 0")->fetchCol();
+  $cache_size = variable_get('springboard_purge_cache_entries', SPRINGBOARD_PURGE_DEFAULT_CACHE_ENTRIES);
+  $skip_cache = variable_get('sbp_cache_disable', TRUE);
+  if (!$skip_cache) {
+    if ($cache = cache_get('sbp_expired_series_dids')) {
+      if (!empty($cache->data)) {
+        $expired_series_dids = $cache->data;
+      }
+    }
+  }
+  if (!isset($expired_series_dids)) {
+    // Use an aggregate query to find master_dids where all donations in the
+    // series are 'complete', i.e. they've all been canceled, failed, or
+    // processed.
+    $expired_masters = db_query("select master_did,sum(if((gateway_resp is not null and gateway_resp not in ('retry', 'processing', 'locked')), 0,1)) as pending from fundraiser_sustainers group by master_did having pending = 0")->fetchCol();
     foreach ($expired_masters as $index => $master_did) {
-	    $last_modified = _springboard_purge_get_last_donation_modified($master_did);
-			if ($last_modified > $timestamp) {
-				unset($expired_masters[$index]);
-			}
-		}
-		$expired_series_dids = array();
-		// chunk the next fetch query, this performs much better than having a huge 'IN' clause
-		$masters_chunked = array_chunk($expired_masters, variable_get('sbp_chunk_size', 500));
-		foreach ($masters_chunked as $expired_masters) {
-			if (count($expired_series_dids) > $cache_size) {
-				break;
-			}
-			$dids = db_query("select s.did from {fundraiser_sustainers} s inner join {fundraiser_donation} d on d.did = s.did where s.master_did in (:masters) and d.changed < :timestamp", array(':masters' => $expired_masters, ':timestamp' => $timestamp))->fetchCol();
-			$expired_series_dids = array_merge($dids, $expired_series_dids);
-		}
-		$synced_series_dids = array();
-		$dids_chunked = array_chunk($expired_series_dids, variable_get('sbp_chunk_size', 500));
-		foreach ($dids_chunked as $did_chunk) {
-			$synced = db_query("select drupal_id from {salesforce_sync_map} m where m.object_type = 'Opportunity' and m.drupal_id in (:dids)", array(':dids' => $did_chunk))->fetchCol();
-			$synced_series_dids = array_merge($synced, $synced_series_dids);
-		}
-		$expired_series_dids = $synced_series_dids;
-		drush_print("Found " . count($expired_series_dids) . " expired sustainer donations");
-		if (!$skip_cache) {
-			cache_set('sbp_expired_series_dids', $expired_series_dids, 'cache', time() + variable_get('sbp_cache_persist', SBP_CACHE_PERSIST));
-		}
-	}
-	return $expired_series_dids;
+      $last_modified = _springboard_purge_get_last_donation_modified($master_did);
+      if ($last_modified > $timestamp) {
+        unset($expired_masters[$index]);
+      }
+    }
+    $expired_series_dids = array();
+    // Chunk the next fetch query, this performs much better than having a huge
+    // 'IN' clause.
+    $masters_chunked = array_chunk($expired_masters, variable_get('sbp_chunk_size', 500));
+    foreach ($masters_chunked as $expired_masters) {
+      if (count($expired_series_dids) > $cache_size) {
+        break;
+      }
+      $dids = db_query("select s.did from {fundraiser_sustainers} s inner join {fundraiser_donation} d on d.did = s.did where s.master_did in (:masters) and d.changed < :timestamp", array(':masters' => $expired_masters, ':timestamp' => $timestamp))->fetchCol();
+      $expired_series_dids = array_merge($dids, $expired_series_dids);
+    }
+    $synced_series_dids = array();
+    $dids_chunked = array_chunk($expired_series_dids, variable_get('sbp_chunk_size', 500));
+    foreach ($dids_chunked as $did_chunk) {
+      $synced = db_query("select drupal_id from {salesforce_sync_map} m where m.object_type = 'Opportunity' and m.drupal_id in (:dids)", array(':dids' => $did_chunk))->fetchCol();
+      $synced_series_dids = array_merge($synced, $synced_series_dids);
+    }
+    $expired_series_dids = $synced_series_dids;
+    drush_print("Found " . count($expired_series_dids) . " expired sustainer donations");
+    if (!$skip_cache) {
+      cache_set('sbp_expired_series_dids', $expired_series_dids, 'cache', time() + variable_get('springboard_purge_cache_persist', SPRINGBOARD_PURGE_DEFAULT_CACHE_PERSIST));
+    }
+  }
+  return $expired_series_dids;
 }
 
 /**
  * Gets list of non sustainer donations.
+ *
  * @param int $batch_size
  *   Number of fundraiser_donation dids to return.
  */
-function springboard_purge_get_non_sustainer_donations($batch_size = 250, $timestamp, $status) {
-	$cache_size = variable_get('sbp_cache_entries', SBP_CACHE_ENTRIES);
-	$skip_cache = variable_get('sbp_cache_disable', TRUE);
-	if (!$skip_cache) {
-		if ($cache = cache_get('sbp_non_sustainer_dids')) {
-			if (!empty($cache->data)) {
-				$non_sustainer_donations = $cache->data;
-			}
-		}
-	}
-	if ($skip_cache) {
-		$cache_size = $batch_size;
-	}
-	if (!isset($non_sustainer_donations)) {
-		$non_sustainer_donations = db_query_range("select d.did from fundraiser_donation d inner join salesforce_sync_map m on m.drupal_id = d.did left join {fundraiser_sustainers} s on s.did = d.did where s.did is NULL and d.status NOT IN (:status) and d.changed < :timestamp and m.object_type = 'Opportunity'", 0, $cache_size, array(':status' => $status, ':timestamp' => $timestamp))->fetchCol();
-		if (!$skip_cache) {
-			// Cache this result because it's an expensive query.
-			cache_set('sbp_non_sustainer_dids', $non_sustainer_donations, 'cache', time() + variable_get('sbp_cache_persist', SBP_CACHE_PERSIST));
-		}
-	}
-	return $non_sustainer_donations;
- }
+function springboard_purge_get_non_sustainer_donations($batch_size, $timestamp, $status) {
+  $cache_size = variable_get('springboard_purge_cache_entries', SPRINGBOARD_PURGE_DEFAULT_CACHE_ENTRIES);
+  $skip_cache = variable_get('sbp_cache_disable', TRUE);
+  if (!$skip_cache) {
+    if ($cache = cache_get('sbp_non_sustainer_dids')) {
+      if (!empty($cache->data)) {
+        $non_sustainer_donations = $cache->data;
+      }
+    }
+  }
+  if ($skip_cache) {
+    $cache_size = $batch_size;
+  }
+  if (!isset($non_sustainer_donations)) {
+    $non_sustainer_donations = db_query_range("select d.did from fundraiser_donation d inner join salesforce_sync_map m on m.drupal_id = d.did left join {fundraiser_sustainers} s on s.did = d.did where s.did is NULL and d.status NOT IN (:status) and d.changed < :timestamp and m.object_type = 'Opportunity'", 0, $cache_size, array(':status' => $status, ':timestamp' => $timestamp))->fetchCol();
+    if (!$skip_cache) {
+      // Cache this result because it's an expensive query.
+      cache_set('sbp_non_sustainer_dids', $non_sustainer_donations, 'cache', time() + variable_get('springboard_purge_cache_persist', SPRINGBOARD_PURGE_DEFAULT_CACHE_PERSIST));
+    }
+  }
+  return $non_sustainer_donations;
+}
 
 /**
  * Gets list of old commerce orders.
@@ -428,106 +438,109 @@ function springboard_purge_get_non_sustainer_donations($batch_size = 250, $times
  *   Number of commerce orders to return.
  * @param array $excluded_statuses
  *   Additional commerce_order status strings to exclude from deletion.
- * @param array $donations_to_keep
- *   A list of order_id to be exluded.
  *
  * @return array
  *   A list of order_id.
  */
-function springboard_purge_get_old_commerce_orders($days_old, $batch_size, $excluded_statuses = array(), $donations_to_keep) {
-	$time_start = microtime(TRUE);
+function springboard_purge_get_old_commerce_orders($days_old, $batch_size, $excluded_statuses = array()) {
+  $time_start = microtime(TRUE);
   $timestamp = time() - ($days_old * 86400);
-	// Never delete orders with these statuses.
-	$pending_status = array('pending_future_payment', 'pending');
-	$status = array_merge($pending_status, $excluded_statuses);
-	$non_sustainer_dids = springboard_purge_get_non_sustainer_donations($batch_size, $timestamp, $status);
-	// Short-circuit if we have nothing to delete.
-	if (empty($non_sustainer_dids)) {
-		return array();
-	}
-	// Pick batch_size entries from the cached set.
-	$non_sustainer_donations = array_slice($non_sustainer_dids, 0, $batch_size);
+  // Never delete orders with these statuses.
+  $pending_status = array('pending_future_payment', 'pending');
+  $status = array_merge($pending_status, $excluded_statuses);
+  $non_sustainer_dids = springboard_purge_get_non_sustainer_donations($batch_size, $timestamp, $status);
+  // Short-circuit if we have nothing to delete.
+  if (empty($non_sustainer_dids)) {
+    return array();
+  }
+  // Pick batch_size entries from the cached set.
+  $non_sustainer_donations = array_slice($non_sustainer_dids, 0, $batch_size);
   $query = db_select('commerce_order', 'o');
-	// this kills performance
-	// $query->leftJoin('fundraiser_sustainers', 's', 'o.order_id = s.did');
+  // This kills performance
+  // $query->leftJoin('fundraiser_sustainers', 's', 'o.order_id = s.did');.
   $query->fields('o', array('order_id'));
-	// $query->isNull('s.did');
-	// TODO: check that NOT IN is not empty before query
+  // $query->isNull('s.did');
+  // TODO: check that NOT IN is not empty before query.
   $query->condition('o.changed', $timestamp, '<')
-	  ->condition('o.order_id', $non_sustainer_donations, 'IN')
-		->condition('o.status', $status, 'NOT IN');
+        ->condition('o.order_id', $non_sustainer_donations, 'IN')
+        ->condition('o.status', $status, 'NOT IN');
   $query->range(0, $batch_size);
-	// this kills performance
-  //  ->orderBy('o.changed', 'ASC');
-	$donations_to_delete = $query->execute()->fetchCol();
-	$diff = array_diff($non_sustainer_donations, $donations_to_delete);
-	// drush_print("missing: \n" . var_export($diff, TRUE));
-	if (!variable_get('sbp_cache_disable', TRUE)) {
-		if (count($donations_to_delete) == 0) {
-			// No values left in cache to delete. Delete cache entry so that it
-			// will be re-populated.
-			cache_clear_all('sbp_non_sustainer_dids', 'cache');
-		}
-		else {
-			// Look at what dids are deleted, remove them from the cached entries.
-			$update = array_diff($non_sustainer_dids, $donations_to_delete);
-			cache_set('sbp_non_sustainer_dids', $update, 'cache', time() + variable_get('sbp_cache_persist', SBP_CACHE_PERSIST));
-		}
-	}
-	drush_print(count($donations_to_delete) . ' orders found to delete');
-	$time_elapsed = microtime(TRUE) - $time_start;
-	// watchdog('springboard_purge', "query time: @time", array('@time' => $time_elapsed));
+  // This kills performance
+  // ->orderBy('o.changed', 'ASC');.
+  $donations_to_delete = $query->execute()->fetchCol();
+  $diff = array_diff($non_sustainer_donations, $donations_to_delete);
+  // drush_print("missing: \n" . var_export($diff, TRUE));.
+  if (!variable_get('sbp_cache_disable', TRUE)) {
+    if (count($donations_to_delete) == 0) {
+      // No values left in cache to delete. Delete cache entry so that it
+      // will be re-populated.
+      cache_clear_all('sbp_non_sustainer_dids', 'cache');
+    }
+    else {
+      // Look at what dids are deleted, remove them from the cached entries.
+      $update = array_diff($non_sustainer_dids, $donations_to_delete);
+      cache_set('sbp_non_sustainer_dids', $update, 'cache', time() + variable_get('springboard_purge_cache_persist', SPRINGBOARD_PURGE_DEFAULT_CACHE_PERSIST));
+    }
+  }
+  drush_print(count($donations_to_delete) . ' orders found to delete');
+  $time_elapsed = microtime(TRUE) - $time_start;
+  watchdog('springboard_purge', "query time: @time", array('@time' => $time_elapsed));
   return $donations_to_delete;
 }
 
-function springboard_purge_get_old_sustainer_orders($days_old, $batch_size, $excluded_statuses, $donations_to_keep) {
-	$time_start = microtime(TRUE);
+/**
+ *
+ */
+function springboard_purge_get_old_sustainer_orders($days_old, $batch_size, $excluded_statuses) {
+  $time_start = microtime(TRUE);
   $timestamp = time() - ($days_old * 86400);
-	// Never delete orders with these statuses.
-	$pending_status = array('pending_future_payment', 'pending');
-	$status = array_merge($pending_status, $excluded_statuses);
-	$sustainer_dids = springboard_purge_get_expired_series_donations($batch_size, $timestamp);
-	// Short-circuit if we have nothing to delete.
-	if (empty($sustainer_dids)) {
-		return array();
-	}
-	// Pick batch_size entries from the cached set.
-	$sustainer_donations = array_slice($sustainer_dids, 0, $batch_size);
-	// drush_print("dids before");
-	// drush_print(print_r($sustainer_donations));
+  // Never delete orders with these statuses.
+  $pending_status = array('pending_future_payment', 'pending');
+  $status = array_merge($pending_status, $excluded_statuses);
+  $sustainer_dids = springboard_purge_get_expired_series_donations($batch_size, $timestamp);
+  // Short-circuit if we have nothing to delete.
+  if (empty($sustainer_dids)) {
+    return array();
+  }
+  // Pick batch_size entries from the cached set.
+  $sustainer_donations = array_slice($sustainer_dids, 0, $batch_size);
+  // drush_print("dids before");
+  // drush_print(print_r($sustainer_donations));
   $query = db_select('commerce_order', 'o');
-	// this kills performance
-	// $query->leftJoin('fundraiser_sustainers', 's', 'o.order_id = s.did');
+  // This kills performance
+  // $query->leftJoin('fundraiser_sustainers', 's', 'o.order_id = s.did');.
   $query->fields('o', array('order_id'));
-	// $query->isNull('s.did');
-	// TODO: check that NOT IN is not empty before query
+  // $query->isNull('s.did');
+  // TODO: check that NOT IN is not empty before query.
   $query->condition('o.changed', $timestamp, '<')
-	  ->condition('o.order_id', $sustainer_donations, 'IN')
-		->condition('o.status', $status, 'NOT IN');
+        ->condition('o.order_id', $sustainer_donations, 'IN')
+        ->condition('o.status', $status, 'NOT IN');
   $query->range(0, $batch_size);
-	// this kills performance
-  //  ->orderBy('o.changed', 'ASC');
-	$donations_to_delete = $query->execute()->fetchCol();
-	// drush_print("after query");
-	// This will be a mismatch in criteria on the fundraiser_sustainers query and the order query.
-	$diff = array_diff($sustainer_donations, $donations_to_delete);
-	// drush_print("missing from delete: " . var_export($diff, TRUE));
-	if (!variable_get('sbp_cache_disable', TRUE)) {
-		if (count($donations_to_delete) == 0) {
-			// No values left in cache to delete. Delete cache entry so that it
-			// will be re-populated.
-			cache_clear_all('sbp_expired_series_dids', 'cache');
-		}
-		else {
-			// Look at what dids are deleted, remove them from the cached entries.
-			// Also remove any previously cached entries that weren't deleted this pass
-			$update = array_diff($sustainer_dids, $donations_to_delete, $diff);
-			cache_set('sbp_expired_series_dids', $update, 'cache', time() + variable_get('sbp_cache_persist', SBP_CACHE_PERSIST));
-		}
-	}
-	drush_print(count($donations_to_delete) . ' orders found to delete');
-	$time_elapsed = microtime(TRUE) - $time_start;
-	// watchdog('springboard_purge', "query time: @time", array('@time' => $time_elapsed));
+  // This kills performance
+  // ->orderBy('o.changed', 'ASC');.
+  $donations_to_delete = $query->execute()->fetchCol();
+  // drush_print("after query");
+  // This will be a mismatch in criteria on the fundraiser_sustainers query and
+  // the order query.
+  $diff = array_diff($sustainer_donations, $donations_to_delete);
+  // drush_print("missing from delete: " . var_export($diff, TRUE));.
+  if (!variable_get('sbp_cache_disable', TRUE)) {
+    if (count($donations_to_delete) == 0) {
+      // No values left in cache to delete. Delete cache entry so that it
+      // will be re-populated.
+      cache_clear_all('sbp_expired_series_dids', 'cache');
+    }
+    else {
+      // Look at what dids are deleted, remove them from the cached entries.
+      // Also remove any previously cached entries that weren't deleted this
+      // pass.
+      $update = array_diff($sustainer_dids, $donations_to_delete, $diff);
+      cache_set('sbp_expired_series_dids', $update, 'cache', time() + variable_get('springboard_purge_cache_persist', SPRINGBOARD_PURGE_DEFAULT_CACHE_PERSIST));
+    }
+  }
+  drush_print(count($donations_to_delete) . ' orders found to delete');
+  $time_elapsed = microtime(TRUE) - $time_start;
+  watchdog('springboard_purge', "query time: @time", array('@time' => $time_elapsed));
   return $donations_to_delete;
 }
 
@@ -545,16 +558,13 @@ function springboard_purge_get_old_sustainer_orders($days_old, $batch_size, $exc
  *   Additional commerce_order status strings to exclude from deletion.
  */
 function springboard_purge_delete_commerce_orders($days_old, $batch_size, $excluded_statuses, $dry_run = FALSE, $type = 'one_time') {
-  // Do not delete donations that are part of an active series.
-	// Skip this. We can't touch active series.
-  // $donations_to_keep = springboard_purge_get_donations_in_nonexpired_series();
-	if ($type == 'one_time') {
-		$commerce_orders_to_delete = springboard_purge_get_old_commerce_orders($days_old, $batch_size, $excluded_statuses, $donations_to_keep);
-	}
-	else if ($type == 'sustainers') {
-		$commerce_orders_to_delete = springboard_purge_get_old_sustainer_orders($days_old, $batch_size, $excluded_statuses, $donations_to_keep);
-	}
-	
+  if ($type == 'one_time') {
+    $commerce_orders_to_delete = springboard_purge_get_old_commerce_orders($days_old, $batch_size, $excluded_statuses);
+  }
+  elseif ($type == 'sustainers') {
+    $commerce_orders_to_delete = springboard_purge_get_old_sustainer_orders($days_old, $batch_size, $excluded_statuses);
+  }
+
   if ($dry_run) {
     drush_print(implode("\n", $commerce_orders_to_delete));
     return;
@@ -592,13 +602,15 @@ function springboard_purge_count_rows($table) {
 
 /**
  * Get the most recently modified timestamp from a sustainer series.
+ *
  * @param int $master_did
- *   the master_did of the series
+ *   The master_did of the series.
+ *
  * @return int
- *   most recent modified timestamp
+ *   Most recent modified timestamp.
  */
 function _springboard_purge_get_last_donation_modified($master_did) {
-	$final_did = db_query("select did from {fundraiser_sustainers} where master_did = :master_did and next_charge = (select max(next_charge) from {fundraiser_sustainers} where master_did = :master_did)", array(':master_did' => $master_did, ':master_did' => $master_did))->fetchField();
-	$last_modified = db_query("select changed from {commerce_order} where order_id = :did", array(':did' => $final_did))->fetchField();
-	return $last_modified;
+  $final_did = db_query("select did from {fundraiser_sustainers} where master_did = :master_did and next_charge = (select max(next_charge) from {fundraiser_sustainers} where master_did = :master_did)", array(':master_did' => $master_did, ':master_did' => $master_did))->fetchField();
+  $last_modified = db_query("select changed from {commerce_order} where order_id = :did", array(':did' => $final_did))->fetchField();
+  return $last_modified;
 }
