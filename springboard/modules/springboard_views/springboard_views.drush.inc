@@ -42,7 +42,7 @@ function springboard_views_drush_export_donations_csv() {
   $output_path = variable_get('springboard_dw_reports_export_path', 'temporary://'); // Default output path if it is not overwritten.
   $current_page = 0;
   $total_results = 0;
-  $items_per_page = variable_get('springboard_dw_reports_batch_count', 2000); // This determines the number of results per file.
+  $items_per_page = variable_get('springboard_dw_reports_batch_count', 125000); // This determines the number of results per file.
   $max_page = 100; // Primarily for testing; secondarily to avoid an infinite loop.
   $debug = FALSE; // Set this to true to prevent CSV export file generation.
 
@@ -164,7 +164,6 @@ function springboard_views_drush_export_donations_csv() {
 
     if (isset($view->result) && count($view->result) > 0) {
       $output = $view->render();
-      echo "\n\n" . $output . "\n\n\n";
       $filename = $output_path . '/' . date('Y-m-d--H-i-s') . '-donations-export-page-' . ($current_page + 1) . '.csv';
       $file_paths[] = $filename;
       $total_results += count($view->result);
@@ -200,7 +199,7 @@ function springboard_views_drush_export_donations_csv() {
 
   if ($debug) {
     $export_summary['file_gen_disabled'] = 1;
-/*    echo "\n\n";
+    echo "\n\n";
     print_r($export_summary);
     echo "\n\n"; */
   }
