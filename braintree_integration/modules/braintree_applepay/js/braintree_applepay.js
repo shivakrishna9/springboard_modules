@@ -161,6 +161,7 @@
         }, function (error_message, applePayInstance) {
           if (error_message) {
             error(error_message);
+            BI.removePaymentMethod('applepay');
             return;
           }
 
@@ -172,6 +173,9 @@
               BI.disableHostedFieldsSubmit().disablePaypalFieldsSubmit();
               BIAP.resetFieldsSubmit();
               BIAP.applepayFieldsCreated = true;
+            }
+            else {
+              BI.removePaymentMethod('applepay');
             }
           });
         });
