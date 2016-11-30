@@ -226,7 +226,7 @@ function springboard_views_menu() {
   $items = array();
   $items['sbv-export-queue-ajax'] = array(
     'title' => 'AJAX callback',
-    'page callback' => '_springboad_views_data_export_queue',
+    'page callback' => '_springboard_views_data_export_queue',
     'access callback' => 'user_access',
     'access argument' => 'administer fundraiser',
     'type' => MENU_CALLBACK,
@@ -491,8 +491,6 @@ function springboard_views_views_query_alter(&$view, &$query) {
     return;
   }
 
-  // Apply drush-base
-
   // Apply sort and order from the drush sb-export-donations-csv (drush sb-edc) command:
   if (isset($view->drush_order) && isset($view->drush_sort)) {
     $sort = $view->drush_sort;
@@ -654,6 +652,13 @@ function springboard_views_views_query_alter(&$view, &$query) {
         case 'status':
           $query->add_where(1, 'fundraiser_donation.status', $filter_value, '=');
           break;
+        case 'sid':
+          $query->where[1]['conditions'][] = array(
+            'field' => 'webform_submissions_fundraiser_donation.sid',
+            'value' => $filter_value,
+            'operator' => '=',
+          );
+          break;
         case 'txn_id':
           $query->where[1]['conditions'][] = array(
             'field' => 'fundraiser_donation.txn_id',
@@ -661,54 +666,23 @@ function springboard_views_views_query_alter(&$view, &$query) {
             'operator' => '=',
           );
           break;
-      }  
+      }
     }
-  } 
+  }
 
-
-  print_r($query);
+  //print_r($query);
   // Remove query filters set to %%, which were added to the view to allow query-based filtering to work:
   foreach ($query->where[1]['conditions'] as $key => $condition_data) {
     if ($condition_data['value'] == '%%' || $condition_data['value'] == '') {
       unset($query->where[1]['conditions'][$key]);
     }
   }
-
-  $min_date = ''; $max_date = '';
-  if (isset($view->exposed_input['date_filter']['min']['date'])) {
-    $min_date = date('Y-m-d', strtotime($view->exposed_input['date_filter']['min']['date']));
-  }
-  if (isset($view->exposed_input['date_filter']['max']['date'])) {
-    $max_date = date('Y-m-d', strtotime($view->exposed_input['date_filter']['max']['date']));
-  }
-
-  if (!isset($min_date) || !isset($max_date) || empty($min_date) || empty($max_date)) {
-    return;
-  }
-
-  // Add the date filter to the WHERE clause:
-  $query->where[] = array(
-    'conditions' => array(
-      array(
-        'field' =>
-          "DATE_FORMAT(ADDTIME(FROM_UNIXTIME(commerce_order_fundraiser_donation.created), SEC_TO_TIME(-14400)), '%Y-%m-%d') >= :commerce_order_date_filter " .
-          "AND DATE_FORMAT(ADDTIME(FROM_UNIXTIME(commerce_order_fundraiser_donation.created), SEC_TO_TIME(-14400)), '%Y-%m-%d') <= :commerce_order_date_filter1",
-        'value' => array(
-          ':commerce_order_date_filter' => $min_date,
-          ':commerce_order_date_filter1' => $max_date,
-        ),
-        'operator' => 'formula',
-      ),
-    ),
-    'args' => array(),
-    'type' => 'AND',
-  );
 }
 
 /**
  * sbv_donations data export queue AJAX callback.
  */
-function _springboad_views_data_export_queue() {
+function _springboard_views_data_export_queue() {
   if (!isset($_POST['export_params'])) {
     drupal_json_output(array('status' => 'fail'));
     return;

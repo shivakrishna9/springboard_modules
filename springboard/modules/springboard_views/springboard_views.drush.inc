@@ -49,7 +49,7 @@ function springboard_views_drush_export_donations_csv() {
   // Export each page of results into its own CSV file:
   $drush_options = (array) json_decode(drush_get_option('json'));
   $dw_drupal_key_map = _springboard_views_drush_export_donations_dw_key_map();
-
+  $dw_order_key_map = _springboard_views_drush_export_donations_dw_query_key_map();
   if ($debug) {
     echo "\n\n" . print_r($drush_options, 1) . "\n\n";
   }
@@ -76,7 +76,13 @@ function springboard_views_drush_export_donations_csv() {
     foreach ($drush_options as $option_name => $option_value) {
       // Collect sorting data:
       if ($option_name == 'order') {
-        $order_by = $option_value;
+        if (isset($dw_order_key_map[$option_value])) {
+          $order_by = $dw_order_key_map[$option_value];
+        }
+        else {
+          echo json_encode(array('error' => 'Bad order \'' . $option_value . '\'; aborting'));
+          return;
+        }
         continue;
       }
       // Collect ordering data:
@@ -103,7 +109,7 @@ function springboard_views_drush_export_donations_csv() {
         continue;
       }
       // Support an array value if transaction date filtering is done:
-      if ($option_name == 'transaction_date') {
+      elseif ($option_name == 'transaction_date') {
         unset($min_date);
         unset($max_date);
         $expected_date_format = 'L, F j, Y';
@@ -132,7 +138,6 @@ function springboard_views_drush_export_donations_csv() {
           echo '"' . $option_value . '"';
         }
         $filter_key = $dw_drupal_key_map[$option_name];
-        //$view->exposed_input[$filter_key] = $option_value;
         $view->drush_filters[$filter_key] = $option_value;
       }
       else {
@@ -148,18 +153,18 @@ function springboard_views_drush_export_donations_csv() {
     }
 
     if ($debug) {
-      echo "\n\n" . print_r($view->exposed_input, 1) . "\n\n";
+     // echo "\n\n" . print_r($view->exposed_input, 1) . "\n\n";
     }
     $view->pre_execute();
     $view->execute();
 
     // Save the output to a file, if results were returned; otherwise stop:
 
-$output_path = '/tmp';
+    $output_path = '/tmp';
 
     if (isset($view->result) && count($view->result) > 0) {
       $output = $view->render();
-      //echo "\n\n" . $output . "\n\n\n";
+      echo "\n\n" . $output . "\n\n\n";
       $filename = $output_path . '/' . date('Y-m-d--H-i-s') . '-donations-export-page-' . ($current_page + 1) . '.csv';
       $file_paths[] = $filename;
       $total_results += count($view->result);
@@ -195,9 +200,9 @@ $output_path = '/tmp';
 
   if ($debug) {
     $export_summary['file_gen_disabled'] = 1;
-    echo "\n\n";
+/*    echo "\n\n";
     print_r($export_summary);
-    echo "\n\n";
+    echo "\n\n"; */
   }
 
   // Return the job summary.
@@ -241,6 +246,7 @@ function _springboard_views_drush_export_donations_dw_key_map() {
     'search_string'    => 'sbp_search_string_value',
     'state'            => 'sbp_state_value',
     'status'           => 'status',
+    'submission_id'    => 'sid',
     'transaction_id'   => 'txn_id',
     'transaction_date' => 'transaction_date',
     'updated_at'       => 'changed',
@@ -248,6 +254,48 @@ function _springboard_views_drush_export_donations_dw_key_map() {
     'zip'              => 'sbp_zip_value',
   );
 }
+
+/**
+ * Helper function which returns an array that maps data warehouse field keys
+ * to the export donation view's view-specific field using for query-based filtering/sorting:
+ */
+function _springboard_views_drush_export_donations_dw_query_key_map() {
+  return array(
+    'address'          => 'users_fundraiser_donation__field_data_sbp_address.sbp_address_value',
+    'address_line_2'   => 'users_fundraiser_donation__field_data_sbp_address_line_2.sbp_address_line_2_value',
+    'amount'           => 'fundraiser_donation.amount',
+    'city'             => 'users_fundraiser_donation__field_data_sbp_city.sbp_city_value',
+    'contact_id'       => 'sbp_salesforce_contact_id_value',
+    'country'          => 'users_fundraiser_donation__field_data_sbp_country.sbp_country_value',
+    'currency'         => 'fundraiser_donation.currency',
+    'created_at'       => 'fundraiser_donation.created',
+    'device_browser'   => 'users_fundraiser_donation__field_data_sbp_device_browser.sbp_device_browser_value',
+    'device_name'      => 'users_fundraiser_donation__field_data_sbp_device_name.sbp_device_name_value',
+    'device_os'        => 'users_fundraiser_donation__field_data_sbp_device_os.sbp_device_os_value',
+    'device_type'      => 'users_fundraiser_donation__field_data_sbp_device_type.sbp_device_type_value',
+    'email'            => 'commerce_order_fundraiser_donation.mail',
+    'first_name'       => 'users_fundraiser_donation__field_data_sbp_first_name.sbp_first_name_value',
+    'last_name'        => 'users_fundraiser_donation__field_data_sbp_last_name.sbp_last_name_value',
+    'form_id'          => 'fundraiser_donation.nid',
+    'gateway'          => 'fundraiser_donation.gateway',
+    'internal_name'    => 'node_fundraiser_donation__field_data_field_fundraiser_internal_name.field_fundraiser_internal_name_value',
+    'ip_address'       => 'commerce_order_fundraiser_donation.hostname',
+    'order_id'         => 'commerce_order_fundraiser_donation.order_id',
+    'referrer'         => 'users_fundraiser_donation__field_data_sbp_referrer.sbp_referrer_value',
+    'initial_referrer' => 'users_fundraiser_donation__field_data_sbp_initial_referrer.sbp_initial_referrer_value',
+    'search_engine'    => 'users_fundraiser_donation__field_data_sbp_search_engine.sbp_search_engine_value',
+    'search_string'    => 'users_fundraiser_donation__field_data_sbp_search_string.sbp_search_string_value',
+    'state'            => 'users_fundraiser_donation__field_data_sbp_state.sbp_state_value',
+    'status'           => 'fundraiser_donation.status',
+    'submission_id'    => 'webform_submissions_fundraiser_donation.sid',
+    'transaction_id'   => 'fundraiser_donation.txn_id',
+    'transaction_date' => 'fundraiser_donation.created',
+    'updated_at'       => 'fundraiser_donation.changed',
+    'user_agent'       => 'users_fundraiser_donation__field_data_sbp_user_agent.sbp_user_agent_value',
+    'zip'              => 'users_fundraiser_donation__field_data_sbp_zip.sbp_zip_value',
+  );
+}
+
 
 /**
  * AWS code:
@@ -352,3 +400,6 @@ function _springboard_views_drush_export_aws_files_upload($file_paths) {
 
   return $s3_pre_signed_urls;
 }
+
+
+

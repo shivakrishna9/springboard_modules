@@ -1771,12 +1771,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nothing']['label'] = 'Actions';
   $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/springboard/donations/[order_id]/payment" class="action-payment-link">Payment</a><span class="bar"> | </span><a href="/springboard/donations/[order_id]/payment/[transaction_id]/refund" class="action-refund-link">Refund</a>';
   $handler->display->display_options['fields']['nothing']['element_class'] = 'table-actions';
-  /* Sort criterion: Commerce Order: Created date */
-  $handler->display->display_options['sorts']['created']['id'] = 'created';
-  $handler->display->display_options['sorts']['created']['table'] = 'commerce_order';
-  $handler->display->display_options['sorts']['created']['field'] = 'created';
-  $handler->display->display_options['sorts']['created']['relationship'] = 'did';
-  $handler->display->display_options['sorts']['created']['order'] = 'DESC';
   /* Filter criterion: Global: Combine fields filter */
   $handler->display->display_options['filters']['combine']['id'] = 'combine';
   $handler->display->display_options['filters']['combine']['table'] = 'views';
@@ -1946,6 +1940,14 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['relationships']['did']['id'] = 'did';
   $handler->display->display_options['relationships']['did']['table'] = 'fundraiser_donation';
   $handler->display->display_options['relationships']['did']['field'] = 'did';
+  /* Relationship: Fundraiser donations: Donating user */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
+  /* Relationship: Fundraiser donations: Webform Submission */
+  $handler->display->display_options['relationships']['sid']['id'] = 'sid';
+  $handler->display->display_options['relationships']['sid']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['sid']['field'] = 'sid';
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: order_id (hidden) */
   $handler->display->display_options['fields']['order_id']['id'] = 'order_id';
@@ -2025,7 +2027,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['created']['label'] = 'created_at';
   $handler->display->display_options['fields']['created']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['created']['date_format'] = 'custom';
-  $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/Y H/i/s';
+  $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/Y H:i:s';
   $handler->display->display_options['fields']['created']['second_date_format'] = 'long';
   /* Field: Commerce Order: Updated date */
   $handler->display->display_options['fields']['changed']['id'] = 'changed';
@@ -2035,7 +2037,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['changed']['label'] = 'updated_at';
   $handler->display->display_options['fields']['changed']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['changed']['date_format'] = 'custom';
-  $handler->display->display_options['fields']['changed']['custom_date_format'] = 'n/j/Y H/i/s';
+  $handler->display->display_options['fields']['changed']['custom_date_format'] = 'n/j/Y H:i:s';
   $handler->display->display_options['fields']['changed']['second_date_format'] = 'long';
   /* Field: Fundraiser donations: Extra Props */
   $handler->display->display_options['fields']['extra_props']['id'] = 'extra_props';
@@ -2043,6 +2045,289 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['extra_props']['field'] = 'extra_props';
   $handler->display->display_options['fields']['extra_props']['label'] = 'extra_props';
   $handler->display->display_options['defaults']['arguments'] = FALSE;
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Global: Combine fields filter */
+  $handler->display->display_options['filters']['combine']['id'] = 'combine';
+  $handler->display->display_options['filters']['combine']['table'] = 'views';
+  $handler->display->display_options['filters']['combine']['field'] = 'combine';
+  $handler->display->display_options['filters']['combine']['operator'] = 'contains';
+  $handler->display->display_options['filters']['combine']['group'] = 1;
+  $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Search';
+  $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
+  $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['combine']['group_info']['label'] = 'Combine fields filter';
+  $handler->display->display_options['filters']['combine']['group_info']['identifier'] = 'combine';
+  $handler->display->display_options['filters']['combine']['group_info']['group_items'] = array(
+    1 => array(
+      'title' => '',
+      'operator' => 'contains',
+      'value' => '',
+    ),
+    2 => array(
+      'title' => '',
+      'operator' => 'contains',
+      'value' => '',
+    ),
+    3 => array(
+      'title' => '',
+      'operator' => 'contains',
+      'value' => '',
+    ),
+  );
+  $handler->display->display_options['filters']['combine']['fields'] = array(
+    'order_id' => 'order_id',
+    'sbp_first_name' => 'sbp_first_name',
+    'sbp_last_name' => 'sbp_last_name',
+    'mail' => 'mail',
+    'title' => 'title',
+  );
+  /* Filter criterion: Commerce Order: Order status */
+  $handler->display->display_options['filters']['status']['id'] = 'status';
+  $handler->display->display_options['filters']['status']['table'] = 'commerce_order';
+  $handler->display->display_options['filters']['status']['field'] = 'status';
+  $handler->display->display_options['filters']['status']['relationship'] = 'did';
+  $handler->display->display_options['filters']['status']['value'] = array(
+    'failed_refund' => 'failed_refund',
+    'failed' => 'failed',
+    'canceled' => 'canceled',
+    'pending_future_payment' => 'pending_future_payment',
+    'refunded' => 'refunded',
+    'partially_refunded' => 'partially_refunded',
+    'payment_received' => 'payment_received',
+  );
+  $handler->display->display_options['filters']['status']['group'] = 1;
+  $handler->display->display_options['filters']['status']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['status']['expose']['operator_id'] = 'status_op';
+  $handler->display->display_options['filters']['status']['expose']['label'] = 'Order status';
+  $handler->display->display_options['filters']['status']['expose']['operator'] = 'status_op';
+  $handler->display->display_options['filters']['status']['expose']['identifier'] = 'status';
+  $handler->display->display_options['filters']['status']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['status']['expose']['reduce'] = TRUE;
+  /* Filter criterion: Content: Internal Name (field_fundraiser_internal_name) */
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['id'] = 'field_fundraiser_internal_name_value';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['table'] = 'field_data_field_fundraiser_internal_name';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['field'] = 'field_fundraiser_internal_name_value';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['relationship'] = 'nid';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['group'] = 1;
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['expose']['operator_id'] = 'field_fundraiser_internal_name_value_op';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['expose']['label'] = 'Internal Form Name';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['expose']['operator'] = 'field_fundraiser_internal_name_value_op';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['expose']['identifier'] = 'field_fundraiser_internal_name_value';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  /* Filter criterion: Date: Date (commerce_order) */
+  $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['table'] = 'commerce_order';
+  $handler->display->display_options['filters']['date_filter']['field'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['relationship'] = 'did';
+  $handler->display->display_options['filters']['date_filter']['operator'] = 'between';
+  $handler->display->display_options['filters']['date_filter']['group'] = 1;
+  $handler->display->display_options['filters']['date_filter']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['date_filter']['expose']['operator_id'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['operator'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['identifier'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['date_filter']['form_type'] = 'date_popup';
+  $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
+    'commerce_order.created' => 'commerce_order.created',
+  );
+  /* Filter criterion: Content: Nid */
+  $handler->display->display_options['filters']['nid']['id'] = 'nid';
+  $handler->display->display_options['filters']['nid']['table'] = 'node';
+  $handler->display->display_options['filters']['nid']['field'] = 'nid';
+  $handler->display->display_options['filters']['nid']['relationship'] = 'nid';
+  $handler->display->display_options['filters']['nid']['group'] = 1;
+  $handler->display->display_options['filters']['nid']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['nid']['expose']['operator_id'] = 'nid_op';
+  $handler->display->display_options['filters']['nid']['expose']['label'] = 'Nid';
+  $handler->display->display_options['filters']['nid']['expose']['operator'] = 'nid_op';
+  $handler->display->display_options['filters']['nid']['expose']['identifier'] = 'nid';
+  $handler->display->display_options['filters']['nid']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  /* Filter criterion: User: First name (sbp_first_name) */
+  $handler->display->display_options['filters']['sbp_first_name_value']['id'] = 'sbp_first_name_value';
+  $handler->display->display_options['filters']['sbp_first_name_value']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['filters']['sbp_first_name_value']['field'] = 'sbp_first_name_value';
+  $handler->display->display_options['filters']['sbp_first_name_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_first_name_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['sbp_first_name_value']['group'] = 1;
+  /* Filter criterion: User: Last name (sbp_last_name) */
+  $handler->display->display_options['filters']['sbp_last_name_value']['id'] = 'sbp_last_name_value';
+  $handler->display->display_options['filters']['sbp_last_name_value']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['filters']['sbp_last_name_value']['field'] = 'sbp_last_name_value';
+  $handler->display->display_options['filters']['sbp_last_name_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_last_name_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['sbp_last_name_value']['group'] = 1;
+  /* Filter criterion: User: Address (sbp_address) */
+  $handler->display->display_options['filters']['sbp_address_value']['id'] = 'sbp_address_value';
+  $handler->display->display_options['filters']['sbp_address_value']['table'] = 'field_data_sbp_address';
+  $handler->display->display_options['filters']['sbp_address_value']['field'] = 'sbp_address_value';
+  $handler->display->display_options['filters']['sbp_address_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_address_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['sbp_address_value']['group'] = 1;
+  /* Filter criterion: User: Address Line 2 (sbp_address_line_2) */
+  $handler->display->display_options['filters']['sbp_address_line_2_value']['id'] = 'sbp_address_line_2_value';
+  $handler->display->display_options['filters']['sbp_address_line_2_value']['table'] = 'field_data_sbp_address_line_2';
+  $handler->display->display_options['filters']['sbp_address_line_2_value']['field'] = 'sbp_address_line_2_value';
+  $handler->display->display_options['filters']['sbp_address_line_2_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_address_line_2_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['sbp_address_line_2_value']['group'] = 1;
+  /* Filter criterion: User: City (sbp_city) */
+  $handler->display->display_options['filters']['sbp_city_value']['id'] = 'sbp_city_value';
+  $handler->display->display_options['filters']['sbp_city_value']['table'] = 'field_data_sbp_city';
+  $handler->display->display_options['filters']['sbp_city_value']['field'] = 'sbp_city_value';
+  $handler->display->display_options['filters']['sbp_city_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_city_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['sbp_city_value']['group'] = 1;
+  /* Filter criterion: User: Postal Code (sbp_zip) */
+  $handler->display->display_options['filters']['sbp_zip_value']['id'] = 'sbp_zip_value';
+  $handler->display->display_options['filters']['sbp_zip_value']['table'] = 'field_data_sbp_zip';
+  $handler->display->display_options['filters']['sbp_zip_value']['field'] = 'sbp_zip_value';
+  $handler->display->display_options['filters']['sbp_zip_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_zip_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['sbp_zip_value']['group'] = 1;
+  /* Filter criterion: User: State/Province (sbp_state) */
+  $handler->display->display_options['filters']['sbp_state_value']['id'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['table'] = 'field_data_sbp_state';
+  $handler->display->display_options['filters']['sbp_state_value']['field'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_state_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_state_value']['value'] = array(
+    'all' => 'all',
+  );
+  $handler->display->display_options['filters']['sbp_state_value']['group'] = 1;
+  /* Filter criterion: User: Country (sbp_country) */
+  $handler->display->display_options['filters']['sbp_country_value']['id'] = 'sbp_country_value';
+  $handler->display->display_options['filters']['sbp_country_value']['table'] = 'field_data_sbp_country';
+  $handler->display->display_options['filters']['sbp_country_value']['field'] = 'sbp_country_value';
+  $handler->display->display_options['filters']['sbp_country_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_country_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_country_value']['group'] = 1;
+  /* Filter criterion: Content: Internal Name (field_fundraiser_internal_name) */
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['id'] = 'field_fundraiser_internal_name_value_1';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['table'] = 'field_data_field_fundraiser_internal_name';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['field'] = 'field_fundraiser_internal_name_value';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['relationship'] = 'nid';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['operator'] = 'empty';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['group'] = 1;
+  /* Filter criterion: User: Device Browser (sbp_device_browser) */
+  $handler->display->display_options['filters']['sbp_device_browser_value']['id'] = 'sbp_device_browser_value';
+  $handler->display->display_options['filters']['sbp_device_browser_value']['table'] = 'field_data_sbp_device_browser';
+  $handler->display->display_options['filters']['sbp_device_browser_value']['field'] = 'sbp_device_browser_value';
+  $handler->display->display_options['filters']['sbp_device_browser_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_device_browser_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_device_browser_value']['group'] = 1;
+  /* Filter criterion: User: Device Name (sbp_device_name) */
+  $handler->display->display_options['filters']['sbp_device_name_value']['id'] = 'sbp_device_name_value';
+  $handler->display->display_options['filters']['sbp_device_name_value']['table'] = 'field_data_sbp_device_name';
+  $handler->display->display_options['filters']['sbp_device_name_value']['field'] = 'sbp_device_name_value';
+  $handler->display->display_options['filters']['sbp_device_name_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_device_name_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_device_name_value']['group'] = 1;
+  /* Filter criterion: User: Device OS (sbp_device_os) */
+  $handler->display->display_options['filters']['sbp_device_os_value']['id'] = 'sbp_device_os_value';
+  $handler->display->display_options['filters']['sbp_device_os_value']['table'] = 'field_data_sbp_device_os';
+  $handler->display->display_options['filters']['sbp_device_os_value']['field'] = 'sbp_device_os_value';
+  $handler->display->display_options['filters']['sbp_device_os_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_device_os_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_device_os_value']['group'] = 1;
+  /* Filter criterion: User: Device Type (sbp_device_type) */
+  $handler->display->display_options['filters']['sbp_device_type_value']['id'] = 'sbp_device_type_value';
+  $handler->display->display_options['filters']['sbp_device_type_value']['table'] = 'field_data_sbp_device_type';
+  $handler->display->display_options['filters']['sbp_device_type_value']['field'] = 'sbp_device_type_value';
+  $handler->display->display_options['filters']['sbp_device_type_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_device_type_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_device_type_value']['group'] = 1;
+  /* Filter criterion: User: Initial Referrer (sbp_initial_referrer) */
+  $handler->display->display_options['filters']['sbp_initial_referrer_value']['id'] = 'sbp_initial_referrer_value';
+  $handler->display->display_options['filters']['sbp_initial_referrer_value']['table'] = 'field_data_sbp_initial_referrer';
+  $handler->display->display_options['filters']['sbp_initial_referrer_value']['field'] = 'sbp_initial_referrer_value';
+  $handler->display->display_options['filters']['sbp_initial_referrer_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_initial_referrer_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_initial_referrer_value']['group'] = 1;
+  /* Filter criterion: User: Referrer (sbp_referrer) */
+  $handler->display->display_options['filters']['sbp_referrer_value']['id'] = 'sbp_referrer_value';
+  $handler->display->display_options['filters']['sbp_referrer_value']['table'] = 'field_data_sbp_referrer';
+  $handler->display->display_options['filters']['sbp_referrer_value']['field'] = 'sbp_referrer_value';
+  $handler->display->display_options['filters']['sbp_referrer_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_referrer_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_referrer_value']['group'] = 1;
+  /* Filter criterion: Fundraiser donations: Transaction ID */
+  $handler->display->display_options['filters']['txn_id']['id'] = 'txn_id';
+  $handler->display->display_options['filters']['txn_id']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['filters']['txn_id']['field'] = 'txn_id';
+  $handler->display->display_options['filters']['txn_id']['operator'] = 'empty';
+  $handler->display->display_options['filters']['txn_id']['group'] = 1;
+  /* Filter criterion: User: Salesforce Contact Id (sbp_salesforce_contact_id) */
+  $handler->display->display_options['filters']['sbp_salesforce_contact_id_value']['id'] = 'sbp_salesforce_contact_id_value';
+  $handler->display->display_options['filters']['sbp_salesforce_contact_id_value']['table'] = 'field_data_sbp_salesforce_contact_id';
+  $handler->display->display_options['filters']['sbp_salesforce_contact_id_value']['field'] = 'sbp_salesforce_contact_id_value';
+  $handler->display->display_options['filters']['sbp_salesforce_contact_id_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_salesforce_contact_id_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_salesforce_contact_id_value']['group'] = 1;
+  /* Filter criterion: User: Search Engine (sbp_search_engine) */
+  $handler->display->display_options['filters']['sbp_search_engine_value']['id'] = 'sbp_search_engine_value';
+  $handler->display->display_options['filters']['sbp_search_engine_value']['table'] = 'field_data_sbp_search_engine';
+  $handler->display->display_options['filters']['sbp_search_engine_value']['field'] = 'sbp_search_engine_value';
+  $handler->display->display_options['filters']['sbp_search_engine_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_search_engine_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_search_engine_value']['group'] = 1;
+  /* Filter criterion: User: Search String (sbp_search_string) */
+  $handler->display->display_options['filters']['sbp_search_string_value']['id'] = 'sbp_search_string_value';
+  $handler->display->display_options['filters']['sbp_search_string_value']['table'] = 'field_data_sbp_search_string';
+  $handler->display->display_options['filters']['sbp_search_string_value']['field'] = 'sbp_search_string_value';
+  $handler->display->display_options['filters']['sbp_search_string_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_search_string_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_search_string_value']['group'] = 1;
+  /* Filter criterion: User: User Agent (sbp_user_agent) */
+  $handler->display->display_options['filters']['sbp_user_agent_value']['id'] = 'sbp_user_agent_value';
+  $handler->display->display_options['filters']['sbp_user_agent_value']['table'] = 'field_data_sbp_user_agent';
+  $handler->display->display_options['filters']['sbp_user_agent_value']['field'] = 'sbp_user_agent_value';
+  $handler->display->display_options['filters']['sbp_user_agent_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_user_agent_value']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sbp_user_agent_value']['group'] = 1;
+  /* Filter criterion: Webform submissions: Sid */
+  $handler->display->display_options['filters']['sid']['id'] = 'sid';
+  $handler->display->display_options['filters']['sid']['table'] = 'webform_submissions';
+  $handler->display->display_options['filters']['sid']['field'] = 'sid';
+  $handler->display->display_options['filters']['sid']['relationship'] = 'sid';
+  $handler->display->display_options['filters']['sid']['operator'] = 'empty';
   $handler->display->display_options['path'] = 'admin/reports/salesforce/donations/export';
   $handler->display->display_options['displays'] = array(
     'page' => 'page',
@@ -2319,7 +2604,6 @@ function springboard_views_views_default_views() {
   );
   $handler->display->display_options['path'] = 'node/%/donation-results';
   $views[$view->name] = $view;
-
   // End sbv_donations.
 
   /**
