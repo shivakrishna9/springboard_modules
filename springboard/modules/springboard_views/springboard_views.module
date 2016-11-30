@@ -524,6 +524,9 @@ function springboard_views_views_query_alter(&$view, &$query) {
         case 'hostname':
           $query->add_where(1, 'commerce_order_fundraiser_donation.hostname', '%' . $filter_value . '%', 'LIKE');
           break;
+        case 'did':
+          $query->add_where(1, 'fundraiser_donation.did', $filter_value, '=');
+          break;
         case 'nid':
           $query->add_where(1, 'fundraiser_donation.nid', $filter_value, '=');
           break;
