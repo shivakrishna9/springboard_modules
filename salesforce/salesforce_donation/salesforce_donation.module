@@ -340,6 +340,15 @@ function salesforce_donation_fundraiser_donation_delete($donation) {
 }
 
 /**
+ * Implements hook_fundraiser_sustainers_future_order_insert().
+ *
+ * Queue up pending donations for export to Salesforce.
+ */
+function salesforce_donation_fundraiser_sustainers_future_order_insert($donation) {
+  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation, 'donation');
+}
+
+/**
  * Implements hook_salesforce_genmap_map_item_alter().
  */
 function salesforce_donation_salesforce_genmap_map_item_alter(&$item, $donation) {
@@ -470,7 +479,6 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       if (!empty($mapped_stages)) {
         if (in_array($donation->status, $mapped_stages)) {
           $flipped_stages = array_flip($mapped_stages);
-
           $stage = $flipped_stages[$donation->status];
         }
       }
@@ -523,10 +531,12 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
   // on available methods. Methods are defined within the associated active
   // gateways.
   foreach ($donation->donation['payment_fields'] as $payment_method => $payment_fields) {
-    foreach ($payment_fields as $key => $value) {
-      if (isset($map->field_map['salesforce_donation_map'][$key])) {
-        $sf_field = $map->field_map['salesforce_donation_map'][$key];
-        $fields[$sf_field] = $value;
+    if (is_array($payment_fields)) {
+      foreach ($payment_fields as $key => $value) {
+        if (isset($map->field_map['salesforce_donation_map'][$key])) {
+          $sf_field = $map->field_map['salesforce_donation_map'][$key];
+          $fields[$sf_field] = $value;
+        }
       }
     }
   }

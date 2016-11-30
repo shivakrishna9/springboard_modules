@@ -198,7 +198,7 @@ function springboard_views_springboard_admin_alias_patterns() {
 }
 
 function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
-  // Top Level: Reports
+  // Top Level: Reports.
   $items['admin/springboard/reports'] = array(
     'link_path' => 'admin/springboard/reports',
     'link_title' => t('Reports'),
@@ -238,7 +238,17 @@ function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
     'customized' => 1,
     'weight' => 0,
   );
-
+  // Reports > Silverpop Transact.
+  if (module_exists('silverpop_transact')) {
+    $items['admin/springboard/reports']['_children']['admin/springboard/reports/silverpop-transact-log'] = array(
+      'link_path' => 'admin/springboard/reports/silverpop-transact-log',
+      'link_title' => 'Silverpop Transact',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 4,
+    );
+  }
   // Reports > Integration Reports.
   $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports'] = array(
     'link_path' => 'admin/springboard/reports/integration-reports',
@@ -389,6 +399,9 @@ function springboard_views_springboard_dashboard_panes() {
       $webform_types[] = $type->type;
     }
   }
+
+  drupal_alter('springboard_views_springboard_dashboard_panes', $webform_types);
+
   $panes['springboard_recent_donation_forms'] = array(
    'label' => t('Recent donation forms'),
    'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
@@ -410,4 +423,62 @@ function springboard_views_springboard_dashboard_panes() {
     'weight' => 2,
   );
   return $panes;
+}
+
+/**
+ * Implements hook_views_pre_view().
+ *
+ * Remove the exposed date popup filter from the file export display to
+ * eliminate a conflict between the popup and views_data_export:
+ */
+function springboard_views_views_pre_view(&$view, &$display_id, &$args) {
+  if ($view->name != 'sbv_donations' || $display_id != 'views_data_export_1') {
+    return;
+  }
+
+  // Unset the date filter form both the default and export displays in case
+  // the default date filter is overwritten within the data export's display:
+  unset($view->display['default']->handler->options['filters']['date_filter']);
+  unset($view->display['views_data_export_1']->handler->options['filters']['date_filter']);
+}
+
+/**
+ * Implements hook_views_query_alter().
+ *
+ * Apply date_popup-based filtering to the donations report's data export display, as filtering
+ * by date can result in date formatting errors depending on the site's current, short date format.
+ */
+function springboard_views_views_query_alter(&$view, &$query) {
+  if ($view->name != 'sbv_donations' || $view->current_display != 'views_data_export_1') {
+    return;
+  }
+  $min_date = ''; $max_date = '';
+  if (isset($view->exposed_input['date_filter']['min']['date'])) {
+    $min_date = date('Y-m-d', strtotime($view->exposed_input['date_filter']['min']['date']));
+  }
+  if (isset($view->exposed_input['date_filter']['max']['date'])) {
+    $max_date = date('Y-m-d', strtotime($view->exposed_input['date_filter']['max']['date']));
+  }
+
+  if (!isset($min_date) || !isset($max_date) || empty($min_date) || empty($max_date)) {
+    return;
+  }
+
+  // Add the date filter to the WHERE clause:
+  $query->where[] = array(
+    'conditions' => array(
+      array(
+        'field' =>
+          "DATE_FORMAT(ADDTIME(FROM_UNIXTIME(commerce_order_fundraiser_donation.created), SEC_TO_TIME(-14400)), '%Y-%m-%d') >= :commerce_order_date_filter " .
+          "AND DATE_FORMAT(ADDTIME(FROM_UNIXTIME(commerce_order_fundraiser_donation.created), SEC_TO_TIME(-14400)), '%Y-%m-%d') <= :commerce_order_date_filter1",
+        'value' => array(
+          ':commerce_order_date_filter' => $min_date,
+          ':commerce_order_date_filter1' => $max_date,
+        ),
+        'operator' => 'formula',
+      ),
+    ),
+    'args' => array(),
+    'type' => 'AND',
+  );
 }

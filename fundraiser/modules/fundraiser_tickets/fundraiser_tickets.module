@@ -259,6 +259,7 @@ function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
     // Don't allow them to tinker with dollar handles or recurring gift settings
     $form['fundraiser_settings']['fundraiser_sustainers']['#access'] = FALSE;
     $form['fundraiser_settings']['amount_wrapper']['#access'] = FALSE;
+    $form['fundraiser_settings']['recurring_amount_wrapper']['#access'] = FALSE;
 
     if (arg(0) == 'node' && (arg(2) == 'edit' || arg(1) == 'add')){
       // Hide all tickets fields on the standard node add/edit page.
@@ -593,7 +594,7 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
  */
 function _fundraiser_tickets_ticket_settings_form_validate(&$form, &$form_state) {
   // Restore default gateway settings lost due to gateway fields being hidden.
-  $gateways = $form['fundraiser_settings']['gateways'];
+  $gateways = $form['payment_methods']['gateways'];
   foreach (array_keys($gateways) as $gateway_value) {
     if (is_array($gateways[$gateway_value])) {
       $gateway = $gateways[$gateway_value];
@@ -606,21 +607,40 @@ function _fundraiser_tickets_ticket_settings_form_validate(&$form, &$form_state)
   // Remove _default index from gateways.
   unset($form_state['values']['gateways']['_default']);
 
-  if ($form_state['values']['fr_tickets_closed_options'][LANGUAGE_NONE][0]['value'] == 'redirect'){
-    $closed_redirect = $form_state['values']['fr_tickets_closed_redirect'][LANGUAGE_NONE][0]['value'];
-    if (!trim($closed_redirect) || !drupal_valid_path($closed_redirect, TRUE)) {
-      form_set_error('fr_tickets_closed_redirect', t("The path '@link_path' is either invalid or you do not have access to it.", array('@link_path' => $closed_redirect)));
+  $check_redirects = array('closed', 'soldout');
+
+  foreach ($check_redirects as $check_redirect) {
+    if ($form_state['values']['fr_tickets_' . $check_redirect . '_options'][LANGUAGE_NONE][0]['value'] == 'redirect') {
+      $redirect = $form_state['values']['fr_tickets_' . $check_redirect . '_redirect'][LANGUAGE_NONE][0]['value'];
+      if (!trim($redirect) || !drupal_valid_path($redirect, TRUE)) {
+        form_set_error('fr_tickets_' . $check_redirect . '_redirect', t("The path '@link_path' is either invalid or you do not have access to it.", array('@link_path' => $redirect)));
+      }
+      if (!empty($form_state['node']->nid)) {
+        $nid = $form_state['node']->nid;
+        $external = url_is_external($redirect);
+        // If this is an internal path, or if it's external but pointing to the
+        // host site, check that the redirect URL isn't pointing to this node,
+        // which would cause an infinite redirect.
+        $form_error = FALSE;
+        $redirect_without_base = str_replace($GLOBALS['base_url'] . '/', '', $redirect);
+        if ($redirect_without_base == $form_state['values']['path']['alias']) {
+          $form_error = TRUE;
+        }
+        if (!$external || $external && strpos($redirect, $GLOBALS['base_url']) !== FALSE) {
+          $path = url('node/' . $nid);
+          $path = ltrim($path, '/');
+          if ($redirect_without_base == $path || $redirect_without_base == 'node/' . $nid) {
+            $form_error = TRUE;
+          }
+        }
+        if ($form_error) {
+          form_set_error('fr_tickets_' . $check_redirect . '_redirect', t("Pointing your redirect URL to this form would cause an infinite redirect. Please use a different URL."));
+        }
+      }
     }
   }
 
-  if ($form_state['values']['fr_tickets_soldout_options'][LANGUAGE_NONE][0]['value'] == 'redirect'){
-    $soldout_redirect = $form_state['values']['fr_tickets_soldout_redirect'][LANGUAGE_NONE][0]['value'];
-    if (!trim($soldout_redirect) || !drupal_valid_path($soldout_redirect, TRUE)) {
-      form_set_error('fr_tickets_soldout_redirect', t("The path '@link_path' is either invalid or you do not have access to it.", array('@link_path' => $soldout_redirect)));
-    }
-  }
-
-  if ($form_state['values']['fr_tickets_donation_donation'][LANGUAGE_NONE][0]['value'] == 1){
+  if ($form_state['values']['fr_tickets_donation_donation'][LANGUAGE_NONE][0]['value'] == 1) {
     $addon = $form_state['values']['fr_tickets_donation_addon_form'][LANGUAGE_NONE][0]['target_id'];
     if (empty($addon)) {
       form_set_error('fr_tickets_donation_addon_form', t('When add-on donations are enabled, "Donation form to Use for Add-ons" is required.'));
@@ -641,12 +661,11 @@ function _fundraiser_tickets_ticket_settings_form_validate(&$form, &$form_state)
   $closed = $form_state['values']['fr_tickets_closed_options'][LANGUAGE_NONE][0]['value'];
   $soldout = $form_state['values']['fr_tickets_soldout_options'][LANGUAGE_NONE][0]['value'];
   $waitlist = $form_state['values']['fr_tickets_waitlist_form'][LANGUAGE_NONE][0]['target_id'];
-  if (($closed == 'form' || $soldout == 'form') && $waitlist == NULL){
+  if (($closed == 'form' || $soldout == 'form') && $waitlist == NULL) {
     form_set_error('fr_tickets_waitlist_form', t('You must select a wait list or choose a different closed or soldout setting.'));
   }
-  $_GET['destination'] =  current_path();
+  $_GET['destination'] = current_path();
 }
-
 
 /**
  * Implements hook_form_alter().
@@ -1267,39 +1286,50 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
 }
 
 /**
- *  Make sure the required fields in the addon donation form are matched
+ * Ensure required fields on the addon donation form exist.
+ *
+ * Also, omits fields listed in the variable
+ * fundraiser_tickets_exempt_add_on_fields.
+ *
+ * @param int $nid
+ *    The node id of the donation form (webform) that is being added.
+ * @param object $donation
+ *    Donation object.
+ * @param object $node
+ *    The webform node object to compare the components of param #1 against.
+ *
+ * @return bool
+ *    Returns FALSE of a required field or the other_amount field is missing.
  */
 function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, $node = NULL) {
+  $exempt_fields = variable_get('fundraiser_tickets_exempt_add_on_fields', array('quantity', 'recurring_amount'));
   $addon_details = springboard_api_get_form_details($nid);
-  if($donation) {
-    //validate the submission
+  if ($donation) {
+    // Validate the submission.
     foreach ($addon_details['fields'] as $name => $field) {
-      if(isset($field['required']) && $field['required'] == 1) {
-        if ($name == 'quantity') {
-          $donation->donation[$name] = 1;
-        }
-        if(!isset($donation->donation[$name]) || $donation->donation[$name] == '') {
+      if (isset($field['required']) && $field['required'] == 1 && !in_array($name, $exempt_fields)) {
+        if (!isset($donation->donation[$name]) || $donation->donation[$name] == '') {
           drupal_set_message(t('Add on donation could not be processed. There was a problem with required field %field', array('%field' => $name)), 'error');
           return FALSE;
         }
       }
     }
   }
-  elseif($node) {
-    //validate the settings form entity reference field
+  elseif ($node) {
+    // Validate the settings form entity reference field.
     $components = array();
-    foreach($node->webform['components'] as $id => $component) {
+    foreach ($node->webform['components'] as $id => $component) {
       $components[$component['form_key']] = $node->webform['components'][$id];
     }
     foreach ($addon_details['fields'] as $name => $field) {
-      if($field['required'] == 1 && $name != 'quantity') {
-        if(!isset($components[$name]) || $components[$name]['mandatory'] == '0' ) {
+      if ($field['required'] == 1 && !in_array($name, $exempt_fields)) {
+        if (!isset($components[$name]) || $components[$name]['mandatory'] == '0') {
           return FALSE;
         }
       }
     }
   }
-  if(!isset($addon_details['fields']['other_amount'])) {
+  if (!isset($addon_details['fields']['other_amount'])) {
     return FALSE;
   }
   return TRUE;
@@ -1311,10 +1341,25 @@ function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, 
  */
 function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission) {
   include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
-
   if (is_numeric($nid)) {
     $node = node_load($nid);
     $submission = (array) $submission;
+
+    // $submission here is the $donation->donation array, which has an
+    // improperly nested payment_fields array when using credit. Alter it to
+    // give webform the expected structure.
+    if (!empty($submission['payment_fields']['credit'])) {
+      // Month and year aren't nested properly.
+      if (!empty($submission['payment_fields']['credit']['card_expiration_month'])) {
+        $submission['payment_fields']['credit']['expiration_date']['card_expiration_month'] = $submission['payment_fields']['credit']['card_expiration_month'];
+        unset($submission['payment_fields']['credit']['card_expiration_month']);
+      }
+      if (!empty($submission['payment_fields']['credit']['card_expiration_year'])) {
+        $submission['payment_fields']['credit']['expiration_date']['card_expiration_year'] = $submission['payment_fields']['credit']['card_expiration_year'];
+        unset($submission['payment_fields']['credit']['card_expiration_year']);
+      }
+    }
+
     $submission = _springboard_api_convert_submission($submission, $node);
     $submit_text = db_query("SELECT submit_text FROM {webform} WHERE nid = :nid", array(':nid' => $nid))->fetchField();
     if($submit_text == '') {

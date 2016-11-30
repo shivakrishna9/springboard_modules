@@ -16,7 +16,6 @@
  * have been form altered into the webform, and would lose those
  * values on submit.
  *
- * @return array
  */
 function sba_quicksign_webform_component_info() {
   $components = array();
@@ -67,6 +66,7 @@ function sba_quicksign_form_alter(&$form, &$form_state, $form_id) {
           $quicksign_field['children'] = sba_quicksign_form();
           $quicksign_field['children']['#weight'] = 1001;
           $form['#attached']['css'][] = drupal_get_path('module', 'sba_quicksign') . '/css/sba-quicksign.css';
+          $form['#attached']['js'][] = drupal_get_path('module', 'sba_quicksign') . '/js/sba_quicksign.js';
           array_unshift($form['#validate'], 'sba_quicksign_form_validate');
         }
       }
@@ -225,7 +225,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
           $profile[$webform_field] = !empty($items[0]['value']) ? $items[0]['value'] : FALSE;
         }
         else {
-          // Special handling for mail
+          // Special handling for mail.
           if (valid_email_address($mail)) {
             $profile['mail'] = $mail;
           }
@@ -392,15 +392,19 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#description' => t('Label text to display above the quick sign form.'),
       '#default_value' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : 'Already a supporter?',
     );
-
     $form['sba_quicksign']['quicksign_button_text'] = array(
       '#type' => 'textfield',
       '#title' => t('Submit button text'),
       '#description' => t('Change the text on the quick sign form submit button.'),
       '#default_value' => isset($settings['quicksign_button_text']) ? $settings['quicksign_button_text'] : t('Sign now'),
+      '#states' => array(
+        'required' => array(
+          ':input[name="quicksign_enabled"]' => array('checked' => TRUE),
+        ),
+      ),
     );
 
-    $default_desc = $node->type == 'sba_message_action' ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
+    $default_desc = ($node->type == 'sba_message_action' || $node->type == 'sba_social_action') ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
     $form['sba_quicksign']['quicksign_description'] = array(
       '#type' => 'text_format',
       '#title' => t('Form description'),
@@ -408,6 +412,20 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => isset($settings['quicksign_description']) ? $settings['quicksign_description'] : $default_desc,
       '#format' => isset($settings['quicksign_description_format']) ? $settings['quicksign_description_format'] : NULL,
     );
+
+    $form['#validate'][] = 'sba_quicksign_node_form_validate';
+  }
+}
+
+/**
+ * Make quicksign button text required.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sba_quicksign_node_form_validate($form, &$form_state) {
+  if ($form_state['values']['quicksign_enabled'] == 1 && empty($form_state['values']['quicksign_button_text'])) {
+    form_set_error('quicksign_button_text', t('Quick Sign submit button text is required.'));
   }
 }
 
@@ -418,7 +436,17 @@ function sba_quicksign_node_load($nodes, $types) {
   }
   foreach ($nodes as $nid => $node) {
     if (sba_quicksign_is_quicksign_type($node->type)) {
-      $node->quicksign_enabled = sba_quicksign_is_enabled($node);
+      $settings = sba_quicksign_settings($node->nid);
+      if (!empty($settings)) {
+        $node->quicksign_label = $settings['quicksign_label'];
+        $node->quicksign_description['value'] = $settings['quicksign_description'];
+        $node->quicksign_description['format'] = $settings['quicksign_description_format'];
+        $node->quicksign_button_text = $settings['quicksign_button_text'];
+        $node->quicksign_enabled = $settings['quicksign_enabled'];
+      }
+      else {
+        $node->quicksign_enabled = FALSE;
+      }
     }
   }
 }
@@ -427,8 +455,8 @@ function sba_quicksign_node_load($nodes, $types) {
  * Implements hook_node_insert().
  */
 function sba_quicksign_node_insert($node) {
-  if (sba_quicksign_is_quicksign_type($node->type) && !empty($node->quicksign_enabled)) {
-    sba_quicksign_save($node);
+  if (sba_quicksign_is_quicksign_type($node->type) && (!empty($node->quicksign_enabled) || isset($node->clone_from_original_nid))) {
+    sba_quicksign_save($node, 'insert');
     sba_quicksign_insert_components($node, 'insert', FALSE, FALSE);
   }
 }
@@ -453,12 +481,12 @@ function sba_quicksign_node_update($node) {
       }
     }
     if (isset($node->quicksign_enabled)) {
-      sba_quicksign_save($node);
+      sba_quicksign_save($node, 'update');
       if (!empty($node->quicksign_enabled) && (!$has_form_component || !$has_flag_component)) {
         sba_quicksign_insert_components($node, 'update', $has_form_component, $has_flag_component);
       }
-      if (empty($node->quicksign_enabled) && ($has_form_component || $has_flag_component)) {
-        sba_quicksign_delete_components($node, $form_cid, $flag_cid);
+      if (empty($node->quicksign_enabled) && $has_form_component) {
+        sba_quicksign_delete_components($node, $form_cid);
       }
     }
   }
@@ -474,30 +502,33 @@ function sba_quicksign_node_delete($node) {
 }
 
 /**
- * @param $component
- */
-function sba_quicksign_webform_component_delete($component) {
-  if ($component['form_key'] == 'sba_quicksign') {
-    sba_quicksign_delete($component['nid']);
-  }
-}
-
-/**
  * Save quick sign settings per-node.
  *
  * @param object $node
  *   The node object.
  */
-function sba_quicksign_save($node) {
-  sba_quicksign_delete($node->nid);
+function sba_quicksign_save($node, $op) {
+
+  // Default values.
+  $default_desc = ($node->type == 'sba_message_action' || $node->type == 'sba_social_action') ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
+  $label = t('Already a supporter?');
+  $description = $default_desc;
+  $format = 'filtered_html';
+  $submit = t('Sign now');
+
+  if ($op == 'update') {
+    sba_quicksign_delete($node->nid);
+  }
+
   $record = array(
     'nid' => $node->nid,
     'quicksign_enabled' => $node->quicksign_enabled,
-    'form_label' => $node->quicksign_label,
-    'form_description' => $node->quicksign_description['value'],
-    'form_description_format' => $node->quicksign_description['format'],
-    'submit_button_text' => $node->quicksign_button_text,
+    'form_label' => isset($node->quicksign_label) ? $node->quicksign_label : $label,
+    'form_description' => isset($node->quicksign_description['value']) ? $node->quicksign_description['value'] : $description,
+    'form_description_format' => isset($node->quicksign_description['format']) ? $node->quicksign_description['format'] : $format,
+    'submit_button_text' => isset($node->quicksign_button_text) ? $node->quicksign_button_text : $submit,
   );
+
   drupal_write_record('sba_quicksign', $record);
 }
 
@@ -674,12 +705,9 @@ function sba_quicksign_insert_components($node, $op, $has_form_component, $has_f
  * @param $node
  * @param $cid
  */
-function sba_quicksign_delete_components($node, $form_cid, $flag_cid) {
+function sba_quicksign_delete_components($node, $form_cid) {
   if ($form_cid) {
     webform_component_delete($node, $node->webform['components'][$form_cid]);
-  }
-  if ($flag_cid) {
-    webform_component_delete($node, $node->webform['components'][$flag_cid]);
   }
 }
 
@@ -791,4 +819,3 @@ function sba_quicksign_clone_node_alter(&$node, $context) {
     $node->quicksign_button_text = $original_settings['quicksign_button_text'];
   }
 }
-

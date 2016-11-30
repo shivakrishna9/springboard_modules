@@ -48,12 +48,6 @@ function fundraiser_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_default_other', TRUE),
     '#description' => t('Check this box to automatically configure donation forms to use the other amount.'),
   );
-  $form['fundraiser']['fundraiser_default_quantity'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Quantity cap'),
-    '#default_value' => variable_get('fundraiser_default_quantity', '10'),
-    '#description' => t('For donation forms that use the quantity field, how many should be allowed.'),
-  );
   $form['fundraiser']['fundraiser_receipt_bcc'] = array(
     '#type' => 'textfield',
     '#title' => t('Donation receipt bcc email address'),

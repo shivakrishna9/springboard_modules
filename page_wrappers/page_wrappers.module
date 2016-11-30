@@ -173,6 +173,13 @@ function page_wrappers_css_alter(&$css) {
       }
     }
 
+    if (function_exists('honeypot_get_css_file_path')) {
+      $honeypot_css = honeypot_get_css_file_path();
+      if (file_exists($honeypot_css)) {
+        $keep[] = $honeypot_css;
+      }
+    }
+
     // If a stylesheet has been added to the wrapper, don't remove it.
     if (!empty($css_files)) {
       foreach ($css_files as $css_file) {
@@ -478,12 +485,22 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
 
   // page_wrapper_node_form
   if ($form_id == 'page_wrapper_node_form') {
+    $lang = $form['language']['#value'];
     // add some help the body (Template HTML) field
-    // TODO: fix language lookup.
-    $form['body']['und'][0]['#prefix'] = '<p class="wrapper-text">';
-    $form['body']['und'][0]['#prefix'] .= t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt;, &lt;head&gt, or &lt;body&gt  tags in the template.');
-    $form['body']['und'][0]['#prefix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear, and <strong>[messages]</strong> where the error messages should appear.');
-    $form['body']['und'][0]['#prefix'] .= '</p>';
+    $form['body'][$lang][0]['#prefix'] = '<p class="wrapper-text">';
+    $form['body'][$lang][0]['#prefix'] .= t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt;, &lt;head&gt, or &lt;body&gt  tags in the template.');
+    $form['body'][$lang][0]['#prefix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear, and <strong>[messages]</strong> where the error messages should appear.');
+    $form['body'][$lang][0]['#prefix'] .= '</p>';
+
+    // Remove themes from the CSS list based on settings in springboard_admin
+    if(module_exists('springboard_admin') && _springboard_admin_apply_treatment($GLOBALS['user'])) {
+      $listed_themes = variable_get('springboard_listed_themes', array('springboard_base', 'springboard_backend', 'springboard_frontend'));
+      foreach($form['page_wrappers_theme_css'][$lang]['#options'] as $key=>$theme) {
+        if(!in_array($key, $listed_themes)) {
+          unset($form['page_wrappers_theme_css'][$lang]['#options'][$key]);
+        }
+      }
+    }
   }
 }
 
@@ -845,13 +862,13 @@ function _page_wrappers_node_assigned_wrapper($node) {
  */
 function _page_wrappers_page_node() {
   $node = NULL;
-
+  $subpages = array('done', 'fundraiser-redirect');
   // Check if this in ajax request form submit
   if (arg(0) == 'system' && arg(1) == 'ajax' && !empty($_POST['form_build_id'])) {
     $node = _page_wrappers_cached_form_node($_POST['form_build_id']);
   }
   // If this is a node page load it up, also cover webform 'done' page
-  elseif (arg(0) == 'node' && is_numeric(arg(1)) && (arg(2) == 'done' || !arg(2))) {
+  elseif (arg(0) == 'node' && is_numeric(arg(1)) && (in_array(arg(2), $subpages) || !arg(2))) {
     $node = node_load(arg(1));
   }
 
@@ -1155,6 +1172,7 @@ function _page_wrapper_preview_form() {
   $form['cc']['number'] = array(
     '#type' => 'textfield',
     '#title' => t('Card Number'),
+    '#attributes' => array('autocomplete' => array('off')),
   );
 
   $form['cc']['expdate'] = array(
@@ -1165,6 +1183,7 @@ function _page_wrapper_preview_form() {
   $form['cc']['cvv'] = array(
     '#type' => 'textfield',
     '#title' => t('Card Security Code'),
+    '#attributes' => array('autocomplete' => array('off')),
   );
 
   $form['cc']['recurs'] = array(

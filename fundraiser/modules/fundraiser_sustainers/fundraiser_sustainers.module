@@ -20,6 +20,8 @@ define('FUNDRAISER_SUSTAINERS_SKIPPED_STATUS', 'skipped');
 define('FUNDRAISER_SUSTAINERS_CANCELED_STATUS', 'canceled');
 define('FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS', 'scheduled');
 define('FUNDRAISER_SUSTAINERS_LOCKED_STATUS', 'locked');
+define('FUNDRAISER_SUSTAINERS_OMITTED_STATUS', 'omitted');
+
 
 /**
  * Status for a master donation where sustainer series is pending creation.
@@ -143,6 +145,14 @@ function fundraiser_sustainers_menu() {
     'page callback' => 'fundraiser_sustainers_charge_now',
     'page arguments' => array(2),
     'access arguments' => array('fastforward recurring donations'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['sustainer-series/%fundraiser_donation/billing'] = array(
+    'title' => 'Update billing information',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_sustainers_billing_update_form', 1),
+    'access callback' => 'fundraiser_sustainers_billing_update_access',
+    'access arguments' => array(1),
     'type' => MENU_CALLBACK,
   );
   $items['fundraiser_sustainers/%/skip/%'] = array(
@@ -273,6 +283,9 @@ function fundraiser_sustainers_theme($existing, $type, $theme, $path) {
       'path' => $path . '/templates',
       'template' => 'fundraiser_sustainers_insights_dashboard',
     ),
+    'fundraiser_sustainers_donation_type_options' => array(
+      'render element' => 'element',
+    ),
   );
 }
 
@@ -333,6 +346,7 @@ function _fundraiser_sustainers_user_has_recurring_donations($user) {
  * Menu callback for the standalone cron.
  */
 function fundraiser_sustainers_standalone_cron() {
+  drupal_page_is_cacheable(FALSE);
   // Process recurring donations.
   $process_recurring = TRUE;
   $processor_key_match = fundraiser_sustainers_processor_key_match();
@@ -494,6 +508,14 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
       $fields['Is_Recurring_Donation__c'] = TRUE;
     }
 
+    // Add the card-on-file token if available.
+    if (module_exists('fundraiser_commerce') && module_exists('commerce_cardonfile')) {
+      $cardonfile_data = _fundraiser_commerce_donation_cardonfile_card($donation, FALSE);
+      if (!empty($cardonfile_data)) {
+        $fields['Card_On_File_Token__c'] = $cardonfile_data->remote_id;
+      }
+    }
+
     // Add additional values for where not offsite recurring.
     if (!$offsite_recurring) {
       if (isset($map->field_map['salesforce_donation_map']['probability'])) {
@@ -574,10 +596,11 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
   if (fundraiser_is_donation_type($form['#node']->type)) {
     $form['fundraiser_settings']['fundraiser_sustainers'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Fundraiser Recurring Display Settings'),
+      '#title' => t('Fundraiser recurring display settings'),
       '#desciption' => t('Modify the way the recurring option is displayed on this form, or if it is even available.'),
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
+      '#weight' => 1,
     );
     $form['fundraiser_settings']['fundraiser_sustainers']['recurring_setting'] = array(
       '#type' => 'select',
@@ -589,6 +612,395 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       ),
       '#default_value' => isset($form['#node']->recurring_setting) ? $form['#node']->recurring_setting : 'user_choice',
     );
+    $form['fundraiser_settings']['fundraiser_sustainers']['recurring_dual_ask_amounts'] = array(
+      '#type' => 'checkbox',
+      '#title' => t("Set different ask amounts for recurring donations?"),
+      '#default_value' => isset($form['#node']->recurring_dual_ask_amounts) ? $form['#node']->recurring_dual_ask_amounts : FALSE,
+      '#states' => array(
+        'visible' => array(
+          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+        ),
+      ),
+    );
+    // Allow some Webform components to override configuration.
+    $default_component = !empty($form['#node']->recurring_donation_type_component) ?
+      $form['#node']->recurring_donation_type_component : 'checkbox'
+    ;
+    $donation_types_string = !empty($form['#node']->recurring_donation_type_options) ?
+      $form['#node']->recurring_donation_type_options :
+      variable_get('fundraiser_sustainers_default_donation_type_options', 'NO_RECURR|One-time|||recurs|Monthly')
+    ;
+    $donation_type_help_text = isset($form['#node']->recurring_donation_type_help_text) ?
+      $form['#node']->recurring_donation_type_help_text :
+      t('Selecting "Monthly" will cause your credit card to be charged once per month until its expiration date.')
+    ;
+    if (module_exists('fundraiser_webform') && !empty($form['#node']->webform)) {
+      // The "glue" module is fundraiser_webform. Look for existing "recurs_monthly" component.
+      foreach ($form['#node']->webform['components'] as $component) {
+        if ($component['form_key'] == 'recurs_monthly' && $component['type'] != 'hidden') {
+          $default_component = empty($component['extra']['multiple']) ? 'radios' : 'checkbox';
+          $donation_type_help_text = $component['extra']['description'];
+          // For now, we're only providing node-edit configuration magic for radios components.
+          if ($default_component == 'radios') {
+            $donation_types_string = str_replace("\n", '|||', $component['extra']['items']);
+          }
+          break;
+        }
+      }
+    }
+
+    $form['fundraiser_settings']['fundraiser_sustainers']['recurring_donation_type_component'] = array(
+      '#type' => 'radios',
+      '#title' => t('Recurring donation selector'),
+      '#options' => array(
+        'checkbox' => t('Checkbox'),
+        'radios' => t('Radio buttons'),
+      ),
+      '#default_value' => $default_component,
+      '#states' => array(
+        'visible' => array(
+          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+        ),
+      ),
+    );
+
+    // Configuration for donation type labels and default.
+    $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'] = array(
+      '#type' => 'container',
+      '#prefix' => '<div id="recurring-donation-type-options">',
+      '#suffix' => '</div>',
+      '#theme' => 'fundraiser_sustainers_donation_type_options',
+      '#table_id' => 'fundraiser-recurring-donation-types-table',
+      '#tree' => TRUE,
+      '#states' => array(
+        'visible' => array(
+          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+          ':input[name*=recurring_donation_type_component]' => array('!value' => 'checkbox'),
+        ),
+      ),
+    );
+    $weight = 0;
+    foreach (explode('|||', $donation_types_string) as $donation_type_string) {
+      list($type, $label) = explode('|', $donation_type_string);
+      $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'][$type]['type'] = array(
+        '#markup' => ($type == 'recurs') ? t("Recurring monthly") : t("One-time"),
+      );
+      $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'][$type]['label'] = array(
+        '#type' => 'textfield',
+        '#default_value' => $label,
+        '#size' => 20,
+      );
+      $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'][$type]['default'] = array(
+        '#type' => 'radio',
+        '#parents' => array('recurring_default_donation_type'),
+        '#return_value' => $type,
+        '#default_value' => !empty($form['#node']->recurring_default_donation_type) ? $form['#node']->recurring_default_donation_type : 'NO_RECURR',
+      );
+      $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'][$type]['weight'] = array(
+        '#type' => 'weight',
+        '#title' => t('Weight'),
+        '#default_value' => $weight++,
+        '#delta' => 1,
+        '#title_display' => 'invisible',
+      );
+    }
+    // Substitute for the table header in theme_fundraiser_sustainers_donation_type_options().
+    $form['fundraiser_settings']['fundraiser_sustainers']['recurring_donation_type_help_text_heading'] = array(
+      '#type' => 'container',
+      '#states' => array(
+        'visible' => array(
+          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+          ':input[name*=recurring_donation_type_component]' => array('value' => 'checkbox'),
+        ),
+      ),
+      'markup' => array(
+        '#markup' => '<hr /><h4>' . t("One-time/recurring selection") . '</h4>',
+      )
+    );
+    $form['fundraiser_settings']['fundraiser_sustainers']['recurring_donation_type_help_text'] = array(
+      '#type' => 'textfield',
+      '#description' => t("This help text will appear below the one-time/recurring checkbox or buttons on the donation form."),
+      '#default_value' => $donation_type_help_text,
+      '#size' => 80,
+      '#maxlength' => 1024,
+      '#states' => array(
+        'visible' => array(
+          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+        ),
+      ),
+    );
+
+    // Scoot down the one-time ask amounts.
+    $form['fundraiser_settings']['amount_wrapper']['#weight'] = 2;
+    $form['fundraiser_settings']['amount_wrapper']['#states']['invisible'] = array(
+      'select[name*=recurring_setting]' => array('value' => 'always'),
+    );
+
+    // Recurring ask amounts configuration fieldset.
+    $node = $form['#node'];
+    $form['fundraiser_settings']['recurring_amount_wrapper'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Recurring ask amounts'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#prefix' => '<div class="clear-block" id="recurring-ask-wrapper">',
+      '#suffix' => '</div>',
+      '#tree' => TRUE, // This is important, this allows the deltas below to function as part of the array.
+      '#weight' => 3,
+      '#states' => array(
+        'visible' => array(
+          array(
+            array(
+              'select[name*=recurring_setting]' => array('value' => 'always'),
+            ),
+            'or',
+            array(
+              'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+              ':input[name*=recurring_dual_ask_amounts]' => array('checked' => TRUE),
+            )
+          ),
+        ),
+      ),
+    );
+
+    // Recurring ask amounts table.
+    $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_donation_amounts'] = array(
+      '#type' => 'container',
+      '#prefix' => '<div id="recurring-ask-amounts">',
+      '#suffix' => '</div>',
+      '#theme' => 'fundraiser_ask_amounts',
+      '#table_id' => 'fundraiser-recurring-ask-amounts-table',
+      '#tree' => TRUE,
+    );
+
+    // AJAXy bits.
+    $donation_amounts = array();
+    // The last submission takes precedence.
+    if (isset($form_state['values']['recurring_amount_wrapper']['recurring_donation_amounts'])) {
+      foreach ($form_state['values']['recurring_amount_wrapper']['recurring_donation_amounts'] as $index => $values) {
+        $donation_amounts[$values['weight']] = array($values['amount'], $values['label']);
+      }
+      ksort($donation_amounts);
+    }
+    else {
+      // If the form hasn't been submitted, then grab the defaults from the node or empty.
+      // Donation amounts were loaded on node_load, and exploded at that time. If they exist, they're on the node.
+      $donation_amounts = isset($node->recurring_donation_amounts) ? $node->recurring_donation_amounts : array();
+      // If not there, then grab some defaults.
+      if (count($donation_amounts) == 0) {
+        $default_amounts = variable_get('fundraiser_default_amounts', '10|$10' . "\n" . '20|$20' . "\n" . '50|$50' . "\n" . '100|$100');
+        $default_amounts = explode("\n", $default_amounts);
+        $default_amounts = array_unique($default_amounts);
+        $exploded_amounts = array();
+        foreach ($default_amounts as $default_amount) {
+          $these_amounts = explode('|', $default_amount);
+          if (count($these_amounts) == 1) {
+            $these_amounts[1] = '$' . $these_amounts[0];
+          }
+          $exploded_amounts[] = $these_amounts;
+        }
+        $donation_amounts = $exploded_amounts;
+      }
+    }
+    // Default provide one spare blank for users to fill in.
+    // If the button clicked was to add another, this line will add an extra field as expected on reload.
+    $donation_amounts[] = array('', '');
+    // Generate a form set for each existing amount. (To be themed into table format.)
+    $index = 0;
+
+    foreach ($donation_amounts as $weight => $donation_amount) {
+      // Filter out other|Other combinations. We don't want to display those in this form.
+      // And if we did, the value would fail validation (not a number).
+      // There is probably a better way to track this, but for now this'll do.
+      if (count($donation_amount) == 2 && $donation_amount[0] != 'other') {
+        $row = _fundraiser_ask_form($donation_amount, $index, $node, $weight);
+        $row['default_amount']['#default_value'] = isset($node->recurring_default_amount) ? ($node->recurring_default_amount == $donation_amount[0]) : FALSE;
+        $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_donation_amounts'][] = $row;
+      }
+      ++$index;
+    }
+
+    // AJAX fix: reorder donation amounts in $form_state['input'] by weight.
+    // Corrects the display order of donation amounts when an ajax event is
+    // triggered.
+    if (isset($form_state['input']['recurring_amount_wrapper']['recurring_donation_amounts'])) {
+      $old_donation_amounts = $form_state['input']['recurring_amount_wrapper']['recurring_donation_amounts'];
+      unset($form_state['input']['recurring_amount_wrapper']['recurring_donation_amounts']);
+      foreach ($old_donation_amounts as $donation_amount) {
+        $new_donation_amounts[$donation_amount['weight']] = $donation_amount;
+      }
+      ksort($new_donation_amounts);
+      foreach ($new_donation_amounts as $donation_amount) {
+        $form_state['input']['recurring_amount_wrapper']['recurring_donation_amounts'][] = $donation_amount;
+      }
+    }
+
+    $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_amount_more'] = array(
+      '#type' => 'button',
+      '#submit' => array(),
+      '#value' => t('Add another'),
+      '#name' => 'recurring-amount-add',
+      '#description' => t('Click here to add more choices.'),
+      '#ajax' => array(
+        'callback' => '_fundraiser_sustainers_donation_settings_form_amounts',
+        'wrapper' => 'recurring-ask-amounts',
+        'method' => 'replace',
+        'effect' => 'fade',
+      ),
+    );
+
+    // Additional fundraiser settings.
+    $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_show_other_amount'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show other amount option'),
+      '#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list ' .
+        'of Donation Amounts.'),
+      '#default_value' => isset($node->recurring_show_other_amount) ? $node->recurring_show_other_amount : variable_get('fundraiser_default_other', TRUE),
+    );
+    $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_minimum_donation_amount'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Minimum donation amount'),
+      '#description' => t('The minimum acceptable donation amount.'),
+      '#default_value' => isset($node->recurring_minimum_donation_amount) ?
+        number_format($node->recurring_minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
+    );
+    foreach ($form['#validate'] as $index => $callback) {
+      if ($callback == '_fundraiser_form_amounts_validate') {
+        // Override.
+        $form['#validate'][$index] = '_fundraiser_sustainers_form_amounts_validate';
+      }
+    }
+  }
+}
+
+/**
+ * Callback handler for the donation ask amount form #ajax.
+ */
+function _fundraiser_sustainers_donation_settings_form_amounts(&$form, &$form_state) {
+  return $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_donation_amounts'];
+}
+
+/**
+ * Validate handler for amounts configuration.
+ */
+function _fundraiser_sustainers_form_amounts_validate($form, &$form_state) {
+  // First, if one-time ask amounts are relevant, call their validator.
+  if ($form_state['values']['recurring_setting'] != 'always') {
+    _fundraiser_form_amounts_validate($form, $form_state);
+
+    if (empty($form_state['values']['recurring_dual_ask_amounts'])) {
+      // And that's all we need to do if recurring ask amounts aren't relevant.
+      return;
+    }
+  }
+
+  // Check the ask amounts, if we have a label and we dong have an amount, throw a fit.
+  // If we have neither, assume it's meant to be empty and leave it be (it will be removed).
+  $amounts = $form_state['values']['recurring_amount_wrapper']['recurring_donation_amounts'];
+  foreach ($amounts as $index => $amount_set) {
+    if (!empty($amount_set['amount']) && empty($amount_set['label'])) {
+      form_set_error('recurring_amount_wrapper][recurring_donation_amounts][' . $index . '][label',
+        t('The label cannot be empty when an amount is set.'));
+    }
+    if (empty($amount_set['amount']) && !empty($amount_set['label'])) {
+      form_set_error('recurring_amount_wrapper][recurring_donation_amounts][' . $index . '][amount',
+        t('The amount cannot be empty when a label is set.'));
+    }
+    if (!is_numeric($amount_set['amount']) && !empty($amount_set['amount'])) {
+      form_set_error('recurring_amount_wrapper][recurring_donation_amounts][' . $index . '][amount',
+        t('The amount must be a number.'));
+    }
+  }
+
+  // Checking the minimum amount.
+  foreach ($amounts as $amount) {
+    $this_amount = empty($amount['amount']) ? 0 : floatval($amount['amount']);  // Make sure we're cast from string.
+    if (empty($amount['remove']) && $this_amount > 0 && (!isset($min) || $min > $this_amount)) {
+      $min = $this_amount;
+    }
+  }
+  // If no min ask amount is found (no ask amounts set) default to
+  // the minimum donation amount. This prevents errors when all ask amounts
+  // are removed from a donation form.
+  $minimum_donation_amount = $form_state['values']['recurring_amount_wrapper']['recurring_minimum_donation_amount'];
+  if (!empty($minimum_donation_amount)) {
+    if (!is_numeric($minimum_donation_amount)) {
+      form_set_error('recurring_amount_wrapper][recurring_minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
+    }
+    else if (!empty($min) && $min < floatval($minimum_donation_amount)) {
+      form_set_error('recurring_amount_wrapper][recurring_minimum_donation_amount', t('The minimum donation amount must not be higher than the minimum ask amount.'));
+    }
+  }
+}
+
+/**
+ * Theme the donation type options table.
+ */
+function theme_fundraiser_sustainers_donation_type_options($element) {
+  $element = $element['element'];
+  $header = array('', t('Type'), t('Donation form label'), t('Default'), t('Weight'));
+  $rows = array();
+  foreach (element_children($element) as $index) {
+    $element[$index]['weight']['#attributes']['class'] = array('donation-type-option-weight');
+    $rows[] = array(
+      'data' => array(
+        '',
+        drupal_render($element[$index]['type']),
+        drupal_render($element[$index]['label']),
+        drupal_render($element[$index]['default']),
+        drupal_render($element[$index]['weight']),
+      ),
+      'class' => array('draggable'),
+    );
+
+  }
+  drupal_add_tabledrag('fundraiser-recurring-donation-types-table', 'order', 'sibling', 'donation-type-option-weight');
+  $title = '<hr /><h4>' . t("One-time/recurring selection") . '</h4>';
+  return $title . theme('table', array('header' => $header, 'rows' => $rows,'attributes' => array('id' => 'fundraiser-recurring-donation-types-table')));
+}
+
+/**
+ * Implements hook_fundraiser_create_fundraiser_alter().
+ */
+function fundraiser_sustainers_fundraiser_create_fundraiser_alter($node) {
+  _fundraiser_sustainers_flatten_amounts($node);
+}
+
+/**
+ * Implements hook_fundraiser_update_fundraiser_alter().
+ */
+function fundraiser_sustainers_fundraiser_update_fundraiser_alter($node) {
+  _fundraiser_sustainers_flatten_amounts($node);
+}
+
+/**
+ * For the benefit of _fundraiser_webform_update_components(), which will fire subsequently
+ * if fundraiser_webform.module is active, we flatten ask amounts to a simple array.
+ * This also standardizes the "recurring_donation_amounts" array's format, which can
+ * take many forms depending on what action triggers _fundraiser_create_fundraiser().
+ */
+function _fundraiser_sustainers_flatten_amounts($node) {
+  if (isset($node->recurring_donation_amounts) && is_array($node->recurring_donation_amounts)) {
+    // Make certain they aren't flattened already.
+    $first_amount = reset($node->recurring_donation_amounts);
+    if (is_array($first_amount)) {
+      $donation_amounts = [];
+      // Do we have weights to sort by?
+      if (isset($first_amount['weight'])) {
+        usort($node->recurring_donation_amounts, function ($a, $b) {
+          return $a['weight'] < $b['weight'] ? -1 : 1;
+        });
+      }
+      foreach ($node->recurring_donation_amounts as $donation_amount) {
+        if (isset($donation_amount['amount']) && isset($donation_amount['label'])) {
+          $donation_amounts[$donation_amount['amount']] = $donation_amount['label'];
+        } else if (isset($donation_amount[0]) && isset($donation_amount[1])) {
+          // Assume the first item gives the amount and the second gives the label.
+          $donation_amounts[$donation_amount[0]] = $donation_amount[1];
+        }
+      }
+      $node->recurring_donation_amounts = $donation_amounts;
+    }
   }
 }
 
@@ -597,17 +1009,13 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
  * Insert a copy of the default map when a Fundraiser node is created.
  */
 function fundraiser_sustainers_node_insert($node) {
+  // If node is a donation type.
   if (fundraiser_is_donation_type($node->type)) {
-    // If node is a donation type.
-    $sustainers_node = array(
-      'nid' => $node->nid,
-      'recurring_setting' => $node->recurring_setting,
-    );
-    _fundraiser_sustainers_update_sustainers_node($sustainers_node);
+    _fundraiser_sustainers_update_sustainers_node($node);
   }
 
+  // And if we have a default map.
   if (fundraiser_is_donation_type($node->type) && module_exists('salesforce_genmap')) {
-    // And if we have a default map.
     $nid = -1;
     if (!empty($node->clone_from_original_nid)) {
       $nid = $node->clone_from_original_nid;
@@ -623,18 +1031,103 @@ function fundraiser_sustainers_node_insert($node) {
 }
 
 /**
- * Implements hook_node_load().
+ * Implements hook_fundraiser_get_fundraiser_alter().
  */
-function fundraiser_sustainers_node_load($nodes, $types) {
-  foreach ($nodes as $node) {
-    // If this isn't a fundraiser type, ignore it.
-    if (fundraiser_is_donation_type($node->type)) {
-      // Get the fundraiser information.
-      $fundraiser_sustainers = _fundraiser_sustainers_get_sustainers_node_by_nid($node->nid);
-      // Merge data from fundraiser with node. Default to user_choice if no entry yet.
-      $nodes[$node->nid]->recurring_setting = isset($fundraiser_sustainers->recurring_setting) ?
-        $fundraiser_sustainers->recurring_setting : 'user_choice';
+function fundraiser_sustainers_fundraiser_get_fundraiser_alter($fundraiser) {
+  // Get the fundraiser information.
+  $fundraiser_sustainers = _fundraiser_sustainers_get_sustainers_node_by_nid($fundraiser->nid);
+  // Merge data from fundraiser with node. Default to user_choice if no entry yet.
+  $fundraiser->recurring_setting = isset($fundraiser_sustainers->recurring_setting) ?
+    $fundraiser_sustainers->recurring_setting : 'user_choice';
+  if (isset($fundraiser_sustainers->recurring_donation_amounts)) {
+    $donation_amounts = explode('|||', $fundraiser_sustainers->recurring_donation_amounts);
+    $donation_amounts = array_unique($donation_amounts);
+    $exploded_amounts = array();
+    foreach ($donation_amounts as $donation_amount) {
+      $exploded_amounts[] = explode('|', $donation_amount);
     }
+    $fundraiser->recurring_donation_amounts = $exploded_amounts;
+  }
+  foreach (['show_other_amount', 'minimum_donation_amount', 'default_amount', 'dual_ask_amounts',
+    'donation_type_component', 'donation_type_options', 'default_donation_type'] as $name)
+  {
+    $fundraiser->{"recurring_$name"} = isset($fundraiser_sustainers->{$name}) ? $fundraiser_sustainers->{$name} : NULL;
+  }
+  if (empty($fundraiser->recurring_default_donation_type)) {
+    // Set a default of "NO_RECURR" (i.e., one-time) for brand new or legacy forms that lack a default donation type.
+    $fundraiser->recurring_default_donation_type = 'NO_RECURR';
+  }
+  if (isset($fundraiser_sustainers->donation_type_help_text)) {
+    // Could be blank. That's okay.
+    $fundraiser->recurring_donation_type_help_text = $fundraiser_sustainers->donation_type_help_text;
+  }
+
+  // If fundraiser_webform.module is enabled, webform component values can override
+  // the ask amounts we just loaded.
+  if (module_exists('fundraiser_webform')) {
+    $field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'recurring_amount');
+    if (!empty($field)) {
+      $unserialized_extra = isset($field->extra) ? unserialize($field->extra) : array();
+      $amounts = $unserialized_extra;
+      if (isset($amounts['items'])) {
+        $amounts = preg_split('/\n/', trim($amounts['items']));
+        $amounts = array_unique($amounts);
+        $donation_amounts = array();
+        for ($i = 0; $i < count($amounts); ++$i) {
+          $donation_amounts[] = explode('|', $amounts[$i]);
+        }
+        $fundraiser->recurring_donation_amounts = $donation_amounts;
+      }
+      if (!empty($field->value)) {
+        $fundraiser->recurring_default_amount = $field->value;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_node_presave().
+ */
+function fundraiser_sustainers_node_presave($node) {
+  // If this isn't a fundraiser type, ignore it.
+  if (fundraiser_is_donation_type($node->type) && isset($node->recurring_amount_wrapper)) {
+    // Check the submission to remove the donation amounts marked and (optionally) set the default.
+    $node->recurring_default_amount = NULL;
+    foreach ($node->recurring_amount_wrapper['recurring_donation_amounts'] as $index => $donation_amount) {
+      // If the remove marker is set.
+      if (isset($donation_amount['remove']) && $donation_amount['remove'] == 1) {
+        unset($node->recurring_amount_wrapper['recurring_donation_amounts'][$index]);
+      }
+      unset($node->recurring_amount_wrapper['recurring_donation_amounts'][$index]['remove']);
+      // Or if the values aren't set.
+      if (empty($donation_amount['label']) && empty($donation_amount['amount'])) {
+        unset($node->recurring_amount_wrapper['recurring_donation_amounts'][$index]);
+      }
+      unset($node->recurring_amount_wrapper['recurring_donation_amounts'][$index]['remove']);
+      // If the default amount box is checked.
+      if (!empty($donation_amount['default_amount'])) {
+        $node->recurring_default_amount = $donation_amount['amount'];
+      }
+    }
+    // Sort and serialize the donation type options and labels.
+    if (!empty($node->donation_type_options)) {  // Only if potentially new configuration is coming from the node edit form.
+      uasort($node->donation_type_options, function ($a, $b) {
+        return ($a['weight'] < $b['weight']) ? -1 : 1;
+      });
+      $donation_type_options = array();
+      foreach ($node->donation_type_options as $type => $settings) {
+        $donation_type_options[] = "$type|" . $settings['label'];
+      }
+      $node->recurring_donation_type_options = $donation_type_options;
+      unset($node->donation_type_options);
+    }
+    // Set the donation amounts where we expect them to be for processing.
+    // These are buried under amount_wrapper because we set 'TREE' on that in the form.
+    $node->recurring_donation_amounts = $node->recurring_amount_wrapper['recurring_donation_amounts'];
+    $node->recurring_show_other_amount = $node->recurring_amount_wrapper['recurring_show_other_amount'];
+    $node->recurring_minimum_donation_amount = is_numeric($node->recurring_amount_wrapper['recurring_minimum_donation_amount']) ?
+      $node->recurring_amount_wrapper['recurring_minimum_donation_amount'] : variable_get('fundraiser_default_minimum', 10.00);
+    unset($node->recurring_amount_wrapper);
   }
 }
 
@@ -644,11 +1137,7 @@ function fundraiser_sustainers_node_load($nodes, $types) {
 function fundraiser_sustainers_node_update($node) {
   // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
-    $sustainers_node = array(
-      'nid' => $node->nid,
-      'recurring_setting' => $node->recurring_setting,
-    );
-    _fundraiser_sustainers_update_sustainers_node($sustainers_node);
+    _fundraiser_sustainers_update_sustainers_node($node);
   }
 }
 
@@ -854,7 +1343,7 @@ function fundraiser_sustainers_user_overview($user, $did = NULL) {
     else {
       // Else display the list.
       // Get the whole set of user donations (in case there's more than just this one). IIF the user owns this one.
-      $donations_header = array('Amount', 'Start Date', 'Next Charge Date', 'Expire Date', 'Status');
+      $donations_header = array('Amount', 'Start Date', 'Next Charge Date', 'Final Charge Date', 'Status');
       $donations_rows = array();
       foreach ($donations as $master_donation) {
         $this_donation = fundraiser_donation_get_donation($master_donation->master_did);
@@ -912,24 +1401,160 @@ function fundraiser_sustainers_fundraiser_field_info() {
       'items' => 'recurs|Yes',
       'multiple' => 1,
     ),
+    '#node_extra_settings' => array('description' => TRUE, 'multiple' => TRUE),  // Make these updatable.
     '#allow_update' => 1,
     '#allow_respawn' => 1,
     '#reset_value' => 1,
     '#create_callback' => '_fundraiser_sustainers_recurs_monthly_field_create',
+    '#webform_component_alter_callback' => '_fundraiser_sustainers_recurs_monthly_field_component_alter',
   );
-
+  // Recurring ask amounts fields. Copy as much as possible from one-time donation fields.
+  $one_time_fields = fundraiser_fundraiser_field_info();
+  $fields['donation']['recurring_amount'] = $one_time_fields['donation']['amount'];
+  $fields['donation']['recurring_amount']['#title'] = t('Please select your tax-deductible gift amount below');
+  $fields['donation']['recurring_amount']['#create_callback'] = '_fundraiser_sustainers_recurring_amount_field_create';
+  $fields['donation']['recurring_amount']['#webform_component_alter_callback'] = '_fundraiser_sustainers_recurring_amount_field_component_alter';
+  $fields['donation']['recurring_other_amount'] = $one_time_fields['donation']['other_amount'];
+  $fields['donation']['recurring_other_amount']['#create_callback'] = '_fundraiser_sustainers_other_amount_field_create';
+  $fields['donation']['recurring_other_amount']['#validate_callback'] = '_fundraiser_sustainers_recurring_other_amount_field_validate';
+  $fields['donation']['recurring_other_amount']['#webform_component_alter_callback'] = '_fundraiser_sustainers_recurring_other_amount_field_component_alter';
   return $fields;
 }
 
 /**
- * Field create callback, adjsut the type of the recurring page shown, based on fundraiser settings.
+ * Implements hook_fundraiser_field_info_alter().
+ */
+function fundraiser_sustainers_fundraiser_field_info_alter(&$fields) {
+  // We need to play goalie on these
+  $fields['donation']['amount']['#create_callback'] = '_fundraiser_sustainers_amount_field_create';
+  $fields['donation']['other_amount']['#validate_callback'] = '_fundraiser_sustainers_other_amount_field_validate';
+}
+
+function _fundraiser_sustainers_amount_field_create($fundraiser, $field) {
+  // If the donation type is recurring-only ("always"), then use recurring ask amounts
+  // for the main "amount" field.
+  if ($fundraiser->recurring_setting == 'always') {
+    // NOTE: Changing this could break site customizations based on Springboard's dual-ask functionality.
+    // See https://docs.google.com/document/d/1EbUt8vetgaj0DAmkNfYKclX03m35QKfB3waUDnNvYLk/edit
+    $field = _fundraiser_sustainers_recurring_amount_field_create($fundraiser, $field);
+  }
+  // Otherwise, pass through to fundraiser.module.
+  else {
+    $field = _fundraiser_amount_field_create($fundraiser, $field);
+  }
+  return $field;
+}
+
+function _fundraiser_sustainers_recurring_amount_field_create($fundraiser, $field) {
+  // Spoof the recurring amount as one-time. Then we can re-use the field_create logic in fundraiser.module.
+  $onetime_donation_amounts = $fundraiser->donation_amounts;
+  $onetime_default_amount = $fundraiser->default_amount;
+  $onetime_show_other_amount = $fundraiser->show_other_amount;
+  if (isset($fundraiser->recurring_donation_amounts)) {
+    // Sometimes node_save() is invoked on a new node being constructed programmatically without
+    // these recurring config fields, in which case we rely on the one-time config.
+    $fundraiser->donation_amounts = $fundraiser->recurring_donation_amounts;
+    $fundraiser->default_amount = $fundraiser->recurring_default_amount;
+    $fundraiser->show_other_amount = $fundraiser->recurring_show_other_amount;
+  }
+  $field = _fundraiser_amount_field_create($fundraiser, $field);
+  $fundraiser->donation_amounts = $onetime_donation_amounts;
+  $fundraiser->default_amount = $onetime_default_amount;
+  $fundraiser->show_other_amount = $onetime_show_other_amount;
+  return $field;
+}
+
+function _fundraiser_sustainers_recurring_amount_field_component_alter($fundraiser, $component) {
+  $amount_component = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
+  // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
+  // will be preserved on an existing form.
+  $component['weight'] = $amount_component->weight;
+  return $component;
+}
+
+function _fundraiser_sustainers_other_amount_field_create($fundraiser, $field) {
+  $onetime_show_other_amount = $fundraiser->show_other_amount;
+  $onetime_minimum_donation_amount = $fundraiser->minimum_donation_amount;
+  if (isset($fundraiser->recurring_donation_amounts)) {
+    // Sometimes node_save() is invoked on a new node being constructed programmatically without
+    // these recurring config fields, in which case we rely on the one-time config.
+    $fundraiser->show_other_amount = $fundraiser->recurring_show_other_amount;
+    $fundraiser->minimum_donation_amount = $fundraiser->recurring_minimum_donation_amount;
+  }
+  $field = _fundraiser_other_amount_field_create($fundraiser, $field);
+  $fundraiser->show_other_amount = $onetime_show_other_amount;
+  $fundraiser->minimum_donation_amount = $onetime_minimum_donation_amount;
+  return $field;
+}
+
+function _fundraiser_sustainers_recurring_other_amount_field_component_alter($fundraiser, $component) {
+  $amount_component = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
+  // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
+  // will be preserved on an existing form.
+  $component['weight'] = $amount_component->weight + 1;
+  return $component;
+}
+
+function _fundraiser_sustainers_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
+  // This validation isn't relevant if making a recurring donation via the recurring-amount fields.
+  // Note that legacy forms can be recurring always and not have recurring-amount fields.
+  if (
+    ($form['#node']->recurring_setting == 'always' && isset($submission_fields['recurring_amount']))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
+      && (is_array($submission_fields['recurs_monthly']) ? !empty($submission_fields['recurs_monthly']['recurs'])
+        : $submission_fields['recurs_monthly'] == 'recurs')
+    )
+  ) return;
+  // Pass through.
+  return _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value);
+}
+
+function _fundraiser_sustainers_recurring_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
+  // This validation is only relevant if making a recurring donation via the recurring-amount fields.
+  if (
+    empty($form['#node']->recurring_dual_ask_amounts)
+    || (is_array($submission_fields['recurs_monthly']) ? empty($submission_fields['recurs_monthly']['recurs'])
+      : $submission_fields['recurs_monthly'] != 'recurs')
+  ) return;
+  // Check for confusing selection.
+  if (!empty($submission_fields['recurring_amount']) && $submission_fields['recurring_amount'] != "other" && !empty($submission_fields['recurring_other_amount'])) {
+    return array(
+      'recurring_amount' => t('You have entered a custom amount and selected a set amount. Please clarify which amount you ' .
+        'intend to give, if you want to give the amount that appears in the other box, please select Other from ' .
+        'the radio buttons.'),
+      'recurring_other_amount' => '',
+    );
+  }
+  $value = $submission_fields['recurring_amount'];
+  // Look for other amount if set.
+  if ($value == 'other') {
+    $value = $submission_fields['recurring_other_amount'];
+  }
+  // Check for valid value.
+  if (!preg_match('/^\d*(\.\d*)?$/', $value)) {
+    return array('recurring_other_amount' => t('Donation amount must be in a valid number format. No commas and only one decimal point.'));
+  }
+  // Check for minimum amount.
+  $fundraiser = _fundraiser_get_fundraiser_by_nid($form['#node']->nid);
+  $minimum_donation_amount = !empty($fundraiser->recurring_minimum_donation_amount) ?
+    $fundraiser->recurring_minimum_donation_amount :  variable_get('fundraiser_default_minimum', 10.00);
+  $minimum_donation_amount = number_format($minimum_donation_amount, 2);
+  if ($value < $minimum_donation_amount) {
+    return array('recurring_other_amount' => t('Your donation amount must be greater than or equal to @min_amount.',
+      array('@min_amount' => $minimum_donation_amount)));
+  }
+}
+
+/**
+ * Field create callback, adjust the type of the recurring page shown, based on fundraiser settings.
  */
 function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field) {
-  // If recurring_settingdon't exist, drop the recurring field.
+  // If recurring_setting doesn't exist, drop the recurring field.
   if (empty($fundraiser->recurring_setting)) {
     return FALSE;
   }
-  // If the show other options is disallowed, unset it.
+  // If the form is always-recurring, hide the donation-type selector.
   if ($fundraiser->recurring_setting == 'always') {
     $field['#type'] = 'hidden';
     $field['#extra'] = array(
@@ -938,8 +1563,8 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
     );
     $field['#value'] = 'recurs';
   }
-  // If the show other options is disallowed, unset it.
-  if ($fundraiser->recurring_setting == 'never') {
+  // If the form is never-recurring, hide the donation-type selector.
+  else if ($fundraiser->recurring_setting == 'never') {
     $field['#type'] = 'hidden';
     $field['#extra'] = array(
       'description' => '',
@@ -947,8 +1572,89 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
     );
     $field['#value'] = 'NO_RECURR';
   }
+  // If component type hasn't been set, this is a legacy form and we haven't don't have enough config info yet, so leave it alone.
+  else if (empty($fundraiser->recurring_donation_type_component)) {
+    $field['#node_extra_settings']['description'] = FALSE;
+    $field['#node_extra_settings']['multiple'] = FALSE;
+  }
+  // If the form is user-choice, and we have enough info, configure the component accordingly.
+  else if ($fundraiser->recurring_setting == 'user_choice') {
+    // Set the "multiple" attribute: TRUE for a checkbox, FALSE for radios.
+    $field['#extra']['multiple'] = empty($fundraiser->recurring_donation_type_component) ?
+      TRUE : ($fundraiser->recurring_donation_type_component == 'checkbox');
+    // Use the help text given in the node edit form.
+    if (isset($fundraiser->recurring_donation_type_help_text)) {
+      $field['#extra']['description'] = t($fundraiser->recurring_donation_type_help_text);
+    }
+    // Was a non-checkbox (i.e., radios) component requested?
+    if (!$field['#extra']['multiple']) {
+      // Use the options and default value given in the node edit form.
+      if (!empty($fundraiser->recurring_donation_type_options)) {
+        $field['#extra']['items'] = is_array($fundraiser->recurring_donation_type_options) ?  // Array comes from node edit form, string comes from DB.
+          implode("\n", $fundraiser->recurring_donation_type_options) : str_replace('|||', "\n", $fundraiser->recurring_donation_type_options);
+        $field['#node_extra_settings']['items'] = TRUE;  //@TODO: If we ever make items configurable from the node edit form for checkbox components, move this up to fundraiser_sustainers_fundraiser_field_info().
+      }
+      if (!empty($fundraiser->recurring_default_donation_type)) {
+        $field['#value'] = $fundraiser->recurring_default_donation_type;
+      }
+    }
+    // If fundraiser_webform is the "glue" module, look for a pre-existing component.
+    if (module_exists('fundraiser_webform')) {
+      foreach ($fundraiser->webform['components'] as $component) {
+        if ($component['form_key'] == 'recurs_monthly') {
+          if ($component['type'] != 'select') {
+            // Not allowed! It has to be a select, so delete and re-create.
+            _fundraiser_webform_delete_component($fundraiser->nid, 'recurs_monthly');
+          } else if ($component['extra']['multiple'] != $field['#extra']['multiple']) {
+            // Toggle component title display on/off when switching between checkbox and radios.
+            $field['#extra']['title_display'] = $field['#extra']['multiple'] ? 'before' : 'none';
+            $field['#node_extra_settings']['title_display'] = TRUE;
+            // If switching from radios to checkbox, also make sure we overwrite old selection items.
+            if ($field['#extra']['multiple']) {
+              $field['#node_extra_settings']['items'] = TRUE;  //@TODO: If we ever make items configurable from the node edit form for checkbox components, we can lose this.
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
   // Return the field to be created. Aka: user_choice
   return $field;
+}
+
+/**
+ * Component alter callback to ensure field is placed correctly on the webform.
+ * Note: this only gets called when fundraiser_webform is the "glue module."
+ */
+function _fundraiser_sustainers_recurs_monthly_field_component_alter($fundraiser, $component) {
+  if (!empty($fundraiser->recurring_dual_ask_amounts)) {
+    // For a dual-ask form, we need to place the recurs_monthly component in the
+    // same fieldset as the ask amounts component, and above it.
+    $amount_component = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
+    $component['pid'] = $amount_component->pid;
+    if ($component['weight'] > $amount_component->weight) {
+      // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
+      // will be preserved on an existing form, unless we're switching fieldsets (see the delete below).
+      $component['weight'] = $amount_component->weight - 1;
+    }
+    foreach ($fundraiser->webform['components'] as $old_component) {
+      if ($old_component['form_key'] == 'recurs_monthly') {
+        if ($component['pid'] != $old_component['pid']) {
+          // Preserve the existing title.
+          $component['name'] = $old_component['name'];
+          // Preserve the existing items and default too, IF the old and new components are checkbox.
+          if ($component['extra']['multiple'] && $old_component['extra']['multiple']) {
+            $component['extra']['items'] = $old_component['extra']['items'];
+            $component['value'] = $old_component['value'];
+          }
+          // To change the component's pid, delete it and let fundraiser_webform recreate.
+          _fundraiser_webform_delete_component($fundraiser->nid, 'recurs_monthly');
+        }
+      }
+    }
+  }
+  return $component;
 }
 
 /**
@@ -960,29 +1666,72 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
  */
 function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   // Find out whether the form has a checkbox/radio field called 'recurs_monthly'.
-  $has_recurring_field = _fundraiser_sustainers_form_has_exposed_recurring_field($form['#node']->nid);
-
-  // Nothing to do if the recurring field is not shown.
-  if (empty($has_recurring_field['visible'])) {
-    return;
-  }
-
-  // Set up the values that we're going to require in the States array. If it's a select list or
-  // radio buttons, check for 'value'. Otherwise, it's a checkbox, so check for 'checked' == FALSE.
-  if ($has_recurring_field['settings']['type'] == 'select' || $has_recurring_field['settings']['type'] == 'radios') {
-    $required_values = array('!value' => 'recurs');
-  }
-  else {
-    $required_values = array('checked' => FALSE);
-  }
-
-  $count_enabled_gateways = 0;
-  $supporting_gateways = array();
-  $selector = ':input[name*=recurs_monthly]';
 
   // Get the fields we'll be needing to work with.
   $payment_method_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'payment_method');
   $recurs_monthly_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurs_monthly');
+  $onetime_amounts_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'amount');
+  $onetime_other_amount_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'other_amount');
+  $recurring_amounts_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurring_amount');
+  $recurring_other_amount_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurring_other_amount');
+
+  // Nothing to do if the recurring field is not shown.
+  if (empty($recurs_monthly_field)) {
+    return;
+  }
+
+  // Does the form have dual ask amounts?
+  $dual_ask_amounts = !empty($form['#node']->recurring_dual_ask_amounts);
+  if ($dual_ask_amounts) {
+    $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_sustainers') . '/js/dual_ask_validation.js';
+    if(isset($form['#node']->recurring_minimum_donation_amount)) {
+      $form['#attached']['js'][] = array(
+        'data' => array(
+          'fundraiserWebform' => array(
+            'recurring_minimum_donation_amount' => $form['#node']->recurring_minimum_donation_amount
+          ),
+        ),
+        'type' => 'setting',
+      );
+    }
+  }
+
+  // Set up the values that we're going to require in the States array. If it's a select list or
+  // radio buttons, check for 'value'. Otherwise, it's a checkbox, so check for 'checked' == FALSE.
+  if ($recurs_monthly_field['#type'] == 'select' || $recurs_monthly_field['#type'] == 'radios') {
+    $onetime_values = array('value' => 'NO_RECURR');
+    $recurring_values = array('value' => 'recurs');
+  }
+  else {
+    $onetime_values = array('checked' => FALSE);
+    $recurring_values = array('checked' => TRUE);
+  }
+
+  $count_enabled_gateways = 0;
+  $supporting_gateways = array();
+  $selector = ($recurs_monthly_field['#type'] == 'select') ? 'select[name*=recurs_monthly]' : ':input[name*=recurs_monthly]';
+
+  // Hide irrelevant fields.
+  if (!$dual_ask_amounts) {
+    // Even if the user does have a choice, if there's only one set of ask amounts, hide the recurring fields.
+    if (!empty($recurring_amounts_field)) {
+      $recurring_amounts_field['#prefix'] = '<div style="display:none;">';
+      $recurring_amounts_field['#suffix'] = '</div>';
+      $recurring_amounts_field['#required'] = FALSE;
+      $recurring_amounts_field['#type'] = 'hidden';
+    }
+    if (!empty($recurring_other_amount_field)) {
+      $recurring_other_amount_field['#prefix'] = '<div style="display:none;">';
+      $recurring_other_amount_field['#suffix'] = '</div>';
+      $recurring_other_amount_field['#type'] = 'hidden';
+    }
+    // Also hide the one-time and recurring radios if user doesn't have a choice of donation type.
+    if ($form['#node']->recurring_setting != 'user_choice') {
+      $recurs_monthly_field['#prefix'] = '<div style="display:none;">';
+      $recurs_monthly_field['#suffix'] = '</div>';
+      $recurs_monthly_field['#type'] = 'hidden';
+    }
+  }
 
   // Check if each gateway allows recurring payments, and use the States API if it doesn't.
   // Else, if it does, add its name to the 'supporting_gateways' array for showing/hiding the 'recurring' field.
@@ -997,13 +1746,13 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
         (!isset($this_gateway['allow_recurring'])
           || !_fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $payment_method['method'])
         )
-        && $has_recurring_field['visible'] == TRUE
+        && $recurs_monthly_field['#type'] != 'hidden'
       ) {
         $payment_method_name = $payment_method['method'];
         $payment_method_field[$payment_method_name] = array(
           '#states' => array(
             'visible' => array(
-              $selector => $required_values
+              $selector => $onetime_values
             ),
           ),
         );
@@ -1018,31 +1767,69 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   if (empty($supporting_gateways)) {
     // There are no gateways enabled that support recurring, hide the field.
     $recurs_monthly_field['#access'] = FALSE;
+    $recurring_amounts_field['#access'] = FALSE;
+    $recurring_other_amount_field['#access'] = FALSE;
   }
   else {
     // Save the payment method field.
     $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'payment_method', $payment_method_field);
 
-    // Modify the 'recurs_monthly' field. Set the #states array if there is a recurring-enabled
-    // gateway; else, set the field to 'hidden' and give it a value of 'no_recurr'.
-    if ($count_enabled_gateways > 1) {
-      $recurs_monthly_field['#states'] = array(
-        'invisible' => array(),
-      );
-      foreach ($supporting_gateways as $supporting_gateway) {
-        $selector = ':input[name*=payment_method],value="' . $supporting_gateway . '"';
-        $recurs_monthly_field['#states']['invisible'][$selector] = array('!value' => $supporting_gateway);
+    // Toggle the recurring option.
+    if ($dual_ask_amounts) {
+      // Hand this to a pre-render callback, which can access individual radio buttons.
+      $recurs_monthly_field['#recurring_gateways'] = $supporting_gateways;
+      $recurs_monthly_field['#pre_render'][] = 'fundraiser_sustainers_recurs_monthly_pre_render';
+    } else {
+      // For a single checkbox, the whole element toggles off when payment method is not recurring-compatible.
+      $conditions = array();
+      foreach ($supporting_gateways as $gateway) {
+        $conditions[] = array('value' => $gateway);
       }
+      $recurs_monthly_field['#states']['visible'] = array(
+        ':input[name*=payment_method]' => $conditions
+      );
+    }
+
+    // Toggle one-time and recurring ask amounts.
+    if ($dual_ask_amounts) {
+      $onetime_amounts_field['#states']['visible'][$selector] = $onetime_values;
+      $onetime_amounts_field['#states']['required'][$selector] = $onetime_values;
+      $onetime_amounts_field['#required'] = FALSE;
+      $onetime_other_amount_field['#states']['visible'][$selector] = $onetime_values;
+      $recurring_amounts_field['#states']['visible'][$selector] = $recurring_values;
+      $recurring_amounts_field['#states']['required'][$selector] = $recurring_values;
+      $recurring_amounts_field['#required'] = FALSE;
+      $recurring_other_amount_field['#states']['visible'][$selector] = $recurring_values;
     }
   }
 
-  // Save the recurring field.
+  // Save the updated fields.
+  $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'amount', $onetime_amounts_field);
+  $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'other_amount', $onetime_other_amount_field);
   $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'recurs_monthly', $recurs_monthly_field);
+  $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'recurring_amount', $recurring_amounts_field);
+  $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'recurring_other_amount', $recurring_other_amount_field);
 
   // Add second validation handler that prevents sending a recurring donation
   // to a non-recurring-enabled payment gateway.
+  array_unshift($form['#submit'], 'fundraiser_sustainers_donation_form_submit');
   $form['#validate'][] = 'fundraiser_sustainers_recurring_conflict_validate';
   return $form;
+}
+
+function fundraiser_sustainers_recurs_monthly_pre_render($element) {
+  $conditions = array();
+  foreach ($element['#recurring_gateways'] as $gateway) {
+    $conditions[] = array('value' => $gateway);
+  }
+  $element['recurs']['#states']['visible'] = array(
+    ':input[name*=payment_method]' => $conditions
+  );
+  // Move description from radio group to the monthly button specifically, so it will go with that button's #state.
+  $element['recurs']['#description'] = $element['#description'];
+  unset($element['#description']);
+
+  return $element;
 }
 
 /**
@@ -1052,7 +1839,7 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
  * chose a payment method that does not support recurring payments. This should be caught by
  * client-side validation but this catches any submission that makes it through.
  */
-function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state) {
+function fundraiser_sustainers_recurring_conflict_validate($form, $form_state) {
   // Ensure we have submitted values and then flatten the array.
   if (empty($form_state['values']['submitted'])) {
     return;
@@ -1060,14 +1847,13 @@ function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state)
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
 
   // Only run through this validation if the form submit is recurring.
-  $recurring_donation = FALSE;
   if (
     empty($submission_fields['recurs_monthly'])
-    || empty($submission_fields['recurs_monthly']['recurs'])
-    || (
-      !empty($submission_fields['recurs_monthly']['recurs'])
-      && ($submission_fields['recurs_monthly']['recurs'] != 'recurs')
-    )
+    || (is_scalar($submission_fields['recurs_monthly']) && $submission_fields['recurs_monthly'] != 'recurs')
+    || (is_array($submission_fields['recurs_monthly']) && (
+      empty($submission_fields['recurs_monthly']['recurs'])
+      || $submission_fields['recurs_monthly']['recurs'] != 'recurs'
+    ))
   ) {
     return;
   }
@@ -1088,41 +1874,70 @@ function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state)
 }
 
 /**
- * Helper function, find out if a node has recurring payments as an option.
- * It also gets the field's settings.
+ * Our donation form submit handler runs before all other fundraiser- and webform-related handlers.
  */
-function _fundraiser_sustainers_form_has_exposed_recurring_field($nid) {
-  $webform_node = node_load($nid);
-
-  // If the 'recurring_setting' is something other than 'user_choice',
-  // that means the 'recurring' value on the webform are not exposed
-  // to the visitor and thus we can go ahead and return FALSE values.
-  if ($webform_node->recurring_setting != 'user_choice') {
-    return array(
-      'visible' => FALSE
-    );
-  } else {
-
-    // Loop through webform components. When we find the one we want, get its settings.
-    foreach ($webform_node->webform['components'] as $key => $component_contents) {
-      if ($component_contents['form_key'] == 'recurs_monthly' && $component_contents['type'] == 'select') {
-        // What type of selection component is it?
-        if ($component_contents['extra']['aslist'] == 1) {
-          $type = 'select';
-        } else {
-          $type = !empty($component_contents['extra']['multiple']) ? 'checkbox' : 'radios';
+function fundraiser_sustainers_donation_form_submit(&$form, &$form_state) {
+  // Are there recurring ask amounts?
+  if (!empty($form['#node']->recurring_dual_ask_amounts)) {
+    // Is it a recurring donation being submitted?
+    $recurs_monthly_value = _fundraiser_sustainers_get_form_state_value($form_state, 'recurs_monthly');
+    if (is_array($recurs_monthly_value)) {  // Checkbox element's value is reported as an array.
+      $recurs_monthly_value = isset($recurs_monthly_value['recurs']) ? $recurs_monthly_value['recurs'] : '';
+    }
+    if ($recurs_monthly_value === 'recurs') {
+      $recurring_amount = _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_amount');
+      // Are there recurring-amounts fields? (Legacy forms might not have them.)
+      if ($recurring_amount !== NULL) {
+        // Replace the standard donation amount with the donor's recurring amount.
+        if ($recurring_amount == 'other') {
+          $recurring_amount = _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_other_amount');
         }
+        if (empty($recurring_amount) || !_fundraiser_sustainers_update_form_state_value($form_state, 'amount', $recurring_amount)) {
+          // Problem! We couldn't find a recurring amount for this recurring donation.
+          _fundraiser_sustainers_update_form_state_value($form_state, 'amount', NULL);
+          form_set_error('recurs_monthly', "Thank you for choosing a monthly donation! However, no monthly donation amount was set, so your donation could not be processed.");
+        }
+      }
+    } else {
+      // For a one-time donation, we don't want a recurring amount saved to the webform.
+      _fundraiser_sustainers_update_form_state_value($form_state, 'recurring_amount', NULL);
+      _fundraiser_sustainers_update_form_state_value($form_state, 'recurring_other_amount', NULL);
+    }
+  }
+}
 
-        return array(
-          'visible' => TRUE,
-          'settings' => array(
-            'type' => $type,
-            'multiple' => !empty($component_contents['extra']['multiple'])
-          ),
-        );
+function _fundraiser_sustainers_update_form_state_value(&$form_state, $key, $value) {
+  return _fundraiser_sustainers_update_form_state_value_recursion($form_state['values'], $key, $value);
+}
+function _fundraiser_sustainers_update_form_state_value_recursion(&$array, $key, $value) {
+  foreach ($array as $candidate_key => $candidate_value) {
+    if ($candidate_key == $key) {
+      $array[$key] = $value;
+      return TRUE;
+    }
+    if (is_array($candidate_value)) {
+      if (_fundraiser_sustainers_update_form_state_value_recursion($array[$candidate_key], $key, $value)) {
+        return TRUE;
       }
     }
   }
+  return FALSE;
+}
+
+function _fundraiser_sustainers_get_form_state_value($form_state, $key) {
+  return _fundraiser_sustainers_get_form_state_value_recursion($form_state['values'], $key);
+}
+function _fundraiser_sustainers_get_form_state_value_recursion($array, $key) {
+  foreach ($array as $candidate_key => $candidate_value) {
+    if ($candidate_key == $key) {
+      return $candidate_value;
+    }
+    if (is_array($candidate_value)) {
+      $value = _fundraiser_sustainers_get_form_state_value_recursion($candidate_value, $key);
+      if (!empty($value)) return $value;
+    }
+  }
+  return NULL;
 }
 
 /**
@@ -1160,6 +1975,19 @@ function fundraiser_sustainers_fundraiser_donation_information_table_alter(&$var
             'node/' . $master_donation->node->nid . '/submission/' . $master_donation->sid))));
       }
     }
+  }
+}
+
+/**
+ * Implements hook_webform_submission_render_alter().
+ */
+function fundraiser_sustainers_webform_submission_render_alter(&$renderable) {
+  // Don't display the recurring amount fields on regular webform submission view.
+  if (isset($renderable['donation']['recurring_amount'])) {
+    unset($renderable['donation']['recurring_amount']);
+  }
+  if (isset($renderable['donation']['recurring_other_amount'])) {
+    unset($renderable['donation']['recurring_other_amount']);
   }
 }
 
@@ -1207,7 +2035,7 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
   $form['fundraiser_sustainers']['fundraiser_cron']['fundraiser_sustainers_create_series_cron'] = array(
     '#type' => 'checkbox',
     '#title' => t('Create the recurring series on cron.'),
-    '#description' => t("Enable this option to create the recurring series using Drupal's cron queue."),
+    '#description' => t("Enable this option to create the recurring series using Drupal's cron queue instead of in real time."),
     '#default_value' => variable_get('fundraiser_sustainers_create_series_cron', 0),
   );
 
@@ -1306,7 +2134,7 @@ function fundraiser_update_cron_settings($form, $form_state) {
 }
 
 /**
- * Provide administrative form for editting a donation set.
+ * Provide administrative form for editing a donation set.
  */
 function fundraiser_sustainers_edit_form($did) {
   // Add js and css to the form.
@@ -1344,37 +2172,13 @@ function fundraiser_sustainers_edit_form($did) {
     $next_donation = fundraiser_donation_get_donation($remaining[0]->did);
   }
 
-  $number = '';
-  $type = '';
-
-  // Use next donation in case it has differnt info than the master donation.
-  if (isset($next_donation->data['cardonfile']) && module_exists('commerce_cardonfile')) {
+  if (!empty($next_donation->data['cardonfile'])) {
     $cardonfile = commerce_cardonfile_load($next_donation->data['cardonfile']);
-    if (!empty($cardonfile)) {
-      $number = '**** **** **** '  . $cardonfile->card_number;
-      $type = t('Card');
-    }
   }
-
-  // Gather further donation data.
-  $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($did);
-  $payment_info = '<div id="payment-info">' .
-  '<h2>Recurring Payment Info</h2>' .
-  '<dl>' .
-  '<dt>Recurring Donation Amount</dt>' .
-  '<dd>' . $next_donation->donation['amount_formatted'] . '</dd>' .
-  '<dt>Recurring Charges Processed</dt>' .
-  '<dd>' . _fundraiser_sustainers_count_donations_recurr_processed($did) . '</dd>' .
-  '<dt>Recurring Charges Remaining</dt>' .
-  '<dd>' . $remaining_donation_count . '</dd>';
-
-  if (!empty($number) && !empty($type)) {
-    $payment_info .= '<dt>'. $type . ' Number</dt>' .
-    '<dd>' . $number . '</dd>';
+  else {
+    $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
   }
-
-  $payment_info .= '</dl>' .
-  '</div>';
+  $payment_info = fundraiser_sustainers_donation_payment_info($next_donation, $did, $cardonfile);
 
   $billing_info = '<div id="billing-info">' .
   '<h2>Billing Address</h2>' .
@@ -1462,6 +2266,7 @@ function fundraiser_sustainers_edit_form($did) {
   $cancelled = isset($next_donation->recurring->cancellation_reason) ? $next_donation->recurring->cancellation_reason : '';
 
   // Generate forms, or error messages as needed.
+  $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($did);
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $donation_amount_form_array = drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation);
     $donation_amount_form = drupal_render($donation_amount_form_array);
@@ -1490,8 +2295,36 @@ function fundraiser_sustainers_edit_form($did) {
   $donation_amount_form = '<div id="donation-amount-form"><h2>Update Donation Amount</h2>' . $donation_amount_form . '</div>';
 
   if ($remaining_donation_count > 0 && empty($cancelled)) {
-    $billing_update_form_array = drupal_get_form('fundraiser_sustainers_billing_update_form', $next_donation);
-    $billing_update_form = drupal_render($billing_update_form_array);
+    $data = array(
+      'donation' => $next_donation,
+      'calling module' => 'fundraiser_sustainers',
+      'update billing' => FALSE,
+      'update cardonfile' => FALSE,
+    );
+    if (!empty($cardonfile)) {
+      $data['card'] = $cardonfile;
+      $data['payment_fields'] = array(
+        'credit' => array(
+          'expiration_date' => array(
+            'card_expiration_month' => array(
+              '#default_value' => $cardonfile->card_exp_month,
+            ),
+            'card_expiration_year' => array(
+              '#default_value' => $cardonfile->card_exp_year,
+            ),
+          ),
+        ),
+      );
+    }
+    // Display the billing update form only if the update callback for the
+    // gatway has been defined.
+    $billing_update_form = '';
+    if (isset($donation->gateway['update callback'])) {
+      $billing_update_form_array = drupal_get_form('fundraiser_update_billing_form', $data);
+      $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
+      $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
+      $billing_update_form = drupal_render($billing_update_form_array);
+    }
   }
   elseif ($remaining_donation_count == 0) {
     $billing_update_form = $no_remaining_message;
@@ -1499,7 +2332,9 @@ function fundraiser_sustainers_edit_form($did) {
   else {
     $billing_update_form = t('This recurring donation has been cancelled.');
   }
-  $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Credit Card Information</h2>' . $billing_update_form . '</div>';
+  if (!empty($billing_update_form)) {
+    $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Payment Information</h2>' . $billing_update_form . '</div>';
+  }
 
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $cancel_form_array = drupal_get_form('fundraiser_sustainers_cancel_form', $next_donation);
@@ -1523,6 +2358,137 @@ function fundraiser_sustainers_edit_form($did) {
   return implode('', $parts);
 }
 
+function fundraiser_sustainers_donation_payment_info($next_donation, $master_did, $cardonfile = NULL) {
+  $number = '';
+  $type = '';
+
+  // Use next donation in case it has differnt info than the master donation.
+  if (!empty($cardonfile) && module_exists('commerce_cardonfile')) {
+    $number = '**** **** **** '  . $cardonfile->card_number;
+    $type = t('Card');
+  }
+
+  // Gather further donation data.
+  $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($master_did);
+  $payment_info = '<div id="payment-info">' .
+    '<h2>Recurring Donation Summary</h2>' .
+    '<dl>' .
+    '<dt>Recurring Donation Amount</dt>' .
+    '<dd>' . $next_donation->donation['amount_formatted'] . '</dd>' .
+    '<dt>Recurring Charges Processed</dt>' .
+    '<dd>' . _fundraiser_sustainers_count_donations_recurr_processed($master_did) . '</dd>' .
+    '<dt>Recurring Charges Remaining</dt>' .
+    '<dd>' . $remaining_donation_count . '</dd>';
+
+  if (!empty($number) && !empty($type)) {
+    $payment_info .= '<dt>'. $type . ' Number</dt>' .
+      '<dd>' . $number . '</dd>';
+  }
+
+  $payment_info .= '</dl>' .
+    '</div>';
+
+  return $payment_info;
+}
+
+/**
+ * Implements hook_fundraiser_update_billing_form__CALLING_MODULE__preprocess().
+ */
+function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustainers__preprocess($form, $form_state, $data) {
+  // Abort if the gateway does not support recurring payments.
+  $info = _fundraiser_get_donation_gateway($data['donation']->did);
+  if (!_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $data['donation']->donation['payment_method'])) {
+    $form['fundraiser-sustainer-billing'] = array(
+      '#markup' => '<div class="fundraiser-sustainer-no-recur-support">' . t('This payment gateway does not support recurring donations and cannot be updated.') . '</div>',
+    );
+    return $form;
+  }
+}
+
+/**
+ * Implements hook_fundraiser_update_billing_form__CALLING_MODULE__alter().
+ */
+function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustainers__alter(&$form, &$form_state, $data) {
+  if (empty($form_state['card']) && !empty($data['donation']->data['cardonfile'])) {
+    $form_state['card'] = commerce_cardonfile_load($data['donation']->data['cardonfile']);
+  }
+
+  $form['master_did'] = array(
+    '#type' => 'hidden',
+    '#value' => $data['donation']->recurring->master_did,
+  );
+
+  // Add Market Source fields for the benefit of new future payment records.
+  if (module_exists('market_source')) {
+    $market_source_keys = array_keys(_market_source_build_qs_keys());
+    $form['market_source_codes'] = array(
+      '#type' => 'container',
+      '#tree' => TRUE,
+    );
+    foreach ($data['donation']->node->webform['components'] as $component) {
+      if (in_array($component['form_key'], $market_source_keys) && $component['type'] == 'hidden') {
+        // Simply provide a hidden field and let Market Source do the rest.
+        $form['market_source_codes'][$component['form_key']] = array(
+          '#type' => 'hidden',
+          '#default_value' => $component['value'],
+        );
+      }
+    }
+    $form['#after_build'][] = 'market_source_webform_after_build';
+  }
+
+  // Add a validation hook which will move some of the form elements, needed for
+  // commerce cardonfile.
+  $form['#validate'][] = '_fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate';
+  $form['#validate'][] = 'fundraiser_sustainers_update_billing_form_validate';
+  $form['actions']['submit']['#submit'][] = 'fundraiser_sustainers_update_billing_form_submit';
+}
+
+/**
+ * Form validation handler for billing address update form.
+ */
+function fundraiser_sustainers_update_billing_form_validate($form, &$form_state) {
+  // Clean up the gateway information as needed on validation.
+  if (isset($form['#donation']->gateway)) {
+    $form_state['values'] = fundraiser_sustainers_gateway_cleanup($form['#donation']->gateway, $form_state['values']);
+  }
+}
+
+/**
+ * Form submit handler for billing address update form.
+ */
+function fundraiser_sustainers_update_billing_form_submit($form, &$form_state) {
+  $master_did = $form_state['values']['master_did'];
+  $submission_fields = $form_state['values'];
+
+  // Remove unnecessary values.
+  unset($submission_fields['master_did']);
+  unset($submission_fields['uid']);
+
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  // We only update donations to come, not ones already processed.
+  $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
+  fundraiser_sustainers_update_billing_info_in_series($donations, $submission_fields, $username);
+
+  // Use the first future donation for a template of new future donations.
+  $source_donation = reset($donations);
+
+  // Load the master donation.
+  $master_donation = fundraiser_donation_get_donation($master_did);
+  $source_donation = fundraiser_donation_get_donation($source_donation->did);
+
+  // If Market Source codes were given, put those on the new donation objects.
+  if (!empty($submission_fields['market_source_codes'])) {
+    $source_donation->new_submission_data = $submission_fields['market_source_codes'];
+  }
+
+  fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $source_donation, $submission_fields);
+
+  drupal_set_message(t('Billing information successfully updated'));
+  $form_state['redirect'] = current_path();
+}
+
 /**
  * Creates a form for donation amount update.
  */
@@ -1544,11 +2510,12 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
   );
   $form['min_amount'] = array(
     '#type' => 'hidden',
-    '#value' => isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0,
+    '#value' => isset($donation->node->recurring_minimum_donation_amount) ? $donation->node->recurring_minimum_donation_amount : (isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0),
   );
 
   $node_currency = fundraiser_get_currency_from_node($donation->node);
-  $formatted_minimum = commerce_currency_format($donation->node->minimum_donation_amount, $node_currency['code'], NULL, FALSE);
+  $min_amount = isset($donation->node->recurring_minimum_donation_amount) ? $donation->node->recurring_minimum_donation_amount : (isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : variable_get('fundraiser_default_minimum', 10.00));
+  $formatted_minimum = commerce_currency_format($min_amount, $node_currency['code'], NULL, FALSE);
 
   $form['formatted_minimum'] = array(
     '#type' => 'value',
@@ -1600,8 +2567,23 @@ function fundraiser_sustainers_donation_amount_form_validate($form, &$form_state
 function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) {
   $amount = $form_state['values']['fee_amount'];
   $formatted_amount = commerce_currency_format($amount, $form_state['values']['fee_currency_code'], NULL, FALSE);
-
   $master_did = $form_state['values']['master_did'];
+  _fundraiser_sustainers_donation_amount_form_update_donations($master_did, $amount, $formatted_amount);
+}
+
+/**
+ * Helper function for fundraiser_sustainers_donation_amount_form_submit().
+ *
+ * This function is also called from fundraiser_sustainers_upgrade_form_submit()
+ * as well as from the above submit function. Bear that in mind if altering
+ * any code here.
+ *
+ * @param $master_did
+ * @param $amount
+ * @param $formatted_amount
+ * @param $upgrade
+ */
+function _fundraiser_sustainers_donation_amount_form_update_donations($master_did, $amount, $formatted_amount, $origin = NULL) {
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   foreach ($donations as $donation) {
     $donation = fundraiser_donation_get_donation($donation->did);
@@ -1615,16 +2597,26 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
 
     fundraiser_donation_update($donation);
 
+    // Let other modules know the amount has been updated
+    module_invoke_all('fundraiser_sustainers_donation_update_amount',
+      $donation->did,
+      $donation->donation['amount']);
+
     // Add a comment.
-    global $user;
-    $username = isset($user->name) ? $user->name : 'Anonymous';
-    fundraiser_donation_comment($donation, 'The amount of this gift was changed from $@old_amount to $@new_amount on @date by @username.',
+    if (!isset($origin)) {
+      global $user;
+      $source = isset($user->name) ? $user->name : 'Anonymous';
+    }
+    else {
+      $source = $origin;
+    }
+    fundraiser_donation_comment($donation, 'The amount of this gift was changed from $@old_amount to $@new_amount on @date by @source.',
       array(
-      '@old_amount' => $donation->donation['old_amount'],
-      '@new_amount' => $donation->donation['amount'],
-      '@date' => format_date(strtotime('now')),
-      '@username' => $username,
-    ));
+        '@old_amount' => $donation->donation['old_amount'],
+        '@new_amount' => $donation->donation['amount'],
+        '@date' => format_date(strtotime('now')),
+        '@source' => $source,
+      ));
 
     // update sf queue.
     if (module_exists('salesforce_genmap')) {
@@ -1632,6 +2624,11 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
         $donation->node, $donation->did, $donation, 'donation');
     }
   }
+
+  // Update the sustainer series object with the new amount.
+ $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $master_did);
+ $fundraiser_sustainers_series->amount = $amount;
+ $fundraiser_sustainers_series->save();
 
   drupal_set_message(t('The amount of all future donations has been updated to @amount.', array('@amount' => $formatted_amount)));
 }
@@ -1760,6 +2757,12 @@ function fundraiser_sustainers_change_charge_date($master_did, $new_day) {
         salesforce_genmap_send_object_to_queue('salesforce_donation', 'update',
           $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
       }
+
+      // Fire a hook so that other modules can respond to the sustainer
+      // charge date change.
+      module_invoke_all('fundraiser_sustainers_change_charge_date',
+        $donation, strtotime(date('m/', $old_charge_date) . str_pad($new_day, 2, '0',
+          STR_PAD_LEFT) . date('/Y', $old_charge_date)));
     }
   }
 }
@@ -1776,126 +2779,6 @@ function _fundraiser_sustainers_explode_date($timestamp) {
     'second' => $date[5],
   );
   return $time;
-}
-
-/**
- * Creates form for billing address update.
- */
-function fundraiser_sustainers_billing_update_form($form, &$form_state, $donation) {
-  // Attach the js files
-  $form['#attached']['js'] = array(
-    drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js',
-    drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js',
-    drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js',
-  );
-  // Abort if the gateway does not support recurring.
-  $info = _fundraiser_get_donation_gateway($donation->did);
-  if (!_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
-    $form['fundraiser-sustainer-billing'] = array(
-      '#markup' => '<div class="fundraiser-sustainer-no-recur-support">' .
-        t('This payment gateway does not support recurring donations and cannot be updated.') .
-        '</div>',
-    );
-    return $form;
-  }
-  $form['#attributes']['class'][] = 'fundraiser-donation-form';
-  $form['master_did'] = array(
-    '#type' => 'hidden',
-    '#value' => $donation->recurring->master_did,
-  );
-  $form['uid'] = array(
-    '#type' => 'hidden',
-    '#value' => $donation->uid,
-  );
-
-  // The rest of this is based on fields generated from fundraiser.
-  $field_info = _fundraiser_field_info();
-  // The parts we need to allow for updating: donor info, billing and credit card.
-  $form['billing_information'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Billing Address'),
-    '#attributes' => array('id' => 'billing-address'),
-  );
-  $billing_fields = array_merge($field_info['donor_information'], $field_info['billing_information']);
-  foreach (element_children($billing_fields) as $field_key) {
-    $field = $billing_fields[$field_key];
-    $form['billing_information'][$field_key] = _fundraiser_sustainers_create_field_from_info($donation, $field_key, $field);
-  }
-
-  // CC info.
-  $form['payment_method'] = array(
-    '#type' => 'hidden',
-    '#value' => $donation->donation['payment_method'],
-  );
-  $form['payment_fields'] = array(
-    '#type' => 'fieldset',
-    '#title' => 'Payment Information',
-    '#attributes' => array('id' => 'credit-card-info'),
-    '#tree' => TRUE,
-  );
-  $form['payment_fields'][$donation->donation['payment_method']] = array(
-    '#type' => 'fieldset',
-    '#attributes' => array('id' => 'credit-card-info'),
-  );
-  // Pull the gateway form from the donation gateway.
-  // Once set a gateway CANNOT be changed on a donation series.
-  // Check against the gateway config for a specific form to go with this payment gateway.
-  if (isset($donation->gateway['form callback'])) {
-    $form_func = $donation->gateway['form callback'];
-    if (function_exists($form_func)) {
-      $form['payment_fields'][$donation->donation['payment_method']] += $form_func($donation->donation['payment_method']);
-    }
-  }
-
-  // And add a submit button.
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save changes'),
-  );
-  $form['#donation'] = $donation;
-
-  // Modify form displays according to callback settings.
-  // This allows any other systems to modify the available options with callbacks.
-  $form['#calling_module'] = 'fundraiser_sustainers';
-  fundraiser_display_form_fields('fundraiser_sustainers', $form, $form_state);
-
-  return $form;
-}
-
-/**
- * Afterbuild for the billing form.
- */
-function fundraiser_sustainers_billing_update_after_build($form, &$form_state) {
-  return fundraiser_donation_form_after_build($form, $form_state);
-}
-
-/**
- * Helper function, generate fields from given field_info.
- */
-function _fundraiser_sustainers_create_field_from_info($donation, $field_key, $field_info) {
-  $field = array(
-    '#type' => $field_info['#type'],
-    '#title' => t('@title', array('@title' => $field_info['#title'])),
-    '#required' => (isset($field_info['#required']) && $field_info['#required'] == 1) ? TRUE : FALSE,
-    '#default_value' => $donation->donation[$field_key],
-  );
-  if ($field_info['#type'] == 'select') {
-    $options = array();
-    $items = $field_info['#extra']['items'];
-    $items = explode("\n", $items);
-    foreach ($items as $item) {
-      $items_values = explode('|', $item);
-      $key = trim($items_values[0]);
-      $label = isset($items_values[1]) ? trim($items_values[1]) : $key;
-      if (!empty($key)) {
-        $options[$key] = $label;
-      }
-    }
-    $field['#options'] = $options;
-    $field['#multiple'] =
-      (isset($field_info['#extra']['multiple']) && $field_info['#extra']['multiple'] == 1) ? TRUE : FALSE;
-  }
-  return $field;
 }
 
 /**
@@ -1918,77 +2801,6 @@ function fundraiser_sustainers_gateway_cleanup($gateway, $submission_fields) {
   }
 
   return $submission_fields;
-}
-
-/**
- * Form validation handler for billing address update form.
- */
-function fundraiser_sustainers_billing_update_form_validate($form, &$form_state) {
-  // Submission fields are keyed according to the fields in
-  // _fundraiser_field_info().
-  // Select only the ones we want to validate with fundraiser.
-  $submission_fields = $form_state['values'];
-  // Clean up the gateway information as needed on validation.
-  if (isset($form['#donation']->gateway)) {
-    $submission_fields = fundraiser_sustainers_gateway_cleanup($form['#donation']->gateway, $submission_fields);
-  }
-
-  // If it's a credit card, do some generic validation.
-  // This is because the gateway's validation doesn't happen during a
-  // billing update.
-  $credit_card_errors = array();
-  if ($submission_fields['payment_method'] == 'credit') {
-    // This returns an array.
-    $credit_card_errors = fundraiser_commerce_generic_credit_card_validate($submission_fields['payment_fields']);
-    if (count($credit_card_errors)) {
-      foreach ($credit_card_errors as $form_key => $message) {
-        form_set_error('payment_fields][credit][' . $form_key, $message);
-      }
-    }
-  }
-
-  // This returns a boolean.
-  // From fundraiser.module.
-  $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields);
-
-  if (form_get_errors() || count($credit_card_errors) || $errors) {
-    // We've set a form_error by now.
-    drupal_set_message(t('Unable to update credit card information.'));
-  }
-}
-
-/**
- * Form submit handler for billing address update form.
- */
-function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
-  $master_did = $form_state['values']['master_did'];
-  $submission_fields = $form_state['values'];
-
-  // Clean up the gateway information.
-  if (isset($form['#donation']->gateway)) {
-    $submission_fields = fundraiser_sustainers_gateway_cleanup($form['#donation']->gateway, $submission_fields);
-  }
-
-  // Remove unnecessary values.
-  unset($submission_fields['master_did']);
-  unset($submission_fields['uid']);
-
-  global $user;
-  $username = isset($user->name) ? $user->name : 'Anonymous';
-  // We only update donations to come, not ones already processed.
-  $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
-  fundraiser_sustainers_update_billing_info_in_series($donations, $submission_fields, $username);
-
-  // Use the first future donation for a template of new future donations.
-  $source_donation = reset($donations);
-
-  // Load the master donation.
-  $master_donation = fundraiser_donation_get_donation($master_did);
-  $source_donation = fundraiser_donation_get_donation($source_donation->did);
-
-  fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $source_donation, $submission_fields);
-
-  drupal_set_message(t('Billing information successfully updated'));
 }
 
 /**
@@ -2165,7 +2977,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
     if (!isset($existing_recurring[$increment])) {
       // Create a new one donation from the source or master donation
       $new_donation = !empty($source_donation) ? _fundraiser_donation_copy($source_donation) : _fundraiser_donation_copy($donation);
-      $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
+      $new_donation->sid = $donation->sid; // Not actually submitted, it's automated, so no sid.
       // Create the new donation object, but do not process it. Processing doesn't occur till cron.
       // New donation has all of the old donation information already loaded.
 
@@ -2206,12 +3018,14 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       // Update the recurring table.
       _fundraiser_sustainers_create_recurring($recurring_donation);
 
-      // Load the newly created individual donation into salesforce_donation.
-      if (module_exists('salesforce_genmap')) {
-        $sf_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
-        salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert',
-          $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
+      // Load up the new donation so that all it's properties are set correctly.
+      $created_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
+      // Merge Market Source code overrides if provided.
+      if (!empty($source_donation->new_submission_data)) {
+        $created_donation->submission_data = array_merge($created_donation->submission_data, $source_donation->new_submission_data);
       }
+      // Fire a hook to allow other modules to respond to the future order being created.
+      module_invoke_all('fundraiser_sustainers_future_order_insert', $created_donation);
 
       // Update the previous charge object.
       $previous_charge = $next;
@@ -2300,7 +3114,7 @@ function fundraiser_sustainers_cancel_form($form, &$form_state, $donation) {
   $form['reason'] = array(
     '#type' => 'textarea',
     '#title' => t('Reason'),
-    '#default_value' => t('Please enter a brief description of why you are cancelling. ' .
+    '#default_value' => t('Please enter a brief description of why you are canceling. ' .
       'This will help us better serve you in the future.'),
     '#maxlength' => 500,
     '#cols' => 70,
@@ -2323,7 +3137,7 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
   global $user;
   $master_did = $form_state['values']['master_did'];
   $reason = $form_state['values']['reason'];
-  if (empty($reason) || $reason == t('Please enter a brief description of why you are cancelling. ' .
+  if (empty($reason) || $reason == t('Please enter a brief description of why you are canceling. ' .
       'This will help us better serve you in the future.')) {
     $reason = t('No reason given.');
   }
@@ -2593,6 +3407,9 @@ function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
     'cancellation_reason' => $reason,
   );
   _fundraiser_sustainers_update_recurring($recurring);
+
+  // Fire a hook so that other modules can respond to the deletion.
+  module_invoke_all('fundraiser_sustainers_fundraiser_donation_cancel', $donation);
 }
 
 /**
@@ -2685,6 +3502,100 @@ function fundraiser_sustainers_auto_cancel($donation) {
   else {
     module_invoke_all('fundraiser_sustainers_auto_cancel', $donation);
   }
+}
+
+/**
+ * Creates a form for donation amount update.
+ */
+function fundraiser_sustainers_billing_update_form($form, &$form_state, $donation) {
+  // Make sure we have the master donation ID.
+  $sustainers_record = _fundraiser_sustainers_get_recurring_by_did($donation->did);
+  if (empty($sustainers_record->master_did)) return false;
+
+  // Include some extra info to provide context.
+  $form['series-info'] = array(
+    '#prefix' => '<div id="recurring-series-info">',
+    '#suffix' => '</div>',
+    '#type' => 'fieldset',
+  );
+
+  $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($sustainers_record->master_did);
+  $next_donation = !empty($remaining) ? fundraiser_donation_get_donation($remaining[0]->did) : $donation;
+  $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
+
+  $form['series-info']['recurring-payment-info'] = array(
+    '#markup' => fundraiser_sustainers_donation_payment_info($next_donation, $sustainers_record->master_did, $cardonfile),
+  );
+
+  $form['series-info']['recurring-payment-link'] = array(
+    '#markup' => '<p>' . l(t("View details"), "user/{$donation->uid}/recurring_overview/{$sustainers_record->master_did}") . '</p>',
+    '#prefix' => '<div id="payment-edit-link">',
+    '#suffix' => '</div>',
+  );
+
+  // Build the generic billing update form, unless it's expired or cancelled.
+  $cancelled = isset($next_donation->recurring->cancellation_reason) ? $next_donation->recurring->cancellation_reason : '';
+  if (!empty($cancelled)) {
+    $form['closed-message'] = array(
+      '#type' => 'container',
+    );
+    $form['closed-message']['message'] = array(
+      '#markup' => t("This recurring donation has been cancelled."),
+    );
+  }
+  elseif (empty($remaining)) {
+    $form['closed-message'] = array(
+      '#type' => 'container',
+    );
+    $form['closed-message']['message'] = array(
+      '#markup' => t("There are no further charges for this recurring donation."),
+    );
+  }
+  else {
+    $data = array(
+      'donation' => $next_donation,
+      'calling module' => 'fundraiser_sustainers',
+      'update billing' => FALSE,
+    );
+
+    if (!empty($cardonfile)) {
+      $data['payment_fields'] = array(
+        'credit' => array(
+          'expiration_date' => array(
+            'card_expiration_month' => array(
+              '#default_value' => $cardonfile->card_exp_month,
+            ),
+            'card_expiration_year' => array(
+              '#default_value' => $cardonfile->card_exp_year,
+            ),
+          ),
+        ),
+      );
+    }
+    $form = fundraiser_update_billing_form($form, $form_state, $data);
+
+    // Make the header consistent.
+    if (!empty($form['billing_information'])) {
+      $form['billing_information']['#prefix'] = '<div id="recurring-billing-info"><h2>' . $form['billing_information']['#title'] . '</h2>';
+      $form['billing_information']['#suffix'] = '</div>';
+      unset($form['billing_information']['#title']);
+    }
+    if (!empty($form['payment_fields'])) {
+      $form['payment_fields']['#prefix'] = '<div id="recurring-payment-info"><h2>' . $form['payment_fields']['#title'] . '</h2>';
+      $form['payment_fields']['#suffix'] = '</div>';
+      unset($form['payment_fields']['#title']);
+    }
+  }
+
+  return $form;
+}
+
+/**
+ * Access function for the billing form. Only accept the user him/herself.
+ */
+function fundraiser_sustainers_billing_update_access($donation) {
+  global $user;
+  return ($donation->uid == $user->uid);
 }
 
 /**
@@ -2809,8 +3720,21 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
   // Pass tokens as param so hook_mail has access.
   $params['fundraiser_sustainers_token_set'] = $token_set;
   $params['fundraiser_sustainers_body'] = $body;
-  watchdog('fundraiser_sustainers', 'Credit card expiration email sent to @mail', array('@mail' => $user->mail), WATCHDOG_INFO);
-  drupal_mail('fundraiser_sustainers', 'fundraiser_cc_notification', $user->mail, user_preferred_language($user), $params);
+
+  // Use Silverpop Transact if it is configured. Otherwise, proceed with usual
+  // drupal_mail().
+  if (module_exists('silverpop_transact') && variable_get('silverpop_transact_model') == 'XML') {
+    $token_string = variable_get('silverpop_transact_cc_expiration_message_tokens');
+    $personalization_tokens = silverpop_transact_parse_personalization(token_replace($token_string, $token_set));
+    $group_id = variable_get('silverpop_transact_cc_expiration_message_group_id');
+    watchdog('fundraiser_sustainers', 'Group id is @group', array('@group' => $group_id), WATCHDOG_INFO);
+    silverpop_transact_create_mailing($user->mail, $group_id, $personalization_tokens);
+    watchdog('fundraiser_sustainers', 'Credit card expiration email sent to @mail via Silverpop Transact', array('@mail' => $user->mail), WATCHDOG_INFO);
+  }
+  else {
+    watchdog('fundraiser_sustainers', 'Credit card expiration email sent to @mail', array('@mail' => $user->mail), WATCHDOG_INFO);
+    drupal_mail('fundraiser_sustainers', 'fundraiser_cc_notification', $user->mail, user_preferred_language($user), $params);
+  }
 }
 
 /**
@@ -2895,6 +3819,9 @@ function _fundraiser_sustainers_update_recurring($donation) {
     $log = fundraiser_sustainers_log();
     $log->log($donation, $original);
   }
+
+  // Fire a hook so that other modules can respond to the update.
+  module_invoke_all('fundraiser_sustainers_update_recurring', $donation);
 }
 
 /**
@@ -2910,26 +3837,36 @@ function _fundraiser_sustainers_delete_recurring($did) {
   );
   $log = fundraiser_sustainers_log();
   $log->log($log_record, $original);
+
+  // Fire a hook so that other modules can respond to the deletion.
+  module_invoke_all('fundraiser_sustainers_delete_recurring', $did);
 }
 
 /**
- * DB funct, get user donation set information that are recurring.
+ * Fetch user-specific, recurring donation sets data.
+ *
+ * @param int $uid
+ *   The User ID of the donor in question.
  */
 function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
   $donation_sets = db_query('SELECT r.master_did, MIN(r.next_charge) AS start_date, ' .
     'MAX(r.next_charge) AS expire_date FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
-    'WHERE d.uid = :uid ' .
-    'GROUP BY r.master_did ' .
-    'ORDER BY r.master_did DESC', array(':uid' => $uid))->fetchAll();
+    'WHERE d.uid = :uid GROUP BY r.master_did ORDER BY r.master_did DESC',
+     array(':uid' => $uid))->fetchAll();
   foreach ($donation_sets as $index => $donation_set) {
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
     if (isset($next_charge->next_charge)) {
-      if ($next_charge->gateway_resp == 'canceled') {
-        $status = t('Canceled');
-      }
-      else {
-        $status = t('Active');
+      switch ($next_charge->gateway_resp) {
+        case 'canceled':
+          $status = t('Canceled');
+          break;
+        case 'auto_canceled':
+          $status = t('Auto-Canceled');
+          break;
+        default:
+          $status = t('Active');
+          break;
       }
       $donation_sets[$index]->next_charge = $next_charge->next_charge;
       $donation_sets[$index]->status = $status;
@@ -3023,16 +3960,20 @@ function _fundraiser_sustainers_get_donations_recurr_by_masterdid($master_did) {
  * DB funct, count order donation sets that are remaining.
  */
 function _fundraiser_sustainers_count_donations_recurr_remaining($master_did) {
-  $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
-  $replacements = array(
-    ':master_did' => $master_did,
-    ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
-    ':max_attempts' => $max_processing_attempts,
-  );
+  static $counts = array();
+  if (!isset($counts[$master_did])) {
+    $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
+    $replacements = array(
+      ':master_did' => $master_did,
+      ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
+      ':max_attempts' => $max_processing_attempts,
+    );
 
-  $count = db_query('SELECT COUNT(*) FROM {fundraiser_sustainers} r WHERE r.master_did = :master_did AND (r.gateway_resp IS NULL OR (r.gateway_resp = :status && r.attempts != :max_attempts))', $replacements)->fetchField();
+    $count = db_query('SELECT COUNT(*) FROM {fundraiser_sustainers} r WHERE r.master_did = :master_did AND (r.gateway_resp IS NULL OR (r.gateway_resp = :status && r.attempts != :max_attempts))', $replacements)->fetchField();
 
-  return is_numeric($count) ? $count : 0;
+    $counts[$master_did] = is_numeric($count) ? $count : 0;
+  }
+  return $counts[$master_did];
 }
 
 /**
@@ -3172,45 +4113,53 @@ function _fundraiser_sustainers_get_total_sustainers_by_nid($nid, $start = FALSE
 /**
  * CRUD style DB function for fundraiser_sustainers_sustainers_node.
  */
-function _fundraiser_sustainers_create_sustainers_node($sustainers_node) {
-  $sustainers_node = (array) $sustainers_node;
-  $sustainers_node_data = FALSE;
-  if (isset($sustainers_node['nid'])) {
-    $sustainers_node_data = _fundraiser_sustainers_get_sustainers_node_by_nid($sustainers_node['nid']);
-  }
-  if (!$sustainers_node_data) {
-    drupal_write_record('fundraiser_sustainers_nodes', $sustainers_node);
-  }
-  else {
-    _fundraiser_sustainers_update_sustainers_node($sustainers_node);
-  }
-}
-
-/**
- * CRUD style DB function for fundraiser_sustainers_sustainers_node.
- */
 function _fundraiser_sustainers_get_sustainers_node_by_nid($nid) {
   return db_query('SELECT * FROM {fundraiser_sustainers_nodes} WHERE nid = :nid', array(':nid' => $nid))->fetchObject();
 }
 
+
 /**
  * CRUD style DB function for fundraiser_sustainers_sustainers_node.
  */
-function _fundraiser_sustainers_update_sustainers_node($sustainers_node) {
-  $sustainers_node = (array) $sustainers_node;
-  $sustainers_node_data = FALSE;
-  if (isset($sustainers_node['nid'])) {
-    $sustainers_node_data = _fundraiser_sustainers_get_sustainers_node_by_nid($sustainers_node['nid']);
+function _fundraiser_sustainers_update_sustainers_node($node) {
+  $imploded_amounts = array();
+  _fundraiser_sustainers_flatten_amounts($node);  // Just in case.
+  foreach ((isset($node->recurring_donation_amounts) ? $node->recurring_donation_amounts : array()) as $amount => $label) {
+    $imploded_amounts[] = "$amount|$label";
   }
-  if (!$sustainers_node_data) {
-    _fundraiser_sustainers_create_sustainers_node($sustainers_node);
+  $new_data = array(
+    'nid' => $node->nid,
+    'recurring_setting' => isset($node->recurring_setting) ? $node->recurring_setting : 'never',
+    'recurring_donation_amounts' => implode('|||', $imploded_amounts),
+    'show_other_amount' => isset($node->recurring_show_other_amount) ? $node->recurring_show_other_amount : TRUE,
+    'minimum_donation_amount' => isset($node->recurring_minimum_donation_amount) ? $node->recurring_minimum_donation_amount : $node->minimum_donation_amount,
+    'default_amount' => property_exists($node, 'recurring_default_amount') ? $node->recurring_default_amount : $node->default_amount,
+    'dual_ask_amounts' => (isset($node->recurring_dual_ask_amounts) && $node->recurring_dual_ask_amounts && $node->recurring_setting == 'user_choice'),
+    'donation_type_component' => isset($node->recurring_donation_type_component) ? $node->recurring_donation_type_component : NULL,
+    'donation_type_options' => empty($node->recurring_donation_type_options) ? NULL : (
+      is_array($node->recurring_donation_type_options) ? implode('|||', $node->recurring_donation_type_options) : $node->recurring_donation_type_options
+    ),  // If we aren't processing the node edit form, this setting may already be a string pulled directly from the DB.
+    'default_donation_type' => !empty($node->recurring_default_donation_type) ? $node->recurring_default_donation_type : (
+      ($node->recurring_setting == 'always') ? 'recurs' : 'NO_RECURR'
+    ),
+    'donation_type_help_text' => isset($node->recurring_donation_type_help_text) ? $node->recurring_donation_type_help_text : NULL,
+  );
+
+  if (isset($new_data['nid'])) {
+    $old_data = _fundraiser_sustainers_get_sustainers_node_by_nid($new_data['nid']);
+  }
+  if (empty($old_data)) {
+    // Create new record.
+    if (isset($new_data['default_amount']) && empty($new_data['default_amount'])) unset($new_data['default_amount']); // NULL > empty
+    drupal_write_record('fundraiser_sustainers_nodes', $new_data);
   }
   else {
-    $sustainers_node = array_merge((array) $sustainers_node_data, $sustainers_node);
-    drupal_write_record('fundraiser_sustainers_nodes', $sustainers_node, 'nid');
+    // Update existing record.
+    $new_data = array_merge((array) $old_data, $new_data);
+    if (isset($new_data['default_amount']) && empty($new_data['default_amount'])) unset($new_data['default_amount']); // NULL > empty
+    drupal_write_record('fundraiser_sustainers_nodes', $new_data, 'nid');
   }
 }
-
 /**
  * CRUD style DB function for fundraiser_sustainers_sustainers_node.
  */
@@ -3432,6 +4381,15 @@ function fundraiser_sustainers_action_info() {
       'triggers' => array('any'),
       'permissions' => array('administrate recurring donations'),
     ),
+    'fundraiser_sustainers_omit_sustainer_action' => array(
+      'type' => 'fundraiser_sustainer_record',
+      'label' => t('Permanently Omit Sustainer'),
+      'behavior' => array('changes_property'),
+      'configurable' => FALSE,
+      'vbo_configurable' => FALSE,
+      'triggers' => array('any'),
+      'permissions' => array('administrate recurring donations'),
+    ),
   );
 }
 
@@ -3457,6 +4415,7 @@ function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $cont
 
   switch ($sustainer_record->gateway_resp) {
     case FUNDRAISER_SUSTAINERS_PROCESSING_STATUS:
+    case FUNDRAISER_SUSTAINERS_LOCKED_STATUS:
       $sustainer_record->lock_id = 0;
       $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_RETRY_STATUS;
       $log->logUnlockedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
@@ -3488,6 +4447,58 @@ function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $cont
   }
 
 }
+/**
+ * The omit sustainer action.
+ *
+ * Note that I'm including all gateway_resp cases in case this action gets used
+ * in other situations besides the stuck sustainer VBO.
+ *
+ * Also note that drupal saves the sustainer record entity on its own so that's
+ * why it's not happening here.
+ *
+ * @param Entity $sustainer_record
+ *   The fundraiser_sustainer_record entity.
+ */
+function fundraiser_sustainers_omit_sustainer_action(&$sustainer_record, $context) {
+  $replacements = array(
+    '%did' => $sustainer_record->did,
+    '%status' => $sustainer_record->gateway_resp,
+  );
+
+  $log = fundraiser_sustainers_log();
+
+  switch ($sustainer_record->gateway_resp) {
+    case FUNDRAISER_SUSTAINERS_PROCESSING_STATUS:
+    case FUNDRAISER_SUSTAINERS_LOCKED_STATUS:
+    $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_OMITTED_STATUS;
+      $log->logOmittedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
+      drupal_set_message(t('Omitted sustainer %did and changed its status from %status to Omitted.', $replacements));
+      break;
+
+    // Include support for the NULL value, default value of gateway_resp.
+    case NULL:
+      $replacements['%status'] = FUNDRAISER_SUSTAINERS_OMITTED_STATUS;
+    case FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_RETRY_STATUS:
+      $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_OMITTED_STATUS;
+      $log->logOmittedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
+      drupal_set_message(t('Omitted sustainer %did and left its status at %status', $replacements));
+      break;
+
+    case FUNDRAISER_SUSTAINERS_SUCCESS_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_FAILED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_SKIPPED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_CANCELED_STATUS:
+      // Fall through.
+    default:
+      drupal_set_message(t('Cannot unlock the sustainer %did because its status is %status', $replacements));
+      break;
+  }
+}
 
 /**
  * Calculates monthly donation installments.
@@ -3500,6 +4511,9 @@ function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $cont
 function _fundraiser_sustainers_calculate_installments($donation) {
   $info = _fundraiser_get_donation_gateway($donation->did);
   $installments = 0;
+  // Copy txn_id into the donation array to make it available inside the expire
+  // callback. Needed for Braintree hosted fields sustainer series creation.
+  $donation->donation['txn_id'] = $donation->txn_id;
   if (isset($info['expire callback'])) {
     $expiration_func = $info['expire callback'];
     $expires = $expiration_func($donation->donation);
@@ -3515,4 +4529,67 @@ function _fundraiser_sustainers_calculate_installments($donation) {
   }
 
   return $installments;
+}
+
+/**
+ * Helper function to return the QD record for the specified card id.
+ *
+ * @param int $card_id
+ *   The card ID.
+ *
+ * @return array
+ *   The QD field record.
+ */
+function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
+  $data = db_query('SELECT fd.*, fs.master_did, fss.* FROM {fundraiser_donation} fd, {fundraiser_sustainers} fs LEFT JOIN {fundraiser_sustainers_series} fss ON fss.did = fs.master_did WHERE fd.status = :status AND fd.card_id = :card_id AND fd.did = fs.did GROUP BY fs.master_did', array(
+    ':card_id' => $card_id,
+    ':status' => 'pending_future_payment',
+  ))->fetchAll();
+
+  if (empty($data)) {
+    return array();
+  }
+
+  foreach ($data as $key => $row) {
+    $query = db_query('SELECT * FROM {fundraiser_donation} fd WHERE fd.sid = :sid AND fd.status = :status ORDER BY fd.did LIMIT 1', array(
+      ':sid' => $row->sid,
+      ':status' => 'pending_future_payment',
+    ))->fetchAssoc();
+
+    if (empty($query)) {
+      unset($data[$key]);
+      continue;
+    }
+
+    $data[$key] = array_merge((array) $data[$key], $query);
+  }
+
+  return $data;
+}
+
+/**
+ * Implements hook_fundraiser_commerce_cardonfile_used_by().
+ *
+ * Used to inform fundraiser_commerce_cardonfile if the card is used for Quick
+ * Donations.
+ */
+function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) {
+  $results = _fundraiser_sustainers_get_payment_info_for_card_id($card_id);
+
+  if (empty($results)) {
+    return;
+  }
+
+  $used_by = array();
+
+  foreach ($results as $result) {
+    $used_by[] = t('Recurring @type donation (@amount@spacecharged on the @day)', array(
+      '@type' => strtolower($result['npsp_installment_period']),
+      '@amount' => empty($result['amount']) ? '' : '$' . number_format($result['amount'], 2, '.', '') . ',',
+      '@space' => empty($result['amount']) ? '' : ' ',
+      '@day' => date("jS", strtotime($result['npsp_next_payment_date'])),
+    ));
+  }
+
+  return $used_by;
 }

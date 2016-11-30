@@ -119,7 +119,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
   $access = FALSE;
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
   $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
-  $form['twitter_user_cache'] = array (
+  $form['twitter_user_cache'] = array(
     '#type' => 'value',
     '#value' => $twitter_user_cache,
   );
@@ -129,8 +129,10 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
     $twitter_user_cache['values']['oauth_token_secret'] = decrypt($twitter_user_cache['values']['oauth_token_secret']);
   }
 
-  // Bypass authentication and use Twitter web intents if that node option is set.
-  if (empty($node->field_sba_social_require_auth)) {
+  // Bypass authentication and use Twitter web intents if that node
+  // option is set.
+  $require_auth = field_get_items('node', $node, 'field_sba_social_require_auth');
+  if (empty($require_auth[0]['value'])) {
     $access = TRUE;
   }
 
