@@ -38,9 +38,8 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
   $indvds = array();
   $child_ids = array();
   $multi_indvds = array();
-  $committees = array();
   $chamber_rows = array();
-  $unstructured_chambers = array();
+  $chambers = array();
 
   // If recipients have been chosen, decode the recipients string and
   // structure the items into the expected arrays.
@@ -64,7 +63,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
       }
       // All others.
       else {
-        $unstructured_chambers[] = $target;
+        $chambers[] = $target;
       }
     }
   }
@@ -78,8 +77,8 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     }
   }
   
-  if (!empty($unstructured_chambers)) {
-    $chamber_rows = _springboard_target_api_build_chambers($unstructured_chambers);
+  if (!empty($chambers)) {
+    $chamber_rows = _springboard_target_api_build_chambers($chambers);
   }
 
   // Combine all individual targets into one array.
@@ -140,21 +139,21 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
  *
  * Convert the chamber fields to array and format the keywords field.
  */
-function _springboard_target_api_build_chambers($unstructured_chambers) {
-  foreach ($unstructured_chambers as $chamber_id => $chamber_fields) {
-    $unstructured_chambers[$chamber_id] = (array) $chamber_fields;
-    foreach ($chamber_fields as $field_name => $value) {
+function _springboard_target_api_build_chambers($chambers) {
+  foreach ($chambers as $id => $fields) {
+    $chambers[$id] = (array) $fields;
+    foreach ($fields as $field_name => $value) {
       if ($field_name == 'fields' || $field_name == 'values') {
-        $unstructured_chambers[$chamber_id]['keywords'][$field_name] = $value;
-        unset($unstructured_chambers[$chamber_id][$field_name]);
+        $chambers[$id]['keywords'][$field_name] = $value;
+        unset($chambers[$id][$field_name]);
       }
       if ($field_name == 'role') {
-        $unstructured_chambers[$chamber_id]['chamber'] = $value;
-        unset($unstructured_chambers[$chamber_id]['role']);
+        $chambers[$id]['chamber'] = $value;
+        unset($chambers[$id]['role']);
       }
     }
   }
-  return $unstructured_chambers;
+  return $chambers;
 }
 
 /**
@@ -219,16 +218,16 @@ function _springboard_target_api_get_target_group($group_id) {
  * @return bool
  *   Whether the group can be nested.
  */
-function _springboard_target_api_check_group_recursion($group_id, $parent_id, $parent_name = '') {
-  $group = _springboard_target_api_get_target_group($group_id);
-  if (isset($group->data->groups)) {
-    foreach ($group->data->groups as $nested_group) {
-      if ($nested_group->target_group_group_id == $parent_id) {
-        drupal_set_message('The custom group "' . ($parent_name != '' ? $parent_name : $group->data->name) . '" cannot be added to this group because it contains this group as a member.', 'error');
+function _springboard_target_api_check_group_recursion($child_id, $parent_id, $parent_name = '') {
+  $child_group = _springboard_target_api_get_target_group($child_id);
+  if (isset($child_group->data->groups)) {
+    foreach ($child_group->data->groups as $child_group_group) {
+      if ($child_group_group->target_group_group_id == $parent_id) {
+        drupal_set_message('The custom group "' . ($parent_name != '' ? $parent_name : $child_group->data->name) . '" cannot be added to this group because it contains this group as a member.', 'error');
         return TRUE;
       }
       else {
-        return _springboard_target_api_check_group_recursion($nested_group->target_group_group_id, $parent_id, ($parent_name != '' ? $parent_name : $group->data->name));
+        return _springboard_target_api_check_group_recursion($child_group_group->target_group_group_id, $parent_id, ($parent_name != '' ? $parent_name : $child_group->data->name));
       }
     }
   }
