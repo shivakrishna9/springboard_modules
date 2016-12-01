@@ -12,7 +12,7 @@ function salesforce_ngoc_salesforce_ngoc_batch_status_change(&$batch_upload_sobj
   // and Opportunities created during processing of batch upload objects.
   salesforce_ngoc_create_sync_map_records($batch_upload_sobjects, $changed_records);
   // Release child records from hold queue.
-  // salesforce_ngoc_release_children_from_hold_queue($batch_upload_sobjects, $changed_records);
+  salesforce_ngoc_release_children_from_hold_queue($changed_records);
 }
 
 /**
@@ -62,13 +62,113 @@ function salesforce_ngoc_create_sync_map_records(&$batch_upload_sobjects, &$chan
 }
 
 /**
- * [salesforce_ngoc_release_children_from_hold_queue description]
- * @param  [type] &$batch_upload_sobjects [description]
- * @param  [type] &$changed_records       [description]
- * @return [type]                         [description]
+ * List hold_queue_items with drupal_ids matching changed_records.
+ *
+ * Givin an array of objects that represents the batch upload objects that have
+ * changed in a polling cycle, return a list of hold_queue items that match the
+ * dids and uids of the changed records.
+ *
+ * @param array $changed_records
+ *   An array of objects that represents the batch upload objects that have
+ *   changed.
+ *
+ * @return object
+ *   A db_query result set object with zero or more results.
  */
-function salesforce_ngoc_release_children_from_hold_queue(&$batch_upload_sobjects, &$changed_records) {
+function salesforce_ngoc_get_child_hold_queue_items($changed_records) {
+  $ngoc_sync_map_uids = array_map(function($o) { return $o->uid; }, $changed_records);
+  $ngoc_sync_map_dids = array_map(function($o) { return $o->did; }, $changed_records);
+  // Find {salesforce_ngoc_hold_queue_items} that have parent_drupal_ids that
+  // match those returned in $changed_records.
+  $hold_queue_result = db_query("SELECT id, drupal_id, object_type, parent_type, parent_drupal_id
+    FROM {salesforce_ngoc_hold_queue_items}
+    WHERE (parent_drupal_id IN (:uids) AND parent_type = 'Contact') OR
+          (parent_drupal_id IN (:dids) AND parent_type = 'Opportunity')",
+    array(':uids' => $ngoc_sync_map_uids, ':dids' => $ngoc_sync_map_dids));
+  return $hold_queue_result;
+}
 
+
+/**
+ * Moves items from hold' to 'new' queue, if parents exist in sync_map table.
+ *
+ * @param array $changed_records
+ *    An array of Objects representing changed salesforce_ngoc_sync_map records.
+ *    Array(
+ *      [0] => stdClass Object (
+ *        [id] => 22
+ *        [batch_upload_sfid] => a1MW0000000Tgc7MAC
+ *        [sf_status] => Committed
+ *        [drupal_id] => 1000500
+ *        [uid] => 1000352
+ *        [did] => 1000500
+ *        [module] => salesforce_donation
+ *        [delta] => donation
+ *        [contact_sfid] => 003W000000UaNsRIAV
+ *        [account_sfid] => 001W000000OaaleIAB
+ *        [opportunity_sfid] => 006W0000006FbWKIA0
+ *        [created] => 1480011866
+ *        [lasted_polled] => 1480011934
+ *        [polling_attempts] => 1
+ *      )
+ *    ).
+ *
+ * @todo Watchdog some info.
+ */
+function salesforce_ngoc_release_children_from_hold_queue(&$changed_records) {
+  $child_hold_queue_items = salesforce_ngoc_get_child_hold_queue_items($changed_records);
+  // @todo: Break this foreach out into its own function for code readability.
+  $salesforce_ngoc_parent_objects = variable_get('salesforce_ngoc_parent_objects');
+  $salesforce_queue_records_to_update = array();
+  $hold_queue_records_to_delete = array();
+  // Loop through the hold_queue records to find the changed_record that has the
+  // corresponding parent did or uid.
+  foreach ($child_hold_queue_items as $hold_queue_record) {
+    $unsync_parent_found = FALSE;
+    foreach ($changed_records as $changed_record) {
+      if (($hold_queue_record->parent_type == 'Contact' && $hold_queue_record->parent_drupal_id == $changed_record->uid) ||
+          ($hold_queue_record->parent_type == 'Opportunity' && $hold_queue_record->parent_drupal_id == $changed_record->did)) {
+        // We've found the corresponding changed_record, now see if it has
+        // the sfid for contact or opportunity or both depending on object type.
+        foreach ($salesforce_ngoc_parent_objects[$hold_queue_record->object_type] as $parent_object_type) {
+          if ($parent_object_type == 'Contact') {
+            if (empty($changed_record->contact_sfid)) {
+              // No contact_sfid found so $hold_queue_record has an
+              // unsync'd parent.
+              $unsyncd_parent_found = TRUE;
+            }
+          }
+          elseif ($parent_object_type == 'Opportunity') {
+            if (empty($changed_record->opportunity_sfid)) {
+              // No opportunity_sfid found so $hold_queue_record has an
+              // unsync'd parent.
+              $unsyncd_parent_found = TRUE;
+            }
+          }
+        }
+      }
+    }
+    if ($unsyncd_parent_found == FALSE) {
+      // Save data info for use in queries below.
+      $salesforce_queue_records_to_update[$hold_queue_record->object_type][] = $hold_queue_record->drupal_id;
+      $hold_queue_records_to_delete[] = $hold_queue_record->id;
+    }
+  }
+  // Move queue items from 'hold' to 'new' queue.
+  // The constructed query looks something like this:
+  // UPDATE {salesforce_queue} SET queue='new' WHERE
+  // (drupal_id IN (1, 2, 3) AND object_type = 'Social_Share__c') OR
+  // (drupal_id IN (3, 4, 5) AND object_type = 'sb_Actions_Taken__c').
+  $update_query = db_update('salesforce_queue')->fields(array('queue' => 'new'));
+  foreach ($salesforce_queue_records_to_update as $type => $drupal_ids) {
+    $db_and = db_and()->condition('drupal_id', $drupal_ids, 'IN')->condition('object_type', $type);
+    $update_query->condition(db_or()->condition($db_and));
+  }
+  $update_query->execute();
+
+  // Since this is no longer in the hold queue, remove records from
+  // {salesforce_ngoc_hold_queue_items}.
+  db_query("DELETE FROM {salesforce_ngoc_hold_queue_items} WHERE id IN (:id)", array(':id' => $hold_queue_records_to_delete));
 }
 
 /**
@@ -84,25 +184,32 @@ function salesforce_ngoc_poll_batch_upload() {
   if (count($batch_upload_sobjects)) {
     $changed_records = salesforce_ngoc_batch_upload_compare($ngoc_sync_map_records, $batch_upload_sobjects);
   }
-  // Save {salesforce_ngoc_sync_map} records with updated values.
-  salesforce_ngoc_sync_map_save_multiple($changed_records);
-  // Update polling_attempts and last_polled values. This is bad form to update
-  // entity values directly, but it also seems undesirable to load 2,000
-  // entities just to changes these values. This may cause issues with caching,
-  // so attempting to flush manually afterwards.
-  db_update('salesforce_ngoc_sync_map')
-    ->fields(array('lasted_polled' => time()))
-    ->expression('polling_attempts', 'polling_attempts + :one', array(':one' => 1))
-    ->condition('batch_upload_sfid', $sf_ids, 'IN')
-    ->execute();
-  entity_get_controller('salesforce_ngoc_sync_map')->resetCache($sf_ids);
-
-  // Allow this and other modules to react.
-  // @see salesforce_ngoc_salesforce_ngoc_batch_status_change()
-  foreach (module_implements('salesforce_ngoc_batch_status_change') as $module) {
-    $hook = $module . '_salesforce_ngoc_batch_status_change';
-    $hook($batch_upload_sobjects, $changed_records);
+  if (count($changed_records)) {
+    // Save {salesforce_ngoc_sync_map} records with updated values.
+    salesforce_ngoc_sync_map_save_multiple($changed_records);
+    // Update polling_attempts and last_polled values. This is bad form to
+    // update entity values directly, but it also seems undesirable to load
+    // 2,000 entities just to changes these values. This may cause issues with
+    // caching, so attempting to flush manually afterwards.
+    db_update('salesforce_ngoc_sync_map')
+      ->fields(array('lasted_polled' => time()))
+      ->expression('polling_attempts', 'polling_attempts + :one', array(':one' => 1))
+      ->condition('batch_upload_sfid', $sf_ids, 'IN')
+      ->execute();
+    entity_get_controller('salesforce_ngoc_sync_map')->resetCache($sf_ids);
+    // Allow this and other modules to a change in batch upload objects.
+    // @see salesforce_ngoc_salesforce_ngoc_batch_status_change()
+    foreach (module_implements('salesforce_ngoc_batch_status_change') as $module) {
+      $hook = $module . '_salesforce_ngoc_batch_status_change';
+      $hook($batch_upload_sobjects, $changed_records);
+    }
   }
+  watchdog('salesforce_ngoc', 'Polling job complete. :ngoc_sync_map_records batch upload objects queried for changes. :changed_records changed records found.',
+    array(
+      ':ngoc_sync_map_records' => count($ngoc_sync_map_records),
+      ':changed_records' => count($changed_records)
+    ),
+    WATCHDOG_NOTICE, l('Batch Upload Report', 'springboard/reports/integration-reports/batch-upload-item'));
 }
 
 /**

@@ -188,10 +188,15 @@ function salesforce_ngoc_schema() {
       'delta_drupal_module' => array('delta', 'drupal_id', 'module'),
     ),
   );
-
   $schema['salesforce_ngoc_hold_queue_items'] = array(
-    'description' => 'Tracks items in the hold queue that have parent objects in SF that must be processed before releasing.',
+    'description' => 'Tracks items in the hold queue that have parent objects...',
     'fields' => array(
+      'id' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
       'drupal_id' => array(
         'description' => 'drupal_id of the held queue item from the salesforce_queue table',
         'type' => 'int',
@@ -219,6 +224,7 @@ function salesforce_ngoc_schema() {
         'not null' => TRUE,
       ),
     ),
+    'primary key' => array('id'),
     'unique keys' => array(
       'drupal_id' => array('drupal_id', 'object_type', 'parent_type', 'parent_drupal_id')
     ),

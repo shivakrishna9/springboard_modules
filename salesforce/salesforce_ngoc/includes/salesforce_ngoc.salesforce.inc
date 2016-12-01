@@ -8,7 +8,7 @@
  * Implements hook_salesforce_genmap_destination_queue_alter().
  */
 function salesforce_ngoc_salesforce_genmap_destination_queue_alter(&$queue_name, $item, $drupal_object) {
-  if ($parents = salesforce_ngoc_has_unsyncd_parents($item, $drupal_object)) {
+  if ($parents = salesforce_ngoc_has_unsyncd_parents($item['object_type'], $drupal_object)) {
     $queue_name = 'hold';
     salesforce_ngoc_write_hold_queue_items($item, $parents);
   }
@@ -54,7 +54,7 @@ function salesforce_ngoc_salesforce_mapping_confirm_entity_for_queue($entity, $e
  * Implements hook_salesforce_mapping_destination_queue_alter().
  */
 function salesforce_ngoc_salesforce_mapping_destination_queue_alter(&$queue_name, $item, $entity) {
-  if ($parents = salesforce_ngoc_has_unsyncd_parents($item, $entity)) {
+  if ($parents = salesforce_ngoc_has_unsyncd_parents($item['object_type'], $entity)) {
     $queue_name = 'hold';
     salesforce_ngoc_write_hold_queue_items($item, $parents);
   }
@@ -97,23 +97,22 @@ function salesforce_ngoc_salesforce_sync_save_map_alter($record) {
  *
  * Objects that have parent Contact and Opportunity objects are:
  * - sb_Actions_Taken__c
- * - social_share__c
+ * - Social_Share__c
  * - Donation_Upsell__c
  * - P2P_Personal_Campaign__c
  * - Sustainers_Upgrade__c
  *
- * @param array $item
- *   A salesforce_mapping or salesforce_genmap queue item.
+ * @param string $object_type
+ *   The type of salesforce object (eg 'Social_Share__c').
  * @param object $drupal_object
  *   An object or drupal entity containing data for finding parent records.
  *
  * @return array
  */
-function salesforce_ngoc_has_unsyncd_parents($item, $drupal_object){
+function salesforce_ngoc_has_unsyncd_parents($object_type, $drupal_object){
   $unsyncd_parents_found = array();
   $salesforce_ngoc_parent_objects = variable_get('salesforce_ngoc_parent_objects');
-  $object_type = $item['object_type'];
-  // If this is an object with known parents that are created
+  // If this is an object type that has parents that need to exist first.
   if (isset($salesforce_ngoc_parent_objects[$object_type])) {
     foreach ($salesforce_ngoc_parent_objects[$object_type] as $parent_object_type => $delta) {
       // Find the drupal_id of the parent object. It can be a uid or a did.
@@ -158,7 +157,7 @@ function salesforce_ngoc_has_unsyncd_parents($item, $drupal_object){
         // the queue name cannot be changed. We have to get it right the first
         // time.
         // This would be unnecessary if webform_user_webform_submit() didn't
-        // create users and update webform_submission records in the same
+        // create and then update webform_submission records in the same
         // request.
         $unsyncd_parents_found[] = array($parent_object_type => $parent_drupal_id);
       }
