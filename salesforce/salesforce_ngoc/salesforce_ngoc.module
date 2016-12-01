@@ -89,6 +89,16 @@ function salesforce_ngoc_permission() {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function salesforce_ngoc_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'salesforce_ngoc') . '/views',
+  );
+}
+
+/**
  * Menu callback for the standalone cron.
  */
 function salesforce_ngoc_standalone_cron() {
