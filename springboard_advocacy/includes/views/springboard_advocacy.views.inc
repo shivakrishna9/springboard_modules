@@ -177,7 +177,6 @@ function springboard_advocacy_views_data() {
     'title' => t('Matching targets'),
     'help' => t('Display matching targets in a group keyword search.'),
     'field' => array(
-      'click sortable' => TRUE,
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
   );
@@ -186,7 +185,6 @@ function springboard_advocacy_views_data() {
     'title' => t('Child Groups'),
     'help' => t('Display child groups of a group.'),
     'field' => array(
-      'click sortable' => TRUE,
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
   );
