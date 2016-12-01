@@ -53,12 +53,6 @@ function springboard_purge_get_privileged_users($protected_roles = array()) {
     'Springboard administrator',
     'Springboard editor',
     'Springboard P2P campaigner',
-    'administrator',
-    'Customer Service',
-    'Site Administrator',
-    'Site Contributor',
-    'Site Editor',
-    'Site UberEditor',
   );
   $privileged_roles = array_merge($privileged_roles, $protected_roles);
 
