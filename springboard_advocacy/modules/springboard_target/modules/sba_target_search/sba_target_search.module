@@ -240,7 +240,9 @@ function sba_target_search_convert_recipients($group) {
     $recipient = array();
     if (isset($chamber->committee_id) && $chamber->committee_id != '0' && $chamber->committee_id != '') {
       $recipient['committee_id'] = $chamber->committee_id;
-      $recipient['committee'] = $chamber->committee_name;
+      $state = $chamber->committee_state != "All" ? ' (' . $chamber->committee_state . ')' : '';
+      $role = ' (' . $chamber->committee_chamber . ')';
+      $recipient['committee'] = $chamber->committee_name . $role . $state;
     }
     else {
       foreach ($chamber as $field_name => $value) {
