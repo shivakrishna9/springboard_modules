@@ -114,7 +114,6 @@ function sba_target_search_preprocess_views_exposed_form(&$vars, $hook) {
 
 function sba_target_search_preprocess_views_view_table(&$vars) {
   $view = $vars['view'];
-  dpm($view);
 
   $fields = &$view->field;
   $columns = $view->style_plugin->options['columns'];
