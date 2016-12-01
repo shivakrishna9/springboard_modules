@@ -175,6 +175,7 @@ function salesforce_ngoc_release_children_from_hold_queue(&$changed_records) {
  * Queries SF batch_upload objects for change in processing status.
  */
 function salesforce_ngoc_poll_batch_upload() {
+  $changed_records = array();
   // Get records from {salesforce_ngoc_sync_map}, oldest first.
   $ngoc_sync_map_records = db_query_range("SELECT * FROM {salesforce_ngoc_sync_map} WHERE sf_status != 'Committed' ORDER BY created DESC", 0, variable_get('salesforce_ngoc_poll_record_limit', SALESFORCE_NGOC_DEFAULT_POLL_RECORD_LIMIT))->fetchAllAssoc('batch_upload_sfid');
   $sf_ids = array_keys($ngoc_sync_map_records);
@@ -183,25 +184,25 @@ function salesforce_ngoc_poll_batch_upload() {
   // Compare values from SF to those in {salesforce_ngoc_sync_map}.
   if (count($batch_upload_sobjects)) {
     $changed_records = salesforce_ngoc_batch_upload_compare($ngoc_sync_map_records, $batch_upload_sobjects);
-  }
-  if (count($changed_records)) {
-    // Save {salesforce_ngoc_sync_map} records with updated values.
-    salesforce_ngoc_sync_map_save_multiple($changed_records);
-    // Update polling_attempts and last_polled values. This is bad form to
-    // update entity values directly, but it also seems undesirable to load
-    // 2,000 entities just to changes these values. This may cause issues with
-    // caching, so attempting to flush manually afterwards.
-    db_update('salesforce_ngoc_sync_map')
-      ->fields(array('lasted_polled' => time()))
-      ->expression('polling_attempts', 'polling_attempts + :one', array(':one' => 1))
-      ->condition('batch_upload_sfid', $sf_ids, 'IN')
-      ->execute();
-    entity_get_controller('salesforce_ngoc_sync_map')->resetCache($sf_ids);
-    // Allow this and other modules to a change in batch upload objects.
-    // @see salesforce_ngoc_salesforce_ngoc_batch_status_change()
-    foreach (module_implements('salesforce_ngoc_batch_status_change') as $module) {
-      $hook = $module . '_salesforce_ngoc_batch_status_change';
-      $hook($batch_upload_sobjects, $changed_records);
+    if (count($changed_records)) {
+      // Save {salesforce_ngoc_sync_map} records with updated values.
+      salesforce_ngoc_sync_map_save_multiple($changed_records);
+      // Update polling_attempts and last_polled values. This is bad form to
+      // update entity values directly, but it also seems undesirable to load
+      // 2,000 entities just to changes these values. This may cause issues with
+      // caching, so attempting to flush manually afterwards.
+      db_update('salesforce_ngoc_sync_map')
+        ->fields(array('lasted_polled' => time()))
+        ->expression('polling_attempts', 'polling_attempts + :one', array(':one' => 1))
+        ->condition('batch_upload_sfid', $sf_ids, 'IN')
+        ->execute();
+      entity_get_controller('salesforce_ngoc_sync_map')->resetCache($sf_ids);
+      // Allow this and other modules to a change in batch upload objects.
+      // @see salesforce_ngoc_salesforce_ngoc_batch_status_change()
+      foreach (module_implements('salesforce_ngoc_batch_status_change') as $module) {
+        $hook = $module . '_salesforce_ngoc_batch_status_change';
+        $hook($batch_upload_sobjects, $changed_records);
+      }
     }
   }
   watchdog('salesforce_ngoc', 'Polling job complete. :ngoc_sync_map_records batch upload objects queried for changes. :changed_records changed records found.',
@@ -223,7 +224,7 @@ function salesforce_ngoc_poll_batch_upload() {
  *
  * @return array
  *   An array containing salesforce_ngoc_sync_map records that have changed,
- *   and their new values.
+ *   and their new values. Returns empty array if none found.
  */
 function salesforce_ngoc_batch_upload_compare($ngoc_sync_map_records, $batch_upload_sobjects) {
   $changed_records = array();
@@ -262,6 +263,7 @@ function salesforce_ngoc_batch_upload_compare($ngoc_sync_map_records, $batch_upl
  *
  * @return array
  *   An assoc array containing SObject objects, keyed by the objects SF Id.
+ *   Returns empty array if none are found.
  */
 function salesforce_ngoc_get_batch_upload_sobjects($sf_ids) {
   $sobjects = array();
@@ -289,7 +291,9 @@ function salesforce_ngoc_get_batch_upload_sobjects($sf_ids) {
   // Key the array by Salesforce Id to make them easier to access later.
   $keyed_array = array();
   foreach ($sobjects as $sobject) {
-    $keyed_array[$sobject->Id] = $sobject;
+    if (isset($sobject->Id)) {
+      $keyed_array[$sobject->Id] = $sobject;
+    }
   }
   return $keyed_array;
 }
