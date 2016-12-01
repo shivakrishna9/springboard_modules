@@ -5,13 +5,13 @@
 */
 function sba_target_search_menu() {
 // Committee Search Selector autocomplete path.
-$items['target-search/committee/autocomplete'] = array(
-'page callback' => '_sba_target_search_committee_autocomplete',
-'access arguments' => array('add target to action'),
-'type' => MENU_CALLBACK,
-);
+  $items['target-search/committee/autocomplete'] = array(
+    'page callback' => '_sba_target_search_committee_autocomplete',
+    'access arguments' => array('add target to action'),
+    'type' => MENU_CALLBACK,
+  );
 
-return $items;
+  return $items;
 }
 
 /**
