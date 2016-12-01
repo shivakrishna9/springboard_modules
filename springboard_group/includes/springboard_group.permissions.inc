@@ -290,3 +290,19 @@ function springboard_group_form_user_admin_permissions_alter(&$form, $form_state
 /**
  * Implements hook_user_default_permissions().
  */
+
+/**
+ * Implements hook_form_alter().
+ */
+function springboard_group_form_og_ui_admin_global_permissions_alter(&$form, &$form_state, $form_id) {
+  if (arg(2) == 'groups') {
+    $path = drupal_get_path('module', 'springboard_group') . '/js/springboard-groups-groups-permissions.js';
+    $form['#attached']['js'][] = $path;
+
+    $settings = array('sbaShowNonMember' => variable_get('springboard_group_show_non_member', 0));
+    $form['#attached']['js'][] = array(
+      'data' => $settings,
+      'type' => 'setting',
+    );
+  }
+}

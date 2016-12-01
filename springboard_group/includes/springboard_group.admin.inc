@@ -350,6 +350,19 @@ function springboard_group_advanced_settings() {
     '#markup' => '<p>' . t('Allow groups permissions to override Springboard Permissions.'),
   );
 
+  $form['roles'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Roles',
+    '#description' => '',
+    '#collapsible' => TRUE,
+  );
+
+  $form['roles']['springboard_group_show_non_member'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show the "non member" role on the groups permissions page.'),
+    '#default_value' => variable_get('springboard_group_show_non_member', NULL),
+  );
+
   $form['altered_views'] = array(
     '#type' => 'fieldset',
     '#title' => 'Groups-enabled Springboard views',
