@@ -7,7 +7,7 @@
 /**
  * Implements hook_views_default_views().
  */
-function silverpop_transact_views_default_views() {
+function salesforce_ngoc_views_default_views() {
   $view = new view();
   $view->name = 'salesforce_ngoc_batch_upload_items';
   $view->description = '';
