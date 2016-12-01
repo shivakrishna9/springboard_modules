@@ -298,6 +298,7 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['defaults']['exposed_form'] = FALSE;
   $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['exposed_form']['options']['reset_button'] = TRUE;
   $handler->display->display_options['defaults']['style_plugin'] = FALSE;
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
@@ -581,6 +582,7 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['defaults']['exposed_form'] = FALSE;
   $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['exposed_form']['options']['reset_button'] = TRUE;
   $handler->display->display_options['defaults']['pager'] = FALSE;
   $handler->display->display_options['pager']['type'] = 'springboard_advocacy_views_plugin_pager';
   $handler->display->display_options['pager']['options']['items_per_page'] = '10';
@@ -635,6 +637,10 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['group_name']['table'] = 'advocacy';
   $handler->display->display_options['fields']['group_name']['field'] = 'group_name';
   $handler->display->display_options['fields']['group_name']['element_label_colon'] = FALSE;
+  /* Field: Advocacy: Child Groups */
+  $handler->display->display_options['fields']['child_groups']['id'] = 'child_groups';
+  $handler->display->display_options['fields']['child_groups']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['child_groups']['field'] = 'child_groups';
   /* Field: Advocacy: Matching targets */
   $handler->display->display_options['fields']['matching_targets']['id'] = 'matching_targets';
   $handler->display->display_options['fields']['matching_targets']['table'] = 'advocacy';

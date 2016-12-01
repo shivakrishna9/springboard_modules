@@ -182,6 +182,15 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  $data['advocacy']['child_groups'] = array(
+    'title' => t('Child Groups'),
+    'help' => t('Display child groups of a group.'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
+
   // Organization title returned by the API request.
   $data['advocacy']['title'] = array(
     'title' => t('Organization title'),
@@ -725,6 +734,8 @@ function theme_springboard_advocacy_views_attachment_before($vars) {
         $matches[$key] = str_replace('id:', '', $str);
       }
       $vars['query']['committee_id'] = $matches[0];
+      $vars['query']['search_committee'] = preg_replace('|\(id:[0-9]*\)|', '', $vars['query']['search_committee']);
+
     }
     if (isset($vars['query']['class_name']) && !empty($vars['query']['district_name'])) {
       unset($vars['query']['class_name']);

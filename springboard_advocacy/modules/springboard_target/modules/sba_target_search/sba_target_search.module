@@ -158,48 +158,71 @@ function sba_target_search_preprocess_views_exposed_form(&$vars, $hook) {
 /**
  * Implements hook_preprocess_views_view_table().
  *
- * Change the table output of the Target search when only custom groups are searched.
+ * Change the table output of the Target search based on class type of search
+ * result.
  */
 
 function sba_target_search_preprocess_views_view_table(&$vars) {
-  $view = $vars['view'];
-  $fields = &$view->field;
-  $columns = $view->style_plugin->options['columns'];
-  $classes = isset($view->filter['search_class_name']->value) ? $view->filter['search_class_name']->value : '';
-  if($view->name == 'targets' && $view->current_display == 'block_3' && in_array('Group', $classes)) {
-    $group_fields = array('last_name', 'group_name', 'target_actions');
-    foreach($vars['header'] as $key => $head) {
-      if(!in_array($key, $group_fields)) {
-        unset($vars['header'][$key]);
 
+  $view = $vars['view'];
+  if ($view->name == 'targets' && $view->current_display == 'block_3') {
+    $fields = &$view->field;
+    $columns = $view->style_plugin->options['columns'];
+    $classes = isset($view->filter['search_class_name']->value) ? $view->filter['search_class_name']->value : [];
+    $omit_fields = [];
+    if (!in_array('Group', $classes)) {
+      $omit_fields = array_merge($omit_fields, array('matching_targets', 'child_groups'));
+    }
+    if (!in_array('Legislator', $classes)) {
+      $omit_fields = array_merge($omit_fields, array(
+        'district_code',
+        'committee_memberships',
+        'role',
+      ));
+    }
+    if (count($classes) == 1 && in_array('Group', $classes)) {
+      $omit_fields = array_merge($omit_fields, array(
+        'salutation',
+        'first_name',
+        'email',
+        'party',
+        'title',
+        'organization',
+        'role',
+        'state',
+        'district_code',
+        'committee_memberships',
+      ));
+    }
+
+    foreach ($vars['header'] as $key => $head) {
+      if (in_array($key, $omit_fields)) {
+        unset($vars['header'][$key]);
       }
     }
-    foreach($columns as $key => $column) {
-      if(!in_array($key, $group_fields)) {
-        // prevent headers from being rebuilt in springboard_advocacy_preprocess_views_view_table().
+    foreach ($columns as $key => $column) {
+      if (in_array($key, $omit_fields)) {
+        // Prevent headers from being rebuilt in
+        // springboard_advocacy_preprocess_views_view_table().
         unset($columns[$key]);
       }
     }
-    foreach($fields as $key=> $field) {
-      if(!in_array($key, $group_fields)) {
+    foreach ($fields as $key => $field) {
+      if (in_array($key, $omit_fields)) {
         unset($fields[$key]);
       }
     }
     $vars['view']->style_plugin->options['columns'] = $columns;
     $vars['view']->style_options['columns'] = $columns;
     $vars['options']['columns'] = $columns;
-    foreach($vars['rows'] as $key => $row) {
-      foreach($row as $field_name => $value) {
-        if(!in_array($field_name, $group_fields)) {
+    foreach ($vars['rows'] as $key => $row) {
+      foreach ($row as $field_name => $value) {
+        if (in_array($field_name, $omit_fields)) {
           unset($vars['rows'][$key][$field_name]);
         }
       }
     }
-
-    $header = $vars['header'];
-    $rows = $vars['rows'];
   }
-
 }
 
 
@@ -267,7 +290,9 @@ function sba_target_search_convert_recipients($group) {
     $recipient = array();
     if (isset($chamber->committee_id) && $chamber->committee_id != '0' && $chamber->committee_id != '') {
       $recipient['committee_id'] = $chamber->committee_id;
-      $recipient['committee'] = $chamber->committee_name;
+      $state = $chamber->committee_state != "All" ? ' (' . $chamber->committee_state . ')' : '';
+      $role = ' (' . $chamber->committee_chamber . ')';
+      $recipient['committee'] = $chamber->committee_name . $role . $state;
     }
     else {
       foreach ($chamber as $field_name => $value) {
@@ -318,9 +343,18 @@ function sba_target_search_convert_recipients($group) {
   return json_encode($recipients);
 }
 
+/**
+ * Process the matching targets for display.
+ *
+ * @param array $matches
+ *   An array of targets matching the keyword.
+ *
+ * @return null|string
+ *   The matching targets, formatted for display.
+ */
 function sba_target_search_process_matches($matches) {
   $output = '';
-  if (!empty($matches)) {
+  if (!empty($matches) && count($matches) < 11) {
     $output = '';
     $names = array();
     foreach ($matches as $match) {
@@ -328,9 +362,51 @@ function sba_target_search_process_matches($matches) {
     }
     $output .= check_plain(implode(' | ', $names));
   }
+  elseif (!empty($matches)) {
+    // @todo show in modal?
+    $count = count($matches);
+    $output = t('@count targets in this group matched this search.', array('@count' => $count));
+  }
   return $output;
 }
 
+/**
+ * Process the matching targets for display.
+ *
+ * @param array $matches
+ *   An array of targets matching the keyword.
+ *
+ * @return null|string
+ *   The matching targets, formatted for display.
+ */
+function sba_target_search_process_groups($groups) {
+  $output = '';
+  if (!empty($groups) && count($groups) < 21) {
+    $output = '';
+    $names = array();
+    foreach ($groups as $group) {
+      $names[] = $group->name;
+    }
+    $output .= check_plain(implode(' | ', $names));
+  }
+  elseif (!empty($groups)) {
+    // @todo show in modal?
+    $count = count($groups);
+    $output = t('@count targets in this group matched this search.', array('@count' => $count));
+  }
+  return $output;
+}
+
+
+/**
+ * Display info about the target.
+ *
+ * @param object $match
+ *   A target object.
+ *
+ * @return string
+ *   The formatted target.
+ */
 function sba_target_search_match_details($match) {
   $output = array();
   $target = (array) $match;

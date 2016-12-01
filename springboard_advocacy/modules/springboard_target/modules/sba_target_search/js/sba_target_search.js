@@ -967,7 +967,7 @@
                 var v = this.value;
                 if (nm.indexOf('search_committee') != -1) {
                     var com_id = v.match("id:[0-9]*");
-                    committee.push(v);
+                    committee.push(v.replace(/\(id:[0-9]*\)/g, ''));
                     committee_id.push(com_id[0].replace('id:', ''));
                 }
                 else if (nm.indexOf('role') != -1) {
@@ -1338,7 +1338,7 @@
             segments[0] = segments[0].SbaUcfirst();
           if(segments[0] != 'Search_committee' && segments[0] != 'Committee_id' && segments[0] != 'Class_name') {
                 segments[1] = segments[1].replace(/%7C/g, '|');
-                queryObj[segments[0]] = segments[1].split('|');
+              queryObj[segments[0]] = segments[1].split('|');
             }
             // If this is a legislative group...
             else if(segments[0] == 'Search_committee') {

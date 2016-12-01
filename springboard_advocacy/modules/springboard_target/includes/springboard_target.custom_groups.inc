@@ -109,7 +109,7 @@ function springboard_target_group_form_validate($form, &$form_state) {
       $form_state['redirect'] = 'admin/springboard/advocacy/targets/custom-groups';
     }
     else {
-      form_set_error('data][recipients', 'There was a problem saving the group @name to the advocacy server.');
+      form_set_error('data][recipients', t('There was a problem saving the group @name to the advocacy server.', array('@name' => $values['group_group_name'])));
     }
   }
 }
