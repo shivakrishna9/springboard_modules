@@ -68,15 +68,6 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     }
   }
 
-  // Check child groups for recursion.
-  if (!empty($group['group_id'])) {
-    foreach ($child_ids as $child_id) {
-      if (_springboard_target_api_check_group_recursion($child_id, $group['group_id'])) {
-        return FALSE;
-      }
-    }
-  }
-  
   if (!empty($chambers)) {
     $chamber_rows = _springboard_target_api_build_chambers($chambers);
   }
@@ -102,7 +93,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
       $group_id = $response->data->id;
     }
     else {
-      $group_id = 'FALSE';
+      $group_id = FALSE;
     }
   }
   elseif (!$is_new) {
@@ -125,10 +116,15 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     }
     // Set the group ID based on the API response.
     if (!empty($response->data->id)) {
-      $group_id = $response->data->id;
+      $group_id = $response->data;
     }
     else {
       $group_id = FALSE;
+      if (!empty($response->data->children_failed)) {
+        foreach ($response->data->children_failed as $child) {
+          drupal_set_message(t('The custom group @group cannot be added to this group because it or one of its children contains this group as a member.', array('@group' => $child->name)), 'warning');
+        }
+      }
     }
   }
   return $group_id;
@@ -203,50 +199,4 @@ function _springboard_target_api_get_target_group($group_id) {
   $response = $api_call->invokeClientMethod('getTargetGroup', $group_id);
 
   return $response;
-}
-
-/**
- * Prevent infinite recursion of group parentage.
- *
- * @param int $child_id
- *   The child group id.
- * @param int $parent_id
- *   The parent group id.
- * @param string $parent_name
- *   The parent group name.
- *
- * @return bool
- *   Whether the group can be nested.
- */
-function _springboard_target_api_check_group_recursion($child_id, $parent_id, $parent_name = '') {
-  // In case a recursion already got into the system somehow, prevent *this*
-  // function from infinitely looping by using a static variable.
-  static $gids = [];
-  if (!in_array($child_id, $gids)) {
-    $gids[] = $child_id;
-    $child_group = _springboard_target_api_get_target_group($child_id);
-    if (isset($child_group->data->groups)) {
-      foreach ($child_group->data->groups as $child_group_group) {
-        if ($child_group_group->target_group_group_id == $parent_id) {
-          drupal_set_message('The custom group "' . ($parent_name != '' ? $parent_name : $child_group->data->name) . '" cannot be added to this group because it or one of its children contains this group as a member.', 'error');
-          return TRUE;
-        }
-        else {
-          return _springboard_target_api_check_group_recursion($child_group_group->target_group_group_id, $parent_id, ($parent_name != '' ? $parent_name : $child_group->data->name));
-        }
-      }
-    }
-  }
-  else {
-    if (!empty($parent_name)) {
-      // We found a pre-existing infinite recursion. It's possible that
-      // it might not involve the top-level group, so we need a different
-      // error message.
-      drupal_set_message('The custom group "' . $parent_name . '" cannot be added to this group because it contains a child group which is invalid.', 'error');
-      return TRUE;
-    }
-    else {
-      // There's a recursion but it's not looping, so let it be. Hopefully.
-    }
-  }
 }
