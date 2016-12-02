@@ -46,7 +46,7 @@
       $input.parent('.form-item').remove();
     };
 
-    this.updateAmount = function(checkedOption) {
+    this.updateAmount = function(event, checkedOption) {
       if (undefined === checkedOption) {
         var checked = parent.$amount.filter(':checked');
         if (!checked.length) {
@@ -103,8 +103,8 @@
 
       parent.updateAmount();
       parent.$amount.on('change', parent.updateAmount);
-      parent.$otherAmount.on('focus', function() {
-        parent.updateAmount('other');
+      parent.$otherAmount.on('focus', function(e) {
+        parent.updateAmount(e, 'other');
       });
 
       for (paymentMethod in paymentMethods) {
