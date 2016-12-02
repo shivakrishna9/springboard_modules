@@ -39,26 +39,21 @@
         // Since the donation validation submission handler is already on the
         // queue, we need to insert our submission handler function before the
         // donation validation.
-        if (BI.settings.autofill == 'if_blank' || BI.settings.autofill == 'always') {
-          BIAP.callbacks = $.extend(true, [], $.data(BI.$form[0], 'events')['submit']);
-          var guid = 128;
-          if (undefined !== BIAP.callbacks && BIAP.callbacks.length) {
-            guid = BIAP.callbacks[0].guid - 1;
-          }
-          $.data(BI.$form[0], 'events')['submit'].splice(0, BIAP.callbacks.length, {
-            data: null,
-            guid: guid,
-            handler: BIAP.submitFields,
-            namespace: '',
-            origType: 'submit',
-            quick: null,
-            selector: null,
-            type: 'submit'
-          });
+        BIAP.callbacks = $.extend(true, [], $.data(BI.$form[0], 'events')['submit']);
+        var guid = 128;
+        if (undefined !== BIAP.callbacks && BIAP.callbacks.length) {
+          guid = BIAP.callbacks[0].guid - 1;
         }
-        else {
-          BI.$form.on('submit.braintree_applepay', BIAP.submitFields);
-        }
+        $.data(BI.$form[0], 'events')['submit'].splice(0, BIAP.callbacks.length, {
+          data: null,
+          guid: guid,
+          handler: BIAP.submitFields,
+          namespace: '',
+          origType: 'submit',
+          quick: null,
+          selector: null,
+          type: 'submit'
+        });
         return BIAP;
       };
 
