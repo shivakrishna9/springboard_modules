@@ -232,6 +232,8 @@ class IrusaDonationMigration extends IrusaMigration {
         salesforce_donation_fundraiser_donation_success($recur);
       }
     }
+
+    db_query("UPDATE {fundraiser_sustainers} SET sustainer_key = :sustainer_key WHERE master_did = :master_did", array(':sustainer_key' => $this->sustainerKey(), ':master_did' => $did));
   }
 
   public function completeRollback($entity_ids) {
@@ -239,6 +241,10 @@ class IrusaDonationMigration extends IrusaMigration {
     foreach ($entity_ids as $entity_id) {
       db_query("DELETE FROM {salesforce_sync_map} WHERE drupal_id = :drupal_id AND module = 'fundraiser_sustainers_series' AND delta = 'fundraiser_sustainers_series'", array(':drupal_id' => $entity_id));
     }
+  }
+
+  public function sustainerKey() {
+    return 'bogus.key';
   }
 
 }
