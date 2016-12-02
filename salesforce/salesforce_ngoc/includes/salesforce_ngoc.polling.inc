@@ -78,6 +78,10 @@ function salesforce_ngoc_create_sync_map_records(&$batch_upload_sobjects, &$chan
 function salesforce_ngoc_get_child_hold_queue_items($changed_records) {
   $ngoc_sync_map_uids = array_map(function($o) { return $o->uid; }, $changed_records);
   $ngoc_sync_map_dids = array_map(function($o) { return $o->did; }, $changed_records);
+
+  // @todo: if either uids or dids are empty, we get a PDO exception. Need to
+  // construct this query dynamically?
+
   // Find {salesforce_ngoc_hold_queue_items} that have parent_drupal_ids that
   // match those returned in $changed_records.
   $hold_queue_result = db_query("SELECT id, drupal_id, object_type, parent_type, parent_drupal_id
@@ -154,21 +158,24 @@ function salesforce_ngoc_release_children_from_hold_queue(&$changed_records) {
       $hold_queue_records_to_delete[] = $hold_queue_record->id;
     }
   }
-  // Move queue items from 'hold' to 'new' queue.
-  // The constructed query looks something like this:
-  // UPDATE {salesforce_queue} SET queue='new' WHERE
-  // (drupal_id IN (1, 2, 3) AND object_type = 'Social_Share__c') OR
-  // (drupal_id IN (3, 4, 5) AND object_type = 'sb_Actions_Taken__c').
-  $update_query = db_update('salesforce_queue')->fields(array('queue' => 'new'));
-  foreach ($salesforce_queue_records_to_update as $type => $drupal_ids) {
-    $db_and = db_and()->condition('drupal_id', $drupal_ids, 'IN')->condition('object_type', $type);
-    $update_query->condition(db_or()->condition($db_and));
+  if (!empty($salesforce_queue_records_to_update)) {
+    // Move queue items from 'hold' to 'new' queue.
+    // The constructed query looks something like this:
+    // UPDATE {salesforce_queue} SET queue='new' WHERE
+    // (drupal_id IN (1, 2, 3) AND object_type = 'Social_Share__c') OR
+    // (drupal_id IN (3, 4, 5) AND object_type = 'sb_Actions_Taken__c').
+    $update_query = db_update('salesforce_queue')->fields(array('queue' => 'new'));
+    foreach ($salesforce_queue_records_to_update as $type => $drupal_ids) {
+      $db_and = db_and()->condition('drupal_id', $drupal_ids, 'IN')->condition('object_type', $type);
+      $update_query->condition(db_or()->condition($db_and));
+    }
+    $update_query->execute();
   }
-  $update_query->execute();
-
-  // Since this is no longer in the hold queue, remove records from
-  // {salesforce_ngoc_hold_queue_items}.
-  db_query("DELETE FROM {salesforce_ngoc_hold_queue_items} WHERE id IN (:id)", array(':id' => $hold_queue_records_to_delete));
+  if (!empty($hold_queue_records_to_delete)) {
+    // Since this is no longer in the hold queue, remove records from
+    // {salesforce_ngoc_hold_queue_items}.
+    db_query("DELETE FROM {salesforce_ngoc_hold_queue_items} WHERE id IN (:id)", array(':id' => $hold_queue_records_to_delete));
+  }
 }
 
 /**
