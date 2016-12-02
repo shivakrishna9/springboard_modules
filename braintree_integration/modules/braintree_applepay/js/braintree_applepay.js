@@ -121,28 +121,27 @@
                 session.completePayment(ApplePaySession.STATUS_FAILURE);
                 return;
               }
-              session.completePayment(ApplePaySession.STATUS_SUCCESS);
 
+              session.completePayment(ApplePaySession.STATUS_SUCCESS);
               BI.$nonce.val(payload.nonce);
 
-              var autofilled = BI.autofill({
-                firstName: event.payment.shippingContact.givenName,
-                lastName: event.payment.shippingContact.familyName,
-                email: event.payment.shippingContact.emailAddress,
-                address: event.payment.shippingContact.addressLines[0],
-                address2: undefined == event.payment.shippingContact.addressLines[1] ? '' : event.payment.shippingContact.addressLines[1],
-                city: event.payment.shippingContact.locality,
-                country: event.payment.shippingContact.countryCode,
-                state: event.payment.shippingContact.administrativeArea,
-                zip: event.payment.shippingContact.postalCode
-              });
+              var autofill = parent.settings.applepay.autofill;
+              if (autofill != 'never') {
+                var autofilled = BI.autofill({
+                  firstName: event.payment.shippingContact.givenName,
+                  lastName: event.payment.shippingContact.familyName,
+                  email: event.payment.shippingContact.emailAddress,
+                  address: event.payment.shippingContact.addressLines[0],
+                  address2: undefined == event.payment.shippingContact.addressLines[1] ? '' : event.payment.shippingContact.addressLines[1],
+                  city: event.payment.shippingContact.locality,
+                  country: event.payment.shippingContact.countryCode,
+                  state: event.payment.shippingContact.administrativeArea,
+                  zip: event.payment.shippingContact.postalCode
+                });
+              }
 
               $.data(BI.$form[0], 'events')['submit'] = BIAP.callbacks;
-              BI.$form.off('submit.braintree_applepay');
-
-              if (!autofilled) {
-                BI.$form.submit();
-              }
+              BI.$form.submit();
             });
           };
 

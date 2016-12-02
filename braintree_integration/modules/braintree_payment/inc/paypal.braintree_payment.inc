@@ -36,5 +36,5 @@ function braintree_payment_braintree_payment_form__paypal__alter(&$context) {
   $js_settings['integration'] = 'paypal';
   $js_settings['paypalContainer'] = 'paypal-container';
   $js_settings['enabledMethods'][] = 'paypal';
-  $js_settings['autofill'] = $payment_method_instance['settings']['autofill'];
+  $js_settings['paypal']['autofill'] = $payment_method_instance['settings']['autofill'];
 }

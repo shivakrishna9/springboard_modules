@@ -24,7 +24,7 @@ function braintree_payment_braintree_payment_form__applepay__alter(&$context) {
 
   $js_settings = &$context['js_settings'];
   $js_settings['enabledMethods'][] = 'applepay';
-  $js_settings['autofill'] = $payment_method_instance['settings']['autofill'];
+  $js_settings['applepay']['autofill'] = $payment_method_instance['settings']['autofill'];
 
   $context['form']['#attached']['js'][] = drupal_get_path('module', 'braintree_applepay') . '/js/braintree_applepay.js';
 }

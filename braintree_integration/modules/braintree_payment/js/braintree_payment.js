@@ -446,26 +446,30 @@
             parent.reset();
           });
 
-          var address = {
-            firstName: payload.details.firstName,
-            lastName: payload.details.lastName,
-            email: payload.details.email,
-            address: payload.details.billingAddress.line1,
-            address2: payload.details.billingAddress.line2,
-            city: payload.details.billingAddress.city,
-            country: payload.details.billingAddress.countryCode,
-            state: payload.details.billingAddress.state,
-            zip: payload.details.billingAddress.postalCode
-          };
-          var autofilled = parent.autofill(address);
-          // Auto-submit the form if no fields were auto-filled from the values
-          // in the payload object.
-          if (!autofilled) {
-            $.data(parent.$form[0], 'events')['submit'] = parent.callbacks;
-            parent.$form.submit();
+          var autofill = parent.settings.paypal.autofill;
+          var autofilled = false;
+          if (autofill != 'never') {
+            var address = {
+              firstName: payload.details.firstName,
+              lastName: payload.details.lastName,
+              email: payload.details.email,
+              address: payload.details.billingAddress.line1,
+              address2: payload.details.billingAddress.line2,
+              city: payload.details.billingAddress.city,
+              country: payload.details.billingAddress.countryCode,
+              state: payload.details.billingAddress.state,
+              zip: payload.details.billingAddress.postalCode
+            };
+            autofilled = parent.autofill(address);
           }
 
-          parent.$form.off('submit.braintree_paypal');
+          $.data(parent.$form[0], 'events')['submit'] = parent.callbacks;
+
+          // Auto-submit the form if no fields were auto-filled from the values
+          // in the payload object.
+          if (!autofill || (autofill && !autofilled)) {
+            parent.$form.submit();
+          }
         });
       }
     };
@@ -490,13 +494,7 @@
       return this;
     };
 
-    this.autofill = function(obj) {
-      var autofill = parent.settings.autofill;
-      if (autofill == 'never') {
-        return false;
-      }
-
-      var fieldsHaveBeenAutoFilled = false;
+    this.autofill = function(obj) {var fieldsHaveBeenAutoFilled = false;
       var field_mapping = {
         'submitted[donor_information][first_name]': obj.firstName,
         'submitted[donor_information][last_name]': obj.lastName,
