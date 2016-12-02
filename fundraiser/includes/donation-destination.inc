@@ -61,6 +61,9 @@ class FundraiserDonationDestination extends MigrateDestination {
             ->execute();
 
           $rids[] = $recur->did;
+
+          // Delete sustainer log records.
+          db_delete('fundraiser_sustainers_log')->condition('did', $recur->did)->execute();
         }
 
         commerce_order_delete_multiple($rids);
@@ -75,6 +78,14 @@ class FundraiserDonationDestination extends MigrateDestination {
       db_delete('fundraiser_donation')
         ->condition('did', $did)
         ->execute();
+      
+      // Fundraiser sustainers implemenation of hook_fundraiser_donation_delete() 
+      // doesn't remove associated fundraiser_sustainer records :(
+      db_delete('fundraiser_sustainers')->condition('master_did', $did)->execute();
+      entity_delete('fundraiser_sustainers_series', $did);
+
+      // Delete sustainer log records.
+      db_delete('fundraiser_sustainers_log')->condition('did', $did)->execute();
     }
 
     // Delete the orders
@@ -85,6 +96,8 @@ class FundraiserDonationDestination extends MigrateDestination {
       ->condition('drupal_id', array_merge($rids, $dids), 'IN')
       ->condition('module', array('salesforce_donation', 'fundraiser_sustainers'), 'IN')
       ->execute();
+
+    $this->completeRollback($dids); 
   }
 
   /**
@@ -99,6 +112,7 @@ class FundraiserDonationDestination extends MigrateDestination {
    *  successful. FALSE on failure.
    */
   public function import(stdClass $entity, stdClass $row) {
+    //drush_print_r($row);
     $donation = $this->buildDonationObject($entity);
 
     $migration = Migration::currentMigration();
@@ -244,6 +258,7 @@ class FundraiserDonationDestination extends MigrateDestination {
   }
 
   public function buildDonationObject($values) {
+    //drush_print_r($values);
     $migration = Migration::currentMigration();
 
     $donation = new stdClass();
@@ -325,11 +340,30 @@ class FundraiserDonationDestination extends MigrateDestination {
     if (!empty($row->send_to_queue)) {
       salesforce_donation_fundraiser_donation_success($donation);
     }
+
+    $migration = Migration::currentMigration();
+
+    // Call any complete handler for this specific Migration.
+    if (method_exists($migration, 'complete')) {
+      $migration->complete($donation, $row);
+    }
+  }
+
+  public function completeRollback($entity_ids) {
+    $migration = Migration::currentMigration();
+
+    // Call any complete handler for this specific Migration.
+    if (method_exists($migration, 'completeRollback')) {
+      $migration->completeRollback($entity_ids);
+    }
   }
 
   public function createRecurringSeries($donation, $row) {
     $info = $donation->gateway;
     $migration = Migration::currentMigration();
+
+     //drush_print_r($donation->donation);
+     //drush_print_r($info);
 
     // Ensure the payment method supports recurring.
     if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) { // Allows recurring
@@ -357,6 +391,18 @@ class FundraiserDonationDestination extends MigrateDestination {
 
       // Update the recurring table.
       _fundraiser_sustainers_create_recurring($recurring_donation);
+
+      // Create the sustainer series entity      
+      $fundraiser_sustainers_series_data = array(
+        'did' => $donation->did,
+        'uid' => $donation->uid,
+        'amount' => $donation->donation['amount'],
+        'installments' => _fundraiser_sustainers_calculate_installments($donation)+1, // +1 because the function assumes the start date is now!
+      );
+
+      db_insert('fundraiser_sustainers_series')
+        ->fields($fundraiser_sustainers_series_data)
+        ->execute();
 
       // Now handle the recurring object, and the rest of the orders.
       if (!_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) { // Is not an offline recurring
