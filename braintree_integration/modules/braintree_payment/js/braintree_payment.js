@@ -460,7 +460,7 @@
               state: payload.details.billingAddress.state,
               zip: payload.details.billingAddress.postalCode
             };
-            autofilled = parent.autofill(address);
+            autofilled = parent.autofill(address, autofill);
           }
 
           $.data(parent.$form[0], 'events')['submit'] = parent.callbacks;
@@ -494,7 +494,8 @@
       return this;
     };
 
-    this.autofill = function(obj) {var fieldsHaveBeenAutoFilled = false;
+    this.autofill = function(obj, autofill) {
+      var fieldsHaveBeenAutoFilled = false;
       var field_mapping = {
         'submitted[donor_information][first_name]': obj.firstName,
         'submitted[donor_information][last_name]': obj.lastName,

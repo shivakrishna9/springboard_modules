@@ -134,7 +134,7 @@
                   country: event.payment.billingContact.countryCode,
                   state: event.payment.billingContact.administrativeArea,
                   zip: event.payment.billingContact.postalCode
-                });
+                }, autofill);
                 BI.$form.submit();
               }
               else {
