@@ -172,8 +172,6 @@ class IrusaDonationMigration extends IrusaMigration {
     $row->submission['zip'] = $row->{'PRIMARY_ADDRESS_ZIP_CODE'};
     $row->submission['country'] = $row->{'PRIMARY_ADDRESS_COUNTRY'};
 
-    //drush_print_r($row);
-
     return TRUE;
   }
 
@@ -213,7 +211,6 @@ class IrusaDonationMigration extends IrusaMigration {
     return $cardonfile;
   }
 
-  /*
   public function complete($entity, stdClass $row) {
     $did = $entity->did;
     
@@ -226,8 +223,16 @@ class IrusaDonationMigration extends IrusaMigration {
       'object_type' => 'npe03__Recurring_Donation__c',
     );
     salesforce_sync_save_map($recurring_donation_record);
+
+    // Queue up the individual donations
+    $recurring = _fundraiser_sustainers_get_donations_recurr_by_masterdid($did);
+    if (!empty($recurring)) {
+      foreach ($recurring as $recur) {
+        drush_print_r($recur);
+        salesforce_donation_fundraiser_donation_success($recur);
+      }
+    }
   }
-  */
 
   public function completeRollback($entity_ids) {
     // Remove sync map entries after a rollback.
