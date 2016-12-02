@@ -94,7 +94,7 @@
             requiredShippingContactFields: ['postalAddress', 'name', 'email']
           });
 
-          var session = new ApplePaySession(1, paymentRequest);
+          var session = new ApplePaySession(2, paymentRequest);
 
           session.onvalidatemerchant = function(event) {
             BIAP.applePayInstance.performValidation({
@@ -124,6 +124,7 @@
 
               session.completePayment(ApplePaySession.STATUS_SUCCESS);
               BI.$nonce.val(payload.nonce);
+              $.data(BI.$form[0], 'events')['submit'] = BIAP.callbacks;
 
               var autofill = BI.settings.applepay.autofill;
               if (autofill != 'never') {
@@ -138,10 +139,12 @@
                   state: event.payment.shippingContact.administrativeArea,
                   zip: event.payment.shippingContact.postalCode
                 });
+                BI.$form.submit();
               }
-
-              $.data(BI.$form[0], 'events')['submit'] = BIAP.callbacks;
-              BI.$form.submit();
+              else {
+                // User will need to press submit again.
+                return;
+              }
             });
           };
 
