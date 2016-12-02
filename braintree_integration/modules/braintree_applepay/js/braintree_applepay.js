@@ -86,7 +86,8 @@
               label: BI.settings.storeName,
               amount: BI.amount
             },
-            requiredShippingContactFields: ['postalAddress', 'name', 'email']
+            requiredBillingContactFields: ['postalAddress', 'name'],
+            requiredShippingContactFields: ['email']
           });
 
           var session = new ApplePaySession(2, paymentRequest);
@@ -124,15 +125,15 @@
               var autofill = BI.settings.applepay.autofill;
               if (autofill != 'never') {
                 var autofilled = BI.autofill({
-                  firstName: event.payment.shippingContact.givenName,
-                  lastName: event.payment.shippingContact.familyName,
+                  firstName: event.payment.billingContact.givenName,
+                  lastName: event.payment.billingContact.familyName,
                   email: event.payment.shippingContact.emailAddress,
-                  address: event.payment.shippingContact.addressLines[0],
-                  address2: undefined == event.payment.shippingContact.addressLines[1] ? '' : event.payment.shippingContact.addressLines[1],
-                  city: event.payment.shippingContact.locality,
-                  country: event.payment.shippingContact.countryCode,
-                  state: event.payment.shippingContact.administrativeArea,
-                  zip: event.payment.shippingContact.postalCode
+                  address: event.payment.billingContact.addressLines[0],
+                  address2: undefined == event.payment.billingContact.addressLines[1] ? '' : event.payment.billingContact.addressLines[1],
+                  city: event.payment.billingContact.locality,
+                  country: event.payment.billingContact.countryCode,
+                  state: event.payment.billingContact.administrativeArea,
+                  zip: event.payment.billingContact.postalCode
                 });
                 BI.$form.submit();
               }
