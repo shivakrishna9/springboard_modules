@@ -509,12 +509,6 @@
         'submitted[billing_information][zip]': obj.zip,
       };
 
-      var fieldsAreEmpty = (function(field_mapping) {
-        return $(field_mapping).filter(function(index, value) {
-          return index != 'submitted[billing_information][country]' && $('[name="' + index + '"]').val() != '';
-        }).get().length > 0;
-      })(field_mapping);
-
       $.each(field_mapping, function(key, value) {
         var $field = $('[name="' + key + '"]');
         if (autofill == 'always' || (autofill == 'if_blank' && $field.val() == '')) {
