@@ -496,10 +496,15 @@ function _fundraiser_recent_donors_insert_donor_optin($sid, $nid, $did, $donatio
     ':did' => $did,
   );
 
-  $exists = db_query("SELECT sid FROM {fundraiser_donor_opt_in} WHERE sid = :sid AND nid = :nid AND did = :did", $query_tokens)
-    ->fetchField();
+  $exists = db_query("SELECT did FROM {fundraiser_donor_opt_in} WHERE did = :did", array(':did' => $did))
+   ->fetchField();
   if (!$exists) {
-    $query_tokens[':created'] = $donation_timestamp;
+    $query_tokens = array(
+      ':sid' => $sid,
+      ':nid' => $nid,
+      ':did' => $did,
+      ':created' => $donation_timestamp,
+    );
     db_query("INSERT INTO {fundraiser_donor_opt_in} VALUES (:sid, :nid, :did, :created)", $query_tokens);
   }
 }
