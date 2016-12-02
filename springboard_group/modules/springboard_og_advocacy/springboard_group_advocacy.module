@@ -133,6 +133,126 @@ function springboard_group_advocacy_menu_alter(&$items) {
       }
     }
   }
+
+  $target_paths = array(
+    'admin/springboard/advocacy/targets',
+    'admin/springboard/advocacy/targets/custom-targets/add',
+    'admin/springboard/advocacy/targets/custom-targets/%/edit',
+    'admin/springboard/advocacy/targets/custom-targets/%/delete',
+    'admin/springboard/advocacy/targets/custom-groups/add',
+    'admin/springboard/advocacy/targets/custom-groups/%/edit',
+    'admin/springboard/advocacy/targets/custom-groups/%/delete',
+  );
+
+  foreach ($items as $path => $item) {
+    if (in_array($path, $target_paths)) {
+      $items[$path]['access callback'] = 'springboard_group_advocacy_custom_targets_and_groups_access';
+      if (strpos($path, '/add') == FALSE) {
+        array_push($items[$path]['access arguments'], 5);
+      }
+    }
+  }
+}
+
+/**
+ * Make the default advoacy target permissions group aware.
+ *
+ * @param $perm
+ * @param null $item_id
+ * @return bool
+ */
+function springboard_group_advocacy_custom_targets_and_groups_access($perm, $item_id = NULL) {
+  if (user_access('administer group')) {
+    return user_access($perm);
+  }
+  else {
+
+    $groups = og_get_groups_by_user();
+
+    // No group membership and not an admin, deny access.
+    if (empty($groups['node'])) {
+      return FALSE;
+    }
+    $context = springboard_group_get_group_context();
+
+    // No group context and not an admin, deny access.
+    if (empty($context)) {
+      return FALSE;
+    }
+
+    switch ($perm) {
+      case  'create groups':
+      case  'create targets':
+        // There's a group context, return the standard permission.
+        return user_access($perm);
+
+      case 'edit groups':
+      case 'delete groups':
+
+        // Test for target ownership by group.
+        $api_call = springboard_advocacy_api_call();
+        $response = $api_call->invokeClientMethod('getTargetGroup', $item_id);
+        if (empty($response->data)) {
+          return FALSE;
+        }
+        if ($response->data->affiliate_id != $context) {
+          return FALSE;
+        }
+        if (!in_array($response->data->affiliate_id, $groups['node'])) {
+          return FALSE;
+        }
+
+        return user_access($perm);
+
+      case 'edit targets':
+      case 'delete targets':
+
+        $api_call = springboard_advocacy_api_call();
+        $response = $api_call->invokeClientMethod('getCustomTarget', $item_id);
+        if (empty($response->data)) {
+          return FALSE;
+        }
+        if ($response->data->affiliate_id != $context) {
+          return FALSE;
+        }
+        if (!in_array($response->data->affiliate_id, $groups['node'])) {
+          return FALSE;
+        }
+
+        return user_access($perm);
+
+    }
+  }
+}
+
+
+function springboard_group_advocacy_springboard_target_user_can_access_targets_alter(&$access) {
+  springboard_group_advocacy_custom_items_access($access);
+}
+
+function springboard_group_advocacy_springboard_target_user_can_access_groups_alter(&$access) {
+  springboard_group_advocacy_custom_items_access($access);
+}
+
+function springboard_group_advocacy_custom_items_access(&$access) {
+  if (user_access('administer group')) {
+    $access = user_access('view targets')
+      || user_access('create targets')
+      || user_access('edit targets')
+      || user_access('delete targets');
+  }
+  else {
+    $groups = og_get_groups_by_user();
+    // No group membership and not an admin, deny access.
+    if (empty($groups['node'])) {
+      $access = FALSE;
+    }
+    $context = springboard_group_get_group_context();
+    // No group context and not an admin, deny access.
+    if (empty($context)) {
+      $access = FALSE;
+    }
+  }
 }
 
 /**

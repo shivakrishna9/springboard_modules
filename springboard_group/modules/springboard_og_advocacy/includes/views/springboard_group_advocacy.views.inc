@@ -65,11 +65,13 @@ function springboard_group_springboard_advocacy_views_plugin_query_alter(&$query
     }
   }
   else {
-    // @todo not implemented do we need this?
     // There's no group id.
     if (!empty($query->search_terms) && ($query->search_terms['class_name'][0] == 'Target' || $query->search_terms['class_name'][0] == 'Group')) {
-      if (user_access('administer group')) {
-        $query->search_terms['affiliate_id'] = 'all';
+      if (!user_access('administer group')) {
+        $query->search_terms['affiliate_id'] = 'disallow_all';
+      }
+      else {
+        $query->search_terms['affiliate_id'] = '_none';
       }
     }
   }

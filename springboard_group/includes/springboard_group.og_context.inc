@@ -132,6 +132,15 @@ function springboard_group_get_group_context() {
   if (!empty($group_context['gid'])) {
     return $group_context['gid'];
   }
+
+  if (module_exists('springboard_group_advocacy') && arg(3) == 'targets' && arg(4) == 'custom-groups' && arg(6) == 'edit') {
+    $api_call = springboard_advocacy_api_call();
+    $response = $api_call->invokeClientMethod('getTargetGroup', arg(5));
+    if (!empty($response->data->affiliate_id)) {
+      return $response->data->affiliate_id;
+    }
+  }
+
   // "_none".
   if (!empty($_SESSION['springboard_group_working_group'])) {
     return $_SESSION['springboard_group_working_group'];
