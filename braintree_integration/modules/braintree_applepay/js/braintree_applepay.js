@@ -125,7 +125,7 @@
               session.completePayment(ApplePaySession.STATUS_SUCCESS);
               BI.$nonce.val(payload.nonce);
 
-              var autofill = parent.settings.applepay.autofill;
+              var autofill = BI.settings.applepay.autofill;
               if (autofill != 'never') {
                 var autofilled = BI.autofill({
                   firstName: event.payment.shippingContact.givenName,
