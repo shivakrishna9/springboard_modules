@@ -3829,7 +3829,7 @@ function _fundraiser_sustainers_update_recurring($donation) {
  */
 function _fundraiser_sustainers_delete_recurring($did) {
   $original = _fundraiser_sustainers_get_recurring_by_did($did);
-  db_delete('fundraiser_sustainers')->condition('did', $did)->execute();
+  db_delete('fundraiser_sustainers')->condition('master_did', $did)->execute();
 
   $log_record = array(
     'did' => $did,
@@ -4592,4 +4592,20 @@ function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) 
   }
 
   return $used_by;
+}
+
+/**
+ * Implements hook_fundraiser_commerce_cardonfile_deleted_card_donations_alter().
+ */
+function fundraiser_sustainers_fundraiser_commerce_cardonfile_deleted_card_donations_alter(&$donations) {
+  foreach ($donations as $donation_id) {
+    $series = db_query('SELECT did FROM {fundraiser_sustainers} WHERE master_did = :did AND did NOT IN (:donations)', array(
+      ':did' => $donation_id,
+      ':donations' => $donations,
+    ))->fetchAllAssoc('did', PDO::FETCH_ASSOC);
+    if (!empty($series)) {
+      $series = array_keys($series);
+      $donations = array_merge($donations, $series);
+    }
+  }
 }
