@@ -121,8 +121,16 @@ function springboard_group_rules_payment_rules_overview__page_alter(&$page) {
  */
 function springboard_group_form_rules_ui_edit_element_alter(&$form, &$form_state, $form_id) {
   // We need the rule name to proceed.
+
   $rule_name = arg(6);
-  springboard_group_rules_add_group_widget($form, $form_state, $rule_name);
+  $rule = rules_config_load($rule_name);
+  if (empty($rule)) {
+    // It's a custom UI managed rule.
+    $rule = rules_config_load('rules_' . $rule_name);
+  }
+  if (!empty($rule)) {
+    springboard_group_rules_add_group_widget($form, $form_state, $rule);
+  }
 
 }
 
@@ -138,7 +146,14 @@ function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$
   }
 
   $rule_name = $form['settings']['name']['#default_value'];
-  springboard_group_rules_add_group_widget($form, $form_state, $rule_name);
+  $rule = rules_config_load($rule_name);
+  if (empty($rule)) {
+    // It's a custom UI managed rule.
+    $rule = rules_config_load('rules_' . $rule_name);
+  }
+  if (!empty($rule)) {
+    springboard_group_rules_add_group_widget($form, $form_state, $rule);
+  }
 
 }
 
@@ -149,13 +164,7 @@ function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$
  * @param $form_state
  * @param $rule_name
  */
-function springboard_group_rules_add_group_widget(&$form, &$form_state, $rule_name) {
-
-  $rule = rules_config_load($rule_name);
-  if (empty($rule)) {
-    // It's a custom UI managed rule.
-    $rule = rules_config_load('rules_' . $rule_name);
-  }
+function springboard_group_rules_add_group_widget(&$form, &$form_state, $rule) {
 
   // Only add the OG field to commerce rules.
   if (!empty($rule) && $rule->module == 'commerce_payment' || in_array('commerce_payment', $rule->dependencies)) {
