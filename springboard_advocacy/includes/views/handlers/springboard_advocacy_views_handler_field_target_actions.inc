@@ -91,7 +91,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     if (!empty($this->options['which_links']['add'])) {
       $query = array();
       // Groups do not use the class_name attribute.
-      if (!isset($values->class_name) && user_access('add group to action')) {
+      if (!isset($values->class_name) && module_exists('springboard_target') && springboard_target_target_access('add group to action')) {
         $query = array(
           'id' => $values->id,
           'type' => 'group',
@@ -99,7 +99,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
         );
       }
       else {
-        if (user_access('add target to action')) {
+        if (module_exists('springboard_target') && springboard_target_target_access('add target to action')) {
           $query = array(
             'id' => $values->id,
             'type' => !empty($values->class_name) ? $values->class_name : '',
@@ -133,10 +133,10 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
 
     // Custom targets can be edited and deleted. Legislators can't.
     if ($type != "legislator") {
-      if (user_access('edit ' . $type . 's') && !empty($this->options['which_links']['edit'])) {
+      if (module_exists('springboard_target') && springboard_target_target_access('edit ' . $type . 's') && !empty($this->options['which_links']['edit'])) {
         $links[] = l(t('edit'), $path . '/' . $values->id . '/edit');
       }
-      if (user_access('delete ' . $type . 's') && !empty($this->options['which_links']['delete'])) {
+      if (module_exists('springboard_target') && springboard_target_target_access('delete ' . $type . 's') && !empty($this->options['which_links']['delete'])) {
         $links[] = l(t('delete'), $path . '/' . $values->id . '/delete');
       }
     }

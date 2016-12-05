@@ -392,7 +392,7 @@ function springboard_advocacy_custom_targets_admin_form($path, $arg = NULL) {
       'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
     ),
   );
-  if (user_access('create targets') && isset($arg)) {
+  if (module_exists('springboard_target') && springboard_target_target_access('create targets') && isset($arg)) {
     if($path == 'edit-custom-targets') {
       $sections['target_form']['create_link'] = array(
         'title' => t('Create a new target'),

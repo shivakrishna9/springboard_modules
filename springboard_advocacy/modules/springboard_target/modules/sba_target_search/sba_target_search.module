@@ -5,13 +5,14 @@
 */
 function sba_target_search_menu() {
 // Committee Search Selector autocomplete path.
-$items['target-search/committee/autocomplete'] = array(
-'page callback' => '_sba_target_search_committee_autocomplete',
-'access arguments' => array('add target to action'),
-'type' => MENU_CALLBACK,
-);
+  $items['target-search/committee/autocomplete'] = array(
+    'page callback' => '_sba_target_search_committee_autocomplete',
+    'access callback' => 'springboard_target_target_access',
+    'access arguments' => array('add target to action'),
+    'type' => MENU_CALLBACK,
+  );
 
-return $items;
+  return $items;
 }
 
 /**
@@ -163,13 +164,23 @@ function sba_target_search_preprocess_views_exposed_form(&$vars, $hook) {
  */
 
 function sba_target_search_preprocess_views_view_table(&$vars) {
-
   $view = $vars['view'];
+
+  $fields = &$view->field;
+  $columns = $view->style_plugin->options['columns'];
+  $classes = isset($view->filter['search_class_name']->value) ? $view->filter['search_class_name']->value : [];
+  $omit_fields = [];
+
+  if ($view->name == 'sba_custom_targets' && $view->current_display == 'block_2') {
+
+    if (empty($view->query->search_terms['group_name'])) {
+      $omit_fields = array_merge($omit_fields, array('matching_targets'));
+      sba_target_search_remove_views_table_columns($vars, $omit_fields, $columns, $fields);
+    }
+  }
+
   if ($view->name == 'targets' && $view->current_display == 'block_3') {
-    $fields = &$view->field;
-    $columns = $view->style_plugin->options['columns'];
-    $classes = isset($view->filter['search_class_name']->value) ? $view->filter['search_class_name']->value : [];
-    $omit_fields = [];
+
     if (!in_array('Group', $classes)) {
       $omit_fields = array_merge($omit_fields, array('matching_targets', 'child_groups'));
     }
@@ -194,32 +205,36 @@ function sba_target_search_preprocess_views_view_table(&$vars) {
         'committee_memberships',
       ));
     }
+    sba_target_search_remove_views_table_columns($vars, $omit_fields, $columns, $fields);
+  }
+}
 
-    foreach ($vars['header'] as $key => $head) {
-      if (in_array($key, $omit_fields)) {
-        unset($vars['header'][$key]);
-      }
+function sba_target_search_remove_views_table_columns(&$vars, $omit_fields, $columns, &$fields) {
+
+  foreach ($vars['header'] as $key => $head) {
+    if (in_array($key, $omit_fields)) {
+      unset($vars['header'][$key]);
     }
-    foreach ($columns as $key => $column) {
-      if (in_array($key, $omit_fields)) {
-        // Prevent headers from being rebuilt in
-        // springboard_advocacy_preprocess_views_view_table().
-        unset($columns[$key]);
-      }
+  }
+  foreach ($columns as $key => $column) {
+    if (in_array($key, $omit_fields)) {
+      // Prevent headers from being rebuilt in
+      // springboard_advocacy_preprocess_views_view_table().
+      unset($columns[$key]);
     }
-    foreach ($fields as $key => $field) {
-      if (in_array($key, $omit_fields)) {
-        unset($fields[$key]);
-      }
+  }
+  foreach ($fields as $key => $field) {
+    if (in_array($key, $omit_fields)) {
+      unset($fields[$key]);
     }
-    $vars['view']->style_plugin->options['columns'] = $columns;
-    $vars['view']->style_options['columns'] = $columns;
-    $vars['options']['columns'] = $columns;
-    foreach ($vars['rows'] as $key => $row) {
-      foreach ($row as $field_name => $value) {
-        if (in_array($field_name, $omit_fields)) {
-          unset($vars['rows'][$key][$field_name]);
-        }
+  }
+  $vars['view']->style_plugin->options['columns'] = $columns;
+  $vars['view']->style_options['columns'] = $columns;
+  $vars['options']['columns'] = $columns;
+  foreach ($vars['rows'] as $key => $row) {
+    foreach ($row as $field_name => $value) {
+      if (in_array($field_name, $omit_fields)) {
+        unset($vars['rows'][$key][$field_name]);
       }
     }
   }
