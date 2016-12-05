@@ -20,7 +20,7 @@ function sba_target_search_views_default_views() {
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Targets';
   $handler->display->display_options['use_more_always'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['type'] = 'springboard_target_views_access';
   $handler->display->display_options['access']['perm'] = 'view targets';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
@@ -963,6 +963,7 @@ function sba_target_search_views_default_views() {
     5 => 0,
     6 => 0,
   );
+
 
   $views[$view->name] = $view;
 

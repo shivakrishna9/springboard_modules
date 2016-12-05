@@ -227,6 +227,26 @@ function springboard_target_views_api() {
 }
 
 /**
+ * * Implements hook_views_plugins().
+ */
+function springboard_target_views_plugins() {
+  $plugins = array(
+    'access' => array(
+      'springboard_target_views_access' => array(
+        'title' => t('Springboard Target Views Access'),
+        'help' => t('Custom access permissions for Springboard Targets.'),
+        'handler' => 'springboard_target_views_access',
+        'path' => drupal_get_path('module', 'springboard_target'),
+        'uses options' => TRUE,
+      ),
+    ),
+  );
+
+  return $plugins;
+}
+
+
+/**
  * Implements hook_view_pre_render().
  *
  * Change the no results text in custom target listing.

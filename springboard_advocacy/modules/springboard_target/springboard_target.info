@@ -6,3 +6,4 @@ dependencies[] = webform_user
 dependencies[] = springboard_advocacy
 
 files[] = includes/springboard_target.api_calls.inc
+files[] = springboard_target_views_access.inc
