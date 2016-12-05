@@ -66,6 +66,10 @@ function springboard_purge($type = NULL) {
   $silent = drush_get_option('silent', FALSE);
   $time_start = microtime(TRUE);
 
+  if (!$dry_run && !drush_confirm(dt('Do you really want to delete these records? This can not be undone.'))) {
+    drush_die('Aborting.');
+  }
+
   switch ($type) {
     case 'users':
         if (!$silent) {
