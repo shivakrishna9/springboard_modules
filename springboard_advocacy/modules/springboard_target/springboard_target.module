@@ -36,14 +36,14 @@ function springboard_target_menu() {
 
   $items['admin/springboard/advocacy/targets/custom-targets/%/edit'] = array(
     'title' => 'Advocacy: Target Center: Edit Custom Target',
-    'access arguments' => array('edit targets'),
+    'access arguments' => array('edit targets', 5),
     'access callback' => 'springboard_target_target_access',
     'page arguments' => array('edit-custom-targets', 5),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-targets/%/delete'] = array(
     'title' => 'Advocacy: Target Center: Delete Custom Target',
-    'access arguments' => array('delete targets'),
+    'access arguments' => array('delete targets', 5),
     'access callback' => 'springboard_target_target_access',
     'page arguments' => array('springboard_target_delete', 5),
     'page callback' => 'drupal_get_form',
@@ -68,14 +68,14 @@ function springboard_target_menu() {
 
   $items['admin/springboard/advocacy/targets/custom-groups/%/edit'] = array(
     'title' => 'Advocacy: Target Center: Edit Custom Group',
-    'access arguments' => array('edit groups'),
+    'access arguments' => array('edit groups', 5),
     'access callback' => 'springboard_target_target_access',
     'page arguments' => array('edit-custom-groups', 5),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-groups/%/delete'] = array(
     'title' => 'Advocacy: Target Center: Delete Custom Group',
-    'access arguments' => array('delete groups'),
+    'access arguments' => array('delete groups', 5),
     'access callback' => 'springboard_target_target_access',
     'page arguments' => array(5),
     'page callback' => 'springboard_target_group_delete',
@@ -138,7 +138,7 @@ function springboard_target_permission() {
 
 /**
  */
-function springboard_target_target_access($op) {
+function springboard_target_target_access($op, $iid = NULL) {
   $access = FALSE;
 
   switch ($op) {
@@ -184,7 +184,7 @@ function springboard_target_target_access($op) {
   }
 
   // Allow other modules to grant / deny access.
-  $alter_access = module_invoke_all('springboard_target_target_access', $op);
+  $alter_access = module_invoke_all('springboard_target_target_access', $op, $iid);
 
   if (in_array(FALSE, $alter_access, TRUE)) {
     $access = FALSE;
