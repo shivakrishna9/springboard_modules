@@ -275,44 +275,77 @@ function springboard_group_advocacy_get_all_states() {
 }
 
 function springboard_group_advocacy_action_targets_validate(&$form, &$form_state) {
-  //$form['#submit'][] = 'springboard_group_delete_email_wrappers';
-
+  $form['#submit'][] = 'springboard_group_advocacy_delete_targets';
   // Get messages from action node
   // iterate through messages and check targets.
   // identify ineleiigble targets and put them in an array keyed by message id
   // on form submit, remove the ineligible targets from local drupal db
   // then update the targets on the api server.
-//  if (!empty($form['#node']->messages)) {
-//    $messages = $form['#node']->messages;
-//    $gids = [];
-//    $targets_to_delete = [];
-//    // Get the group IDs from the form values.
-//    $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
-//    $options = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
-//    foreach ($options as $option) {
-//      $gids[] = $option['target_id'];
-//    }
-//    // Get the existing settings. Check the group membership for each wrapper
-//    // in the setting and compare it to each eligible group.
-//    foreach ($messages as $uuid => $message) {
-//      $targets = json_decode($message->data['recipients']);
-//      $grouped = springboard_group_email_wrappers_get_grouped($gids, $message);
-//      // If the wrapper is not in any of the current groups, add it to
-//      // the removal list.
-//      if (count($grouped) == 0) {
-//        $targets_to_delete[] = $message;
-//      }
-//    }
-//    $form_state['targets_to_delete'] = $targets_to_delete;
+  if (!empty($form['#node']->messages)) {
+    $messages = $form['#node']->messages;
+    $gids = [];
+    $messages_with_targets_to_delete = [];
+    $targets_to_delete = [];
+
+    // Get the group IDs from the form values.
+    $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
+    $options = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
+    foreach ($options as $option) {
+      $gids[] = $option['target_id'];
+    }
+    // Get the existing targets.
+    foreach ($messages as $uuid => $message) {
+      $targets = json_decode($message->data['recipients']);
+      // If the wrapper is not in any of the current groups, add it to
+      // the removal list.
+      if (count($targets) > 0) {
+        $messages_with_targets_to_delete[] = $message;
+        $targets_to_delete = array_merge($targets_to_delete, (array) $targets);
+      }
+    }
+    $form_state['message_targets_to_delete'] = $messages_with_targets_to_delete;
     // Set the message.
- //   if (!empty($targets_to_delete)) {
-//      $count = count($targets_to_delete);
-//      $format = format_plural($count, 'target', 'targets');
-//      $form_state['group_ajax_messages'][] = t('@count @format belonging to ineligible groups will be removed when this form is saved. Please update your targets after saving.', array(
-//        '@count' => $count,
-//        '@format' => $format,
-//      ));
-      $form_state['group_ajax_messages'][] = t('This is the message we show when you change the group on an action. We are still deciding what to do if that happens.');
- //   }
- // }
+    if (!empty($messages_with_targets_to_delete)) {
+      $count = count($targets_to_delete);
+      $format = format_plural($count, 'target', 'targets');
+      $form_state['group_ajax_messages'][] = t('@count @format will be removed when this form is saved. Please update your targets after saving.', array(
+        '@count' => $count,
+        '@format' => $format,
+      ));
+    }
+  }
+}
+
+function springboard_group_advocacy_delete_targets($form, $form_state) {
+  foreach ($form_state['message_targets_to_delete'] as $sba_message) {
+    if (isset($sba_message->data['recipients'])) {
+      $sba_message->data['recipients'] =  '{}';
+      // Build a group object for saving
+      $group = array(
+        'group_id' => $sba_message->data['group_id'],
+        'recipients' => '{}',
+        'name' => $sba_message->data['message_id'],
+        'is_template' => 0,
+        'message' => array(
+          'group_id' => $sba_message->data['group_id'],
+          'message_id' => $sba_message->data['message_id'],
+          'form_id' => $form['#node']->advocacy_id,
+        ),
+      );
+      module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
+      $group_id = springboard_target_api_save_target_group($group, FALSE);
+      $sba_message->data['recipients'] = '{}';
+      if ($group_id) {
+        $sba_message->data['group_id'] = $group_id;
+        $sba_message->changed = time();
+        $sba_message->save();
+      }
+      else {
+        $sba_message->data['group_id'] = 'no_response';
+        drupal_set_message('There was a problem saving the message targets to the advocacy server.', 'warning');
+        $sba_message->changed = time();
+        $sba_message->save();
+      }
+    }
+  }
 }
