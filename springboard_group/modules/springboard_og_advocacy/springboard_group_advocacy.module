@@ -111,6 +111,46 @@ function springboard_group_advocacy_og_permission() {
       'roles' => array(OG_AUTHENTICATED_ROLE),
       'default role' => array(),
     ),
+    'view targets' => array(
+      'title' => t('View Targets'),
+      'description' => t('View Custom targets.'),
+    ),
+    'create targets' => array(
+      'title' => t('Create Targets'),
+      'description' => t('Create Custom targets.'),
+    ),
+    'edit targets' => array(
+      'title' => t('Edit Targets'),
+      'description' => t('Edit Custom my targets.'),
+    ),
+    'delete targets' => array(
+      'title' => t('Delete Targets'),
+      'description' => t('Custom targets.'),
+    ),
+    'view groups' => array(
+      'title' => t('View Groups'),
+      'description' => t('View Custom groups.'),
+    ),
+    'create groups' => array(
+      'title' => t('Create Groups'),
+      'description' => t('Create Custom groups.'),
+    ),
+    'edit groups' => array(
+      'title' => t('Edit Groups'),
+      'description' => t('Edit Custom groups.'),
+    ),
+    'delete groups' => array(
+      'title' => t('Delete Groups'),
+      'description' => t('Custom groups.'),
+    ),
+    'add target to action' => array(
+      'title' => t('Add target to action.'),
+      'description' => t('Add target to action.'),
+    ),
+    'add group to action' => array(
+      'title' => t('Add group to action.'),
+      'description' => t('Add group to action.'),
+    ),
   );
 }
 
@@ -131,126 +171,6 @@ function springboard_group_advocacy_menu_alter(&$items) {
       if (isset($item['access callback']) && $item['access callback'] == 'springboard_advocacy_user_can_create_advocacy_type') {
         $items[$path]['access callback'] = 'springboard_group_advocacy_user_can_create_advocacy_type';
       }
-    }
-  }
-
-  $target_paths = array(
-    'admin/springboard/advocacy/targets',
-    'admin/springboard/advocacy/targets/custom-targets/add',
-    'admin/springboard/advocacy/targets/custom-targets/%/edit',
-    'admin/springboard/advocacy/targets/custom-targets/%/delete',
-    'admin/springboard/advocacy/targets/custom-groups/add',
-    'admin/springboard/advocacy/targets/custom-groups/%/edit',
-    'admin/springboard/advocacy/targets/custom-groups/%/delete',
-  );
-
-  foreach ($items as $path => $item) {
-    if (in_array($path, $target_paths)) {
-      $items[$path]['access callback'] = 'springboard_group_advocacy_custom_targets_and_groups_access';
-      if (strpos($path, '/add') == FALSE) {
-        array_push($items[$path]['access arguments'], 5);
-      }
-    }
-  }
-}
-
-/**
- * Make the default advoacy target permissions group aware.
- *
- * @param $perm
- * @param null $item_id
- * @return bool
- */
-function springboard_group_advocacy_custom_targets_and_groups_access($perm, $item_id = NULL) {
-  if (user_access('administer group')) {
-    return user_access($perm);
-  }
-  else {
-
-    $groups = og_get_groups_by_user();
-
-    // No group membership and not an admin, deny access.
-    if (empty($groups['node'])) {
-      return FALSE;
-    }
-    $context = springboard_group_get_group_context();
-
-    // No group context and not an admin, deny access.
-    if (empty($context)) {
-      return FALSE;
-    }
-
-    switch ($perm) {
-      case  'create groups':
-      case  'create targets':
-        // There's a group context, return the standard permission.
-        return user_access($perm);
-
-      case 'edit groups':
-      case 'delete groups':
-
-        // Test for target ownership by group.
-        $api_call = springboard_advocacy_api_call();
-        $response = $api_call->invokeClientMethod('getTargetGroup', $item_id);
-        if (empty($response->data)) {
-          return FALSE;
-        }
-        if ($response->data->affiliate_id != $context) {
-          return FALSE;
-        }
-        if (!in_array($response->data->affiliate_id, $groups['node'])) {
-          return FALSE;
-        }
-
-        return user_access($perm);
-
-      case 'edit targets':
-      case 'delete targets':
-
-        $api_call = springboard_advocacy_api_call();
-        $response = $api_call->invokeClientMethod('getCustomTarget', $item_id);
-        if (empty($response->data)) {
-          return FALSE;
-        }
-        if ($response->data->affiliate_id != $context) {
-          return FALSE;
-        }
-        if (!in_array($response->data->affiliate_id, $groups['node'])) {
-          return FALSE;
-        }
-
-        return user_access($perm);
-
-    }
-  }
-}
-
-
-function springboard_group_advocacy_springboard_target_user_can_access_targets_alter(&$access) {
-  springboard_group_advocacy_custom_items_access($access);
-}
-
-function springboard_group_advocacy_springboard_target_user_can_access_groups_alter(&$access) {
-  springboard_group_advocacy_custom_items_access($access);
-}
-
-function springboard_group_advocacy_custom_items_access(&$access) {
-  if (user_access('administer group')) {
-    $access = user_access('view targets')
-      || user_access('create targets')
-      || user_access('edit targets')
-      || user_access('delete targets');
-  }
-  else {
-    $groups = og_get_groups_by_user();
-    // No group membership and not an admin, deny access.
-    if (empty($groups['node'])) {
-      $access = FALSE;
-    }
-    $context = springboard_group_get_group_context();
-    // No group context and not an admin, deny access.
-    if (empty($context)) {
-      $access = FALSE;
     }
   }
 }
@@ -287,4 +207,111 @@ function springboard_group_advocacy_user_can_create_advocacy_type() {
     }
   }
   return $access;
+}
+
+/**
+ * Implements hook_springboard_target_target_access().
+ */
+function springboard_group_springboard_target_target_access($op, $item_id) {
+  global $user;
+
+  if (user_access('administer group')) {
+    return user_access($op);
+  }
+  else {
+
+    $groups = og_get_groups_by_user();
+    $context = springboard_group_get_group_context();
+
+    // First, check if access should be denied due to mismatched affiliate id
+    // or other issues.
+    switch ($op) {
+
+      case 'edit groups':
+      case 'delete groups':
+        if (!empty($item_id)) {
+          // Test for target ownership by group.
+          $api_call = springboard_advocacy_api_call();
+          $response = $api_call->invokeClientMethod('getTargetGroup', $item_id);
+          if (empty($response->data)) {
+            return FALSE;
+          }
+          if ($response->data->affiliate_id != $context) {
+            return FALSE;
+          }
+          if (!in_array($response->data->affiliate_id, $groups['node'])) {
+            return FALSE;
+          }
+        }
+        break;
+
+      case 'edit targets':
+      case 'delete targets':
+        if (!empty($item_id)) {
+          $api_call = springboard_advocacy_api_call();
+          $response = $api_call->invokeClientMethod('getCustomTarget', $item_id);
+          if (empty($response->data)) {
+            return FALSE;
+          }
+          if ($response->data->affiliate_id != $context) {
+            return FALSE;
+          }
+          if (!in_array($response->data->affiliate_id, $groups['node'])) {
+            return FALSE;
+          }
+        }
+        break;
+    }
+  }
+
+  // If we get this far, check for in-group permissions.
+  if (!user_access($op)) {
+    $account = $user;
+    $group_perms = array_keys(array_filter(springboard_group_advocacy_get_advocacy_group_perms($account)));
+    return in_array($op, $group_perms);
+  }
+}
+
+
+/**
+ * Check if user has target CRUD permissions in any Group.
+ */
+function springboard_group_advocacy_get_advocacy_group_perms($account) {
+
+  $all_user_group_rids = array();
+  $in_group_perms = array();
+
+  // Get the user's groups.
+  $groups = og_get_entity_groups('user', $account);
+  // Get the user's roles in every group.
+  if (!empty($groups['node'])) {
+    foreach ($groups['node'] as $gid) {
+      $all_user_group_rids += og_get_user_roles('node', $gid, $account->uid, TRUE, TRUE);
+    }
+
+    $advo_perms = array(
+      'view targets',
+      'create targets',
+      'edit targets',
+      'delete targets',
+      'view groups',
+      'create groups',
+      'edit groups',
+      'delete groups',
+      'add target to action',
+      'add group to action',
+    );
+
+    // Check the role permissions for target CRUD access.
+    $perms = og_role_permissions($all_user_group_rids);
+    foreach ($perms as $group_perm) {
+      foreach ($group_perm as $key => $status) {
+        if (in_array($key, $advo_perms)) {
+          $in_group_perms[$key] = $status;
+        }
+      }
+    }
+  }
+
+  return $in_group_perms;
 }
