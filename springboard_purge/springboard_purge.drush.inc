@@ -43,10 +43,10 @@ function springboard_purge_drush_command() {
 function springboard_purge($type = NULL) {
 
   $options = array(
-    'users' => dt('Users'),
-    'webforms' => dt('Webforms'),
-    'orders' => dt('Orders'),
-    'sustainers' => dt('Sustainers'),
+    'users' => dt('users'),
+    'webforms' => dt('webforms'),
+    'orders' => dt('orders'),
+    'sustainers' => dt('sustainers'),
   );
   // Check for existence of argument.
   if (!$type) {

@@ -29,7 +29,6 @@ function springboard_purge_get_user_whitelist($days_old, $protected_roles) {
         springboard_purge_get_queued_users(),
         springboard_purge_get_non_synced_users(),
         springboard_purge_get_node_authors(),
-        springboard_purge_get_content_authors(),
         springboard_purge_get_recent_submissions_users($days_old)
     );
   $users_to_keep = array_unique($users_to_keep);
@@ -117,13 +116,6 @@ function springboard_purge_get_non_synced_users() {
  */
 function springboard_purge_get_node_authors() {
   return db_query("SELECT DISTINCT(uid) FROM {node}")->fetchCol();
-}
-
-/**
- * Returns ids of users that are set as content authors.
- */
-function springboard_purge_get_content_authors() {
-  return db_query("SELECT DISTINCT(field_author_target_id) FROM field_data_field_author")->fetchCol();
 }
 
 /**
