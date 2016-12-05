@@ -128,7 +128,7 @@ function springboard_group_form_rules_ui_edit_element_alter(&$form, &$form_state
     // It's a custom UI managed rule.
     $rule = rules_config_load('rules_' . $rule_name);
   }
-  if (!empty($rule)) {
+  if (!empty($rule) && arg(7) != 'edit') {
     springboard_group_rules_add_group_widget($form, $form_state, $rule);
   }
 
