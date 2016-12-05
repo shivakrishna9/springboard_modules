@@ -45,14 +45,14 @@ class springboard_advocacy_views_handler_field_group_actions extends views_handl
     $links  = array();
     $class_name = isset($values->class_name) ? $values->class_name : '';
 
-    if (user_access('view groups') && !empty($this->options['which_links']['view'])) {
+    if (module_exists('springboard_target') && springboard_target_target_access('view groups') && !empty($this->options['which_links']['view'])) {
       $links[] = l('view', 'admin/springboard/advocacy/targets/custom-groups/'. $values->id . '/view');
     }
-    if ($class_name != "Legislator" && user_access('edit groups') && !empty($this->options['which_links']['edit'])) {
+    if ($class_name != "Legislator" && module_exists('springboard_target') && springboard_target_target_access('edit groups') && !empty($this->options['which_links']['edit'])) {
       $links[] = l('edit', 'admin/springboard/advocacy/targets/custom-groups/'. $values->id . '/edit');
     }
     // Only add the delete link if the group has no parents (is not in use by another group or message).
-    if ($class_name != "Legislator" && user_access('delete groups') && !empty($this->options['which_links']['delete']) && empty($values->parents)) {
+    if ($class_name != "Legislator" && module_exists('springboard_target') && springboard_target_target_access('delete groups') && !empty($this->options['which_links']['delete']) && empty($values->parents)) {
       $links[] = l('delete', 'admin/springboard/advocacy/targets/custom-groups/'. $values->id . '/delete');
     }
     return implode(' | ', $links);

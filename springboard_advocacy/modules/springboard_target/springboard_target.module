@@ -17,29 +17,34 @@ function springboard_target_menu() {
     'title' => 'Advocacy: Target Center',
     'page arguments' => array('target-center'),
     'access arguments' => array('view targets'),
+    'access callback' => 'springboard_target_target_access',
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-targets'] = array(
     'title' => 'Advocacy: Target Center: Custom Targets',
     'page arguments' => array('custom-targets'),
     'access arguments' => array('view targets'),
-  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+    'access callback' => 'springboard_target_target_access',
+    ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-targets/add'] = array(
     'title' => 'Advocacy: Target Center: Add Custom Target',
     'access arguments' => array('create targets'),
+    'access callback' => 'springboard_target_target_access',
     'page arguments' => array('add-custom-targets'),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-targets/%/edit'] = array(
     'title' => 'Advocacy: Target Center: Edit Custom Target',
     'access arguments' => array('edit targets'),
+    'access callback' => 'springboard_target_target_access',
     'page arguments' => array('edit-custom-targets', 5),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-targets/%/delete'] = array(
     'title' => 'Advocacy: Target Center: Delete Custom Target',
     'access arguments' => array('delete targets'),
+    'access callback' => 'springboard_target_target_access',
     'page arguments' => array('springboard_target_delete', 5),
     'page callback' => 'drupal_get_form',
     'file' => 'springboard_target.custom_targets.inc',
@@ -51,23 +56,27 @@ function springboard_target_menu() {
     'title' => 'Advocacy: Target Center: Custom Groups',
     'page arguments' => array('custom-groups'),
     'access arguments' => array('view targets'),
-  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+    'access callback' => 'springboard_target_target_access',
+    ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-groups/add'] = array(
     'title' => 'Advocacy: Target Center: Add Custom Group',
     'access arguments' => array('create groups'),
+    'access callback' => 'springboard_target_target_access',
     'page arguments' => array('add-custom-groups'),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-groups/%/edit'] = array(
     'title' => 'Advocacy: Target Center: Edit Custom Group',
     'access arguments' => array('edit groups'),
+    'access callback' => 'springboard_target_target_access',
     'page arguments' => array('edit-custom-groups', 5),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-groups/%/delete'] = array(
     'title' => 'Advocacy: Target Center: Delete Custom Group',
     'access arguments' => array('delete groups'),
+    'access callback' => 'springboard_target_target_access',
     'page arguments' => array(5),
     'page callback' => 'springboard_target_group_delete',
     'file' => 'springboard_target.custom_groups.inc',
@@ -127,25 +136,84 @@ function springboard_target_permission() {
   );
 }
 
+/**
+ */
+function springboard_target_target_access($op) {
+  $access = FALSE;
+
+  switch ($op) {
+    case 'view targets':
+      $access = user_access('view targets');
+      break;
+
+    case  'create targets':
+      $access = user_access('create targets');
+      break;
+
+    case  'edit targets':
+      $access = user_access('edit targets');
+      break;
+
+    case  'delete targets':
+      $access = user_access('delete targets');
+      break;
+
+    case  'view groups':
+      $access = user_access('view groups');
+      break;
+
+    case  'create groups':
+      $access = user_access('create groups');
+      break;
+
+    case  'edit groups':
+      $access = user_access('edit groups');
+      break;
+
+    case  'delete groups':
+      $access = user_access('delete groups');
+      break;
+
+    case  'add target to action':
+      $access = user_access('add target to action');
+      break;
+
+    case  'add group to action':
+      $access = user_access('add group to action');
+      break;
+  }
+
+  // Allow other modules to grant / deny access.
+  $alter_access = module_invoke_all('springboard_target_target_access', $op);
+
+  if (in_array(FALSE, $alter_access, TRUE)) {
+    $access = FALSE;
+  }
+  elseif (in_array(TRUE, $alter_access, TRUE)) {
+    $access = TRUE;
+  }
+
+  return $access;
+}
 
 /**
  * Determines if a user can access any target management features.
  */
 function springboard_target_user_can_access_targets() {
-  return user_access('view targets')
-    || user_access('create targets')
-    || user_access('edit targets')
-    || user_access('delete targets');
+  return springboard_target_target_access('view targets')
+    || springboard_target_target_access('create targets')
+    || springboard_target_target_access('edit targets')
+    || springboard_target_target_access('delete targets');
 }
 
 /**
  * Determines if a user can access any group management features.
  */
 function springboard_target_user_can_access_groups() {
-  return user_access('view groups')
-  || user_access('create groups')
-  || user_access('edit groups')
-  || user_access('delete groups');
+  return springboard_target_target_access('view groups')
+  || springboard_target_target_access('create groups')
+  || springboard_target_target_access('edit groups')
+  || springboard_target_target_access('delete groups');
 }
 
 
