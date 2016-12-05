@@ -116,7 +116,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     }
     // Set the group ID based on the API response.
     if (!empty($response->data->id)) {
-      $group_id = $response->data;
+      $group_id = $response->data->id;
     }
     else {
       $group_id = FALSE;
