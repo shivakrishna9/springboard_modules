@@ -167,6 +167,7 @@
         parent.disableHostedFieldsSubmit();
       }
       else if (undefined !== paymentMethods[paymentMethod] && paymentMethods[paymentMethod].isEnabled()) {
+        parent.disableHostedFieldsSubmit().disablePaypalFieldsSubmit();
         paymentMethods[paymentMethod].createFields(parent.clientInstance);
       }
 
@@ -383,9 +384,6 @@
     this.disablePaypalFieldsSubmit = function() {
       if (fEnablePaypalFieldsSubmit) {
         $.data(parent.$form[0], 'events')['submit'] = parent.callbacks;
-      }
-      else {
-        parent.$form.off('submit.braintree_paypal', parent.submitPaypalFields);
       }
 
       fEnablePaypalFieldsSubmit = false;

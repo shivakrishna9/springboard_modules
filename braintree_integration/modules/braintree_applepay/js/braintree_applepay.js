@@ -63,9 +63,8 @@
         if (fEnableFieldsSubmit) {
           $.data(BI.$form[0], 'events')['submit'] = BIAP.callbacks;
         }
-        else {
-          BI.$form.off('submit.braintree_applepay', BIAP.submitFields);
-        }
+
+        fEnableFieldsSubmit = false;
         return BIAP;
       };
 
@@ -189,5 +188,5 @@
 
       return BIAP;
     })());
-  })
+  });
 })(jQuery);
