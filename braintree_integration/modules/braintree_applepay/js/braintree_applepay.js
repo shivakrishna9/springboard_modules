@@ -131,7 +131,7 @@
                   address: event.payment.billingContact.addressLines[0],
                   address2: undefined == event.payment.billingContact.addressLines[1] ? '' : event.payment.billingContact.addressLines[1],
                   city: event.payment.billingContact.locality,
-                  country: event.payment.billingContact.countryCode,
+                  country: event.payment.billingContact.countryCode.toUpperCase(),
                   state: event.payment.billingContact.administrativeArea,
                   zip: event.payment.billingContact.postalCode
                 }, autofill);
