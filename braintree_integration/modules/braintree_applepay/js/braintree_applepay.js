@@ -34,6 +34,7 @@
         return BIAP;
       };
 
+      var fEnableFieldsSubmit = false;
       BIAP.enableFieldsSubmit = function() {
         // When autofill is enabled, we only want to validate the amount field.
         // Since the donation validation submission handler is already on the
@@ -54,11 +55,17 @@
           selector: null,
           type: 'submit'
         });
+        fEnableFieldsSubmit = true;
         return BIAP;
       };
 
       BIAP.disableFieldsSubmit = function() {
-        BI.$form.off('submit.braintree_applepay');
+        if (fEnableFieldsSubmit) {
+          $.data(BI.$form[0], 'events')['submit'] = BIAP.callbacks;
+        }
+        else {
+          parent.$form.off('submit.braintree_applepay', BIAP.submitFields);
+        }
         return BIAP;
       };
 

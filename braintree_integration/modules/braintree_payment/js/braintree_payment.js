@@ -156,6 +156,7 @@
         }
       }
       if (paymentMethod == 'credit' && parent.creditEnabled()) {
+        // PayPal submission event gets reset in parent.createHostedFields.
         parent.createHostedFields(parent.clientInstance);
       }
       else if (paymentMethod == 'paypal' && parent.paypalEnabled()) {
