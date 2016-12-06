@@ -585,12 +585,44 @@ function springboard_group_page_alter(&$page) {
   springboard_group_permissions_overview__page_alter($page);
 }
 
+/**
+ * Implements hook_clone_access_alter().
+ */
 function springboard_group_clone_access_alter(&$access, $node) {
-  $groups = og_get_groups_by_user();
+  $user_groups = og_get_groups_by_user();
   $context = springboard_group_get_group_context();
-  if (!user_access('administer group') && !in_array($context, $groups['node'])) {
+  if (!empty($context)) {
+    // Check if user has create permission for the content type.
+    global $user;
+    $perms = springboard_group_get_group_member_perms($user, $context);
+    foreach ($perms as $group_perm) {
+      foreach ($group_perm as $key => $status) {
+        $in_group_perms[$key] = $status;
+      }
+    }
+    $node_access = in_array('create ' . $node->type . ' content', $in_group_perms);
+    if (!user_access('administer group') && empty($node_access)) {
+      $access = FALSE;
+    }
+  }
+
+  // Check if the node is in the user's group.
+  if (!user_access('administer group') && !in_array($context, $user_groups['node'])) {
     $access = FALSE;
   }
+}
+
+/**
+ * Get the current user's in group permissions.
+ */
+function springboard_group_get_group_member_perms($account = NULL, $gid) {
+  if (empty($account)) {
+    global $user;
+    $account = $user;
+  }
+  $roles = og_get_user_roles('node', $gid, $account->uid, TRUE, TRUE);
+  $perms = array_filter(og_role_permissions($roles));
+  return $perms;
 }
 
 /**
