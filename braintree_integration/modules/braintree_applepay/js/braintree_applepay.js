@@ -90,7 +90,7 @@
             requiredShippingContactFields: ['email']
           });
 
-          var session = new ApplePaySession(2, paymentRequest);
+          var session = new ApplePaySession(1, paymentRequest);
 
           session.onvalidatemerchant = function(event) {
             BIAP.applePayInstance.performValidation({

@@ -166,12 +166,34 @@
           $('.fundraiser-donation-form').submit(function() {
             // Validate the form
             if (formIsValid()) {
-              $('.fundraiser-donation-form #edit-submit').hide();
-              $('.fundraiser_submit_message').hide();
+              var $submit = $('.fundraiser-donation-form #edit-submit');
+              var $submitMessage = $('.fundraiser_submit_message');
+
               var $span = $('<span/>').addClass('donation-processing-spinner');
               var $p = $('<p/>').addClass('donation-processing').text('Processing ').append($span);
               var $div = $('<div/>').addClass('donation-processing-wrapper').append($p);
-              $('.fundraiser-donation-form #edit-submit').after($div);
+              $submit.after($div);
+              $submit.add($submitMessage).hide();
+
+              // Scroll to donate button if it's not in view.
+              var docTop = $(window).scrollTop();
+              var docBottom = docTop + $(window).height();
+              var divTop = $div.offset().top;
+              var divBottom = divTop + $div.height();
+              // Offset in pixels, so that element we scroll to isn't on edge.
+              var offset = 50;
+              if (divBottom > docBottom || divTop < docTop) {
+                var newTop = parseInt(divTop);
+                if (divBottom > docBottom) {
+                  newTop += offset;
+                }
+                else {
+                  newTop -= offset;
+                }
+                $('html, body').animate({
+                  scrollTop: newTop
+                }, 100);
+              }
               return true;
             }
             return false;

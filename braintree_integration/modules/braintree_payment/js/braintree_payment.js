@@ -348,27 +348,22 @@
       // Since the donation validation submission handler is already on the
       // queue, we need to insert our submission handler function before the
       // donation validation.
-      if (parent.settings.autofill == 'if_blank' || parent.settings.autofill == 'always') {
-        parent.callbacks = $.extend(true, [], $.data(parent.$form[0], 'events')['submit']);
-        var guid = 128;
-        if (undefined !== parent.callbacks && parent.callbacks.length) {
-          guid = parent.callbacks[0].guid - 1;
-        }
-        $.data(parent.$form[0], 'events')['submit'].splice(0, parent.callbacks.length, {
-          data: null,
-          guid: guid,
-          handler: parent.submitPaypalFields,
-          namespace: '',
-          origType: 'submit',
-          quick: null,
-          selector: null,
-          type: 'submit'
-        });
-        fEnablePaypalFieldsSubmit = true;
+      parent.callbacks = $.extend(true, [], $.data(parent.$form[0], 'events')['submit']);
+      var guid = 128;
+      if (undefined !== parent.callbacks && parent.callbacks.length) {
+        guid = parent.callbacks[0].guid - 1;
       }
-      else {
-        parent.$form.on('submit.braintree_paypal', parent.submitPaypalFields);
-      }
+      $.data(parent.$form[0], 'events')['submit'].splice(0, parent.callbacks.length, {
+        data: null,
+        guid: guid,
+        handler: parent.submitPaypalFields,
+        namespace: '',
+        origType: 'submit',
+        quick: null,
+        selector: null,
+        type: 'submit'
+      });
+      fEnablePaypalFieldsSubmit = true;
       return this;
     };
 
@@ -508,9 +503,18 @@
         'submitted[billing_information][zip]': obj.zip,
       };
 
+      // If this flag is false when we examine the secondary address field, then
+      // the secondary address field shouldn't be autofilled.
+      var primaryAddressMatches = false;
+      if ($('[name="submitted[billing_information][address]"]').val() == field_mapping['submitted[billing_information][address]']) {
+        primaryAddressMatches = true;
+      }
+
       $.each(field_mapping, function(key, value) {
         var $field = $('[name="' + key + '"]');
-        if (autofill == 'always' || (autofill == 'if_blank' && $field.val() == '')) {
+        if (autofill == 'always'
+          || (autofill == 'if_blank' && $field.val() == '' && key != 'submitted[billing_information][address_line_2]')
+          || (key == 'submitted[billing_information][address_line_2]' && autofill == 'if_blank' && primaryAddressMatches && $field.val() == '')) {
           $field.val(value);
           fieldsHaveBeenAutoFilled = true;
         }
