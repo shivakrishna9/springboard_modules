@@ -115,23 +115,43 @@ function springboard_group_rules_payment_rules_overview__page_alter(&$page) {
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Contortions required to get field api working on rules config.
+ */
+function springboard_group_form_rules_ui_add_element_alter(&$form, &$form_state, $form_id) {
+  if (arg(1) == 'ajax') {
+    $rule_name = !empty($form_state['parent_element']->name) ? $form_state['parent_element']->name : '';
+    if (empty($rule_name)) {
+      $rule = rules_config_load($rule_name);
+      if (empty($rule)) {
+        // It's a custom UI managed rule.
+        $rule = rules_config_load('rules_' . $rule_name);
+      }
+      if (!empty($rule)) {
+        springboard_group_rules_add_group_widget($form, $form_state, $rule);
+      }
+    }
+  }
+}
+
+
+/**
  * Implements hook_form_FORMID_alter().
  *
  * Contortions required to get field api working on rules config.
  */
 function springboard_group_form_rules_ui_edit_element_alter(&$form, &$form_state, $form_id) {
   // We need the rule name to proceed.
-
-  $rule_name = arg(6);
+  $rule_name = arg(6) != 'edit' ? arg(6) : arg(5);
   $rule = rules_config_load($rule_name);
   if (empty($rule)) {
     // It's a custom UI managed rule.
     $rule = rules_config_load('rules_' . $rule_name);
   }
-  if (!empty($rule) && arg(7) != 'edit') {
+  if (!empty($rule)) {
     springboard_group_rules_add_group_widget($form, $form_state, $rule);
   }
-
 }
 
 /**
@@ -159,10 +179,6 @@ function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$
 
 /**
  * Add the group widget to the rules config form.
- *
- * @param $form
- * @param $form_state
- * @param $rule_name
  */
 function springboard_group_rules_add_group_widget(&$form, &$form_state, $rule) {
 
