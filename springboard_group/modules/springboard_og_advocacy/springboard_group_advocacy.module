@@ -303,14 +303,14 @@ function springboard_group_advocacy_get_advocacy_group_perms($account) {
     );
 
     // Check the role permissions for target CRUD access.
-      $perms = og_role_permissions($all_user_group_rids);
-      foreach ($perms as $group_perm) {
-        foreach ($group_perm as $key => $status) {
-          if (in_array($key, $advo_perms)) {
-            $in_group_perms[$key] = $status;
-          }
+    $perms = og_role_permissions($all_user_group_rids);
+    foreach ($perms as $group_perm) {
+      foreach ($group_perm as $key => $status) {
+        if (in_array($key, $advo_perms)) {
+          $in_group_perms[$key] = $status;
         }
       }
+    }
   }
 
   return $in_group_perms;

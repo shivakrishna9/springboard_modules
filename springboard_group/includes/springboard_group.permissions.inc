@@ -288,10 +288,6 @@ function springboard_group_form_user_admin_permissions_alter(&$form, $form_state
 }
 
 /**
- * Implements hook_user_default_permissions().
- */
-
-/**
  * Implements hook_form_alter().
  */
 function springboard_group_form_og_ui_admin_global_permissions_alter(&$form, &$form_state, $form_id) {
@@ -305,4 +301,25 @@ function springboard_group_form_og_ui_admin_global_permissions_alter(&$form, &$f
       'type' => 'setting',
     );
   }
+}
+
+/**
+ * Get the current users in group permissions.
+ */
+function springboard_group_get_group_member_perms($gid, $account = NULL) {
+  if (empty($account)) {
+    global $user;
+    $account = $user;
+  }
+  $roles = og_get_user_roles('node', $gid, $account->uid, TRUE, TRUE);
+  $perms = og_role_permissions($roles);
+  $in_group_perms = [];
+  // Users may have multiple roles in a group.
+  foreach ($perms as $role_perm) {
+    $role_perm = array_filter($role_perm);
+    foreach ($role_perm as $key => $status) {
+      $in_group_perms[$key] = $status;
+    }
+  }
+  return $in_group_perms;
 }
