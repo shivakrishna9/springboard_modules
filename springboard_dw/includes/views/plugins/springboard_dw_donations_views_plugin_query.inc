@@ -109,7 +109,6 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
     // Submit the request to the Data Warehouse and get the response:
     $response = springboard_dw_api_call($endpoint, $params, $method);
     $response_data = json_decode((string) $response->getBody());
-    // dpm($response_data);
 
     // Handle results from the donations endpoint:
     if ($request_type == 'multi_donation' && isset($response_data->donation->data)) {

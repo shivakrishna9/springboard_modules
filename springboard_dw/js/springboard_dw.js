@@ -158,5 +158,48 @@ Drupal.behaviors.springboardDataWarehouseViews = {
         }
       });
     });
+
+    // Add CSV download button
+    $('.view-springboard-dw-donations-report .views-table').before(
+      '<a href="#" id="sb-queue-csv-download" class="views-data-export"><span class="img-caption">Download as .CSV</span></a>'
+    );
+    $('.view-springboard-dw-donations-report .views-table caption').insertBefore('#sb-queue-csv-download');
+
+    // Add AJAX CSV Download queue behavior:
+    $(document).ready(function() {
+      var downloadButton = $('#sb-queue-csv-download');
+      downloadButton.after('<span id="sbv-export-download-msg"></span>');
+      downloadButton.click(function (e) {
+        $('#sbv-export-download-msg').text('Working...');
+        // Gather data:
+        var viewParams = {};
+        // viewParams['status'] = $('#views-exposed-form-sbv-donations-page #edit-status').val();
+        downloadButton.hide();
+        e.preventDefault();
+        $.ajax({
+          type: 'POST',
+          url: '/sb-dw-export-queue-ajax',
+          dataType: 'json',
+          data: {
+            'export_params' : Drupal.settings.sbDWExportDonationsData,
+            'date_range_min' : $('.form-item-date-filter-min-date input').val(),
+            'date_range_max' : $('.form-item-date-filter-max-date input').val(),
+          },
+          context: document.body,
+          success: function(data) {
+            if (data.status == 'success') {
+              $('#sbv-export-download-msg').text('Your export has been queued; you will be emailed a download link when it is ready.');
+            }
+            else {
+              $('#sbv-export-download-msg').text('Export failed.');
+              alert('There was an error; the export file was not generated.');
+            }
+          }
+        });
+      });
+      if ($('.view-empty').length) {
+        downloadButton.hide();
+      }
+    });
   })(jQuery); }
 }

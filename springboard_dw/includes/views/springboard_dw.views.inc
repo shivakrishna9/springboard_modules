@@ -11,6 +11,68 @@
  * Defines pseudo-DB tables for creating views that fetch their data from the remote data warehouse.
  */
 function springboard_dw_views_data() {
+  // Define a view type which displays advocacy lifetime performance data fetched from the warehouse:
+  $data['sp_dw_advocacy_stats_psudo']['table'] = array(
+    'group' => t('Springboard DW Advocacy Stats'),
+    'base' => array(
+      'title' => t('Springboard DW Advocacy Stats'),
+      'help' => t('Fetches lifetime performance statistics from the data warehouse for a single advocacy form.'),
+      'query class' => 'springboard_dw_advocacy_stats_views_plugin_query',
+    ),
+  );
+  // Define the fields:
+  $data['sp_dw_advocacy_stats_psudo']['actions_taken'] = array(
+    'title' => t('Actions Token'),
+    'help' => t('Fetches the total number of actions taken for this advocacy form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_advocacy_stats_psudo']['messages_generated'] = array(
+    'title' => t('Messages Generated'),
+    'help' => t('Fetches the total number of messages generated for this advocacy form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_advocacy_stats_psudo']['new_contacts'] = array(
+    'title' => t('New Contacts'),
+    'help' => t('Fetches the total number of new contacts for this advocacy form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_advocacy_stats_psudo']['first_submission_date'] = array(
+    'title' => t('First Submission Date'),
+    'help' => t('Fetches the date of the first submission for this advocacy form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_advocacy_stats_psudo']['latest_submission_date'] = array(
+    'title' => t('Latest Submission Date'),
+    'help' => t('Fetches the date of the most recent submission for this advocacy form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_advocacy_stats_psudo']['first_submission_id'] = array(
+    'title' => t('First Submission ID'),
+    'help' => t('Fetches the id of the first submission for this advocacy form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_advocacy_stats_psudo']['latest_submission_id'] = array(
+    'title' => t('Latest Submission ID'),
+    'help' => t('Fetches the id of the most recent submission for this advocacy form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  // End advocacy lifetime stats view type
+
+
   // Defines a view type which displays lifetime performance of a given donation form from the warehouse:
   $data['sp_dw_donation_stats_psudo']['table'] = array(
     'group' => t('Springboard DW Donation Stats'),
@@ -199,6 +261,12 @@ function springboard_dw_views_plugins() {
         'handler' => 'springboard_dw_donation_stats_views_plugin_query',
         'path' => drupal_get_path('module', 'springboard_dw') . '/includes/views/plugins',
       ),
+      'springboard_dw_advocacy_stats_views_plugin_query' => array(
+        'title' => t('Springboard Data Warehouse Advocacy Statistics API Request'),
+        'help' => t('Uses Guzzle for querying remote advocacy data'),
+        'handler' => 'springboard_dw_advocacy_stats_views_plugin_query',
+        'path' => drupal_get_path('module', 'springboard_dw') . '/includes/views/plugins',
+      ),
     ),
   );
   return $plugins;
@@ -251,6 +319,30 @@ function springboard_dw_form_views_exposed_form_alter(&$form, &$form_state) {
   // Attached CSS and jQuery related to the exposed filters unless this is view preview output:
   $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ''; // (drupal_get_path() returns nothing during view preview.)
   if (strpos($current_path, 'admin/structure/views') === FALSE) {
+    // Attach filtering and sorting values for jQuery csv export button to send back to Drupal to be queued for export:
+    $view_data = array('source_view' => 'springboard_dw_donations_report');
+    if (isset($form_state['input']) && is_array($form_state['input'])) {
+      foreach ($form_state['input'] as $key => $value) {
+        if (empty($value)) {
+          continue;
+        }
+        switch ($key) {
+          case 'sort':
+            $view_data['sort'] = $value;
+            break;
+          case 'order':
+            $view_data['order'] = $value;
+            break;
+          default:
+            $view_data[$key] = $value;
+            break;
+        }
+      }
+    }   
+    $form['#attached']['js'][] = array(
+      'type' => 'setting',
+      'data' => array('sbDWExportDonationsData' => $view_data),
+    );
     drupal_add_css('//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css', array('type' => 'external'));
     $form['#attached']['css'][] = drupal_get_path('module', 'springboard_dw') . '/css/springboard_dw.css';
     $form['#attached']['js'][] = drupal_get_path('module', 'springboard_dw') . '/js/springboard_dw.js';

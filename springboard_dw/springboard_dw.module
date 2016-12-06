@@ -73,6 +73,14 @@ function springboard_dw_menu() {
     'file'             => 'includes/springboard_dw.admin.inc',
   );
 
+  // DW CSV download queue AJAX callback:
+  $items['sb-dw-export-queue-ajax'] = array(
+    'title' => 'DW Donations AJAX callback',
+    'page callback' => '_springboard_dw_export_queue_data_export',
+    'access callback' => 'user_access',
+    'access argument' => 'administer springboard advocacy',
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -2143,4 +2151,39 @@ function springboard_dw_vendor($item) {
  */
 function springboard_dw_generate_queue_item_response($status_code) {
   return $status_code == 200 ? TRUE : FALSE;
+}
+
+/**
+ * Helper function to queue a DW csv export request:
+ */
+function _springboard_dw_export_queue_data_export() {
+  if (!isset($_POST) || empty($_POST)) {
+    drupal_json_output(array('status' => 'fail'));
+    return;
+  }
+
+  $data = $_POST['export_params'];
+  unset($data['source_view']);
+  unset($data['items_per_page']);
+ 
+  if (isset($_POST['date_range_min'])) {
+    $data['transaction_date']['min'] = $_POST['date_range_min'];
+  }
+  if (isset($_POST['date_range_max'])) {
+    $data['transaction_date']['max'] = $_POST['date_range_max'];
+  }
+
+  watchdog('springboard_dw', 'CSV export request: ' . json_encode($data));
+
+  $recipients = array(
+    'josh.estep@jacksonriver.com',
+  );
+
+  // Queue the data export job:
+  $success = TRUE;
+  //$success = springboard_dw_csv_export_insert('Drupal', $data, $recipients);
+
+  // Return status to jQuery:
+
+  drupal_json_output(array('status' => $success ? 'success' : 'fail'));
 }
