@@ -64,7 +64,7 @@
           $.data(BI.$form[0], 'events')['submit'] = BIAP.callbacks;
         }
         else {
-          parent.$form.off('submit.braintree_applepay', BIAP.submitFields);
+          BI.$form.off('submit.braintree_applepay', BIAP.submitFields);
         }
         return BIAP;
       };
