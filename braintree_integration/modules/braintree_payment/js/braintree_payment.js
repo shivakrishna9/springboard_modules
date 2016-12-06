@@ -205,6 +205,10 @@
 
     var fEnableHostedFieldsSubmit = false;
     this.enableHostedFieldsSubmit = function() {
+      if (fEnableHostedFieldsSubmit) {
+        return this;
+      }
+
       // When the form is submitted when the credit payment type is used, we
       // have to wait for an async response from Braintree to determine if the
       // fields validated successfully or not, and to get a token. Therefore, we
@@ -227,6 +231,7 @@
         type: 'submit'
       });
       fEnableHostedFieldsSubmit = true;
+
       return this;
     };
 
@@ -234,6 +239,8 @@
       if (fEnableHostedFieldsSubmit) {
         $.data(parent.$form[0], 'events')['submit'] = parent.callbacks;
       }
+
+      fEnableHostedFieldsSubmit = false;
       return this;
     };
 
@@ -345,6 +352,10 @@
 
     var fEnablePaypalFieldsSubmit = false;
     this.enablePaypalFieldsSubmit = function() {
+      if (fEnablePaypalFieldsSubmit) {
+        return this;
+      }
+
       // When autofill is enabled, we only want to validate the amount field.
       // Since the donation validation submission handler is already on the
       // queue, we need to insert our submission handler function before the
@@ -365,6 +376,7 @@
         type: 'submit'
       });
       fEnablePaypalFieldsSubmit = true;
+
       return this;
     };
 
@@ -375,6 +387,8 @@
       else {
         parent.$form.off('submit.braintree_paypal', parent.submitPaypalFields);
       }
+
+      fEnablePaypalFieldsSubmit = false;
       return this;
     };
 
