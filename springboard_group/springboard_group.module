@@ -326,7 +326,7 @@ function springboard_group_load_ajax_validation_handlers(&$form, &$form_state) {
         springboard_group_webform_ab_node_form__alter($form, $form_state);
       }
       if (module_exists('springboard_group_advocacy') && springboard_advocacy_is_action_type($type)) {
-        springboard_group_advocacy_action_targets_validate($form, $form_state);
+        springboard_group_advocacy_action_targets_form__alter($form, $form_state);
       }
     }
   }

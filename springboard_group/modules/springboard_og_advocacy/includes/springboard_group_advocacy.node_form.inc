@@ -274,14 +274,17 @@ function springboard_group_advocacy_get_all_states() {
   );
 }
 
-function springboard_group_advocacy_action_targets_validate(&$form, &$form_state) {
-  $form['#submit'][] = 'springboard_group_advocacy_delete_targets';
+/**
+ * Add ajax validation to actions.
+ */
+function springboard_group_advocacy_action_targets_form__alter(&$form, &$form_state) {
   // Get messages from action node
   // iterate through messages and check targets.
   // identify ineleiigble targets and put them in an array keyed by message id
   // on form submit, remove the ineligible targets from local drupal db
   // then update the targets on the api server.
   if (!empty($form['#node']->messages)) {
+    $form['#submit'][] = 'springboard_group_advocacy_delete_targets';
     $messages = $form['#node']->messages;
     $gids = [];
     $messages_with_targets_to_delete = [];
@@ -295,35 +298,44 @@ function springboard_group_advocacy_action_targets_validate(&$form, &$form_state
     }
     // Get the existing targets.
     foreach ($messages as $uuid => $message) {
-      $targets = json_decode($message->data['recipients']);
+      $targets = get_object_vars(json_decode($message->data['recipients']));
       // If the wrapper is not in any of the current groups, add it to
       // the removal list.
       if (count($targets) > 0) {
         $messages_with_targets_to_delete[] = $message;
-        $targets_to_delete = array_merge($targets_to_delete, (array) $targets);
+        $targets_to_delete = array_merge($targets_to_delete, $targets);
       }
     }
-    $form_state['message_targets_to_delete'] = $messages_with_targets_to_delete;
+
+    $form_state['messages_with_targets_to_delete'] = $messages_with_targets_to_delete;
     // Set the message.
     if (!empty($messages_with_targets_to_delete)) {
       $count = count($targets_to_delete);
+      $count_messages = count($messages_with_targets_to_delete);
       $format = format_plural($count, 'target', 'targets');
-      $form_state['group_ajax_messages'][] = t('@count @format will be removed when this form is saved. Please update your targets after saving.', array(
+      $format_messages = format_plural($count_messages, 'message', 'messages');
+      $form_state['group_ajax_messages'][] = t('@count @format in @count_messages @format_messages will be removed when this form is saved. Please update your targets after saving.', array(
         '@count' => $count,
         '@format' => $format,
+        '@count_messages' => $count_messages,
+        '@format_messages' => $format_messages,
       ));
     }
   }
 }
 
+
+/**
+ * Delete message targets when switching group owner.
+ */
 function springboard_group_advocacy_delete_targets($form, $form_state) {
-  foreach ($form_state['message_targets_to_delete'] as $sba_message) {
+  foreach ($form_state['messages_with_targets_to_delete'] as $sba_message) {
     if (isset($sba_message->data['recipients'])) {
-      $sba_message->data['recipients'] =  '{}';
-      // Build a group object for saving
+      $sba_message->data['recipients'] = '';
       $group = array(
         'group_id' => $sba_message->data['group_id'],
-        'recipients' => '{}',
+        // Remove the targets on the API server.
+        'recipients' => '',
         'name' => $sba_message->data['message_id'],
         'is_template' => 0,
         'message' => array(
@@ -334,17 +346,14 @@ function springboard_group_advocacy_delete_targets($form, $form_state) {
       );
       module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
       $group_id = springboard_target_api_save_target_group($group, FALSE);
-      $sba_message->data['recipients'] = '{}';
       if ($group_id) {
-        $sba_message->data['group_id'] = $group_id;
         $sba_message->changed = time();
+        // Remove the targets in the message entity.
         $sba_message->save();
       }
       else {
-        $sba_message->data['group_id'] = 'no_response';
-        drupal_set_message('There was a problem saving the message targets to the advocacy server.', 'warning');
-        $sba_message->changed = time();
-        $sba_message->save();
+        // Don't delete the targets locally if the API delete failed.
+        drupal_set_message('There was a problem deleting the message targets on the advocacy server.', 'warning');
       }
     }
   }
