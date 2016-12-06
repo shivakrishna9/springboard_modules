@@ -43,8 +43,11 @@ function salesforce_ngoc_salesforce_mapping_confirm_entity_for_queue($entity, $e
   // Suppress creation of user salesforce sync item if the user was created by
   // submitting a donation form because the user data is included in the
   // batch_upload salesforce sync item.
-  if($entity_type = 'user' && $op == 'CREATE') {
-    if(!empty($entity->sbp_created_via['und']['0']['value']) && fundraiser_is_donation_type($entity->sbp_created_via['und']['0']['value'])) {
+  // @todo Should this only happen on op CREATE? Or always?
+  if ($entity_type == 'user' && $op == 'CREATE') {
+    $wrapper = entity_metadata_wrapper('user', $entity);
+    $created_via = $wrapper->sbp_created_via->value();
+    if (!empty($created_via) && fundraiser_is_donation_type($created_via)) {
       return FALSE;
     }
   }
