@@ -205,6 +205,10 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
       'callback' => 'springboard_group_og_group_field_ajax_callback',
     );
 
+    // Don't send the IDS of token table fields during ajax requests to avoid
+    // max_input_vars problem.
+    $form['#attached']['js'][] = drupal_get_path('module', 'springboard_group') . '/js/before-serialize.js';
+
     // Set the context for any entity reference fields on this form.
     // Not currently used, but would be required for p2p or any other
     // content type that uses entity reference fields (apart from actions
