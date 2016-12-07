@@ -602,19 +602,21 @@ function springboard_group_page_alter(&$page) {
 function springboard_group_clone_access_alter(&$access, $node) {
   $user_groups = og_get_groups_by_user();
   $context = springboard_group_get_group_context($node);
-  if (!empty($context)) {
+  if (!empty($context) && $context != '_all' && $context != "_none") {
     // Check if user has create permission for the content type.
     global $user;
     $perms = springboard_group_get_group_member_perms($context, $user);
-    $node_access = in_array('create ' . $node->type . ' content', array_keys($perms));
-    if (!user_access('administer group') && empty($node_access)) {
+    if (!empty($perms)) {
+      $node_access = in_array('create ' . $node->type . ' content', array_keys($perms));
+      if (!user_access('administer group') && empty($node_access)) {
+        $access = FALSE;
+      }
+    }
+
+    // Check if the node is in the user's group.
+    if (!user_access('administer group') && !in_array($context, $user_groups['node'])) {
       $access = FALSE;
     }
-  }
-
-  // Check if the node is in the user's group.
-  if (!user_access('administer group') && !in_array($context, $user_groups['node'])) {
-    $access = FALSE;
   }
 }
 

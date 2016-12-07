@@ -307,18 +307,20 @@ function springboard_group_form_og_ui_admin_global_permissions_alter(&$form, &$f
  * Get the current users in group permissions.
  */
 function springboard_group_get_group_member_perms($gid, $account = NULL) {
+  $in_group_perms = [];
   if (empty($account)) {
     global $user;
     $account = $user;
   }
-  $roles = og_get_user_roles('node', $gid, $account->uid, TRUE, TRUE);
-  $perms = og_role_permissions($roles);
-  $in_group_perms = [];
-  // Users may have multiple roles in a group.
-  foreach ($perms as $role_perm) {
-    $role_perm = array_filter($role_perm);
-    foreach ($role_perm as $key => $status) {
-      $in_group_perms[$key] = $status;
+  if ($gid != '_all' && $gid != '_none') {
+    $roles = og_get_user_roles('node', $gid, $account->uid, TRUE, TRUE);
+    $perms = og_role_permissions($roles);
+    // Users may have multiple roles in a group.
+    foreach ($perms as $role_perm) {
+      $role_perm = array_filter($role_perm);
+      foreach ($role_perm as $key => $status) {
+        $in_group_perms[$key] = $status;
+      }
     }
   }
   return $in_group_perms;

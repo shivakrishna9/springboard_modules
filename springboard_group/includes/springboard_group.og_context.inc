@@ -92,12 +92,15 @@ function springboard_group_og_context_handler($item = NULL) {
  * @return mixed
  */
 function springboard_group_get_group_context($node = NULL) {
+
+  // Note to future: this can not be a static value. It's called from
+  // listing pages.
   $gid = NULL;
 
   // First check if we're on a grouped node.
   // BTW, this only happens (so far) in an administrative context,
   // so no big deal performance-wise.
-  if (arg(0) == 'node') {
+  if (arg(0) == 'node' || !empty($node)) {
     if (empty($node)) {
       $node = menu_get_object();
     }
