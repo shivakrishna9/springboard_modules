@@ -1,7 +1,8 @@
 /**
  * @file
  *
- * Remove the token selector table IDs from ajax requests!
+ * Remove the token selector table IDs from ajax requests to prevent
+ * max_input_vars php error causing ajax requests to fail silently!
  *
  * @see wysiwyg.js for similar example.
  */

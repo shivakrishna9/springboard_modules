@@ -2,15 +2,17 @@
 
 // Needed for SpringboardGroup_EntityReference_SelectionHandler_Generic.class.php
 require_once drupal_get_path('module', 'entityreference') . '/plugins/selection/EntityReference_SelectionHandler_Generic.class.php';
+
 /**
  * Implements hook_query_TAG_alter().
  *
  * Not currently used but would be required for p2p autocompletes and other
- * entity reference fields.
+ * entity reference fields defeined in $referencefields array in the function.
  */
 function springboard_group_query_entityreference_alter(&$query) {
   if (isset($query->alterTags['entityreference'])) {
 
+    // Populate array to activate this function. p2p fields.
     $referencefields = array();
 
     if (in_array($query->alterMetaData['field']['field_name'], $referencefields)) {

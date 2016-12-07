@@ -94,6 +94,10 @@ function springboard_group_form_og_ui_delete_membership_alter(&$form, &$form_sta
   $form['#submit'][] = 'springboard_group_delete_membership_submit';
 }
 
+
+/**
+ * Change the redirect to match our custom nav structure.
+ */
 function springboard_group_delete_membership_submit($form, &$form_state) {
   if (arg(1) == 'node') {
     $membership = $form_state['og_membership'];

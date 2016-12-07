@@ -5,18 +5,6 @@
  */
 
 /**
- * Implements hook_fundraiser_gateway_info_alter().
- *
- * If we are on a node add or node edit form, limit the gateways
- * to those allowed by group membership.
- */
-function springboard_group_fundraiser_gateway_info_alter(&$gateways) {
-//  if (arg(0) == 'node' && (arg(2) == 'edit' || arg(1) == 'add')) {
-//    $gateways = springboard_group_fundraiser_filter_gateways($gateways);
-//  }
-}
-
-/**
  * Update the gateway form after AJAX reload triggered by group selection.
  *
  * Called from springboard_group_node_form_alter().
@@ -87,8 +75,8 @@ function springboard_group_fundraiser_rebuild_form(&$form, &$form_state) {
   // Rebuild the gateway fieldset. This code block is lifted directly from
   // _fundraiser_donation_settings_form() with a slight alteration.
   if (empty($gateways)) {
-      $message = t('There are no gateways configured for this group. Please create some gateways in the store configuration.');
-      $form_state['group_ajax_messages'][] = $message;
+    $message = t('There are no gateways configured for this group. Please create some gateways in the store configuration.');
+    $form_state['group_ajax_messages'][] = $message;
 
     // Slight alteration to suppress php notice about
     // missing form state values.
@@ -110,11 +98,15 @@ function springboard_group_fundraiser_rebuild_form(&$form, &$form_state) {
         list(, $name) = explode('|', $lost_gateway['id']);
         $rule = rules_config_load($name);
         if (!empty($rule)) {
-          $list[] = l(check_plain($rule->label), 'admin/commerce/config/payment-methods/manage/' . $rule->id,  array('attributes' => array('target' => '_blank')));
+          $list[] = l(check_plain($rule->label), 'admin/commerce/config/payment-methods/manage/' . $rule->id, array('attributes' => array('target' => '_blank')));
         }
       }
       $gateways_message = theme('item_list', array('items' => $list));
-      $message = t('@num payment @method will be removed: !gateways', array('@num' => $num, '@method' => $method, '!gateways' => $gateways_message));
+      $message = t('@num payment @method will be removed: !gateways', array(
+        '@num' => $num,
+        '@method' => $method,
+        '!gateways' => $gateways_message,
+      ));
       $form_state['group_ajax_messages'][] = $message;
     }
     $fieldset = array(
@@ -141,10 +133,13 @@ function springboard_group_fundraiser_rebuild_form(&$form, &$form_state) {
 /**
  * Check group affiliation of gateways.
  *
- * @param $gateways
- * @param null $gid
+ * @param array $gateways
+ *   Existing payment gateways defiened in hook_fundraiser_gateway_info().
+ * @param int $gid
+ *   The group ID.
  *
  * @return mixed
+ *   The gateways filtered by group.
  */
 function springboard_group_fundraiser_filter_gateways($gateways, $gid = NULL) {
   foreach ($gateways as $key => $gateway) {

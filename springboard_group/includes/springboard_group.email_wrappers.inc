@@ -42,8 +42,7 @@ function springboard_group_email_wrappers_templates_list_alter(&$templates) {
 }
 
 /**
- * Check if group selection is incompatible with already
- * configured wrappers or wrapped nodes.
+ * Check if group is compatible with configured wrappers or wrapped nodes.
  *
  * Called from springboard_group_form_node_form_alter().
  */
@@ -63,6 +62,7 @@ function springboard_group_email_wrappers_node_form__alter(&$form, &$form_state)
 
 /**
  * We're editing a *wrapped* node and need to validate the wrapper's groups.
+ *
  * If an email wrapper is no longer eligible due to group restrictions after
  * changing the groups selector on a node form, add a message which is
  * displayed in a cTools modal triggered by the ajax callback on the groups

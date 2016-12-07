@@ -303,13 +303,15 @@ function springboard_group_prepare_validation_modal(&$form, &$form_state) {
 }
 
 /**
- * Add the validation handlers to the node form.
+ * Add the validation functions to the node form by extending the form_alter
+ * hook.
  */
 function springboard_group_load_ajax_validation_handlers(&$form, &$form_state) {
 
   $callback = !empty($form_state['triggering_element']['#ajax']['callback']) ? $form_state['triggering_element']['#ajax']['callback'] : '';
 
   if (isset($form['#node']->type)) {
+
     $type = $form['#node']->type;
     if (fundraiser_is_donation_type($type)) {
       springboard_group_fundraiser_node_form__alter($form, $form_state, $callback);
@@ -414,6 +416,8 @@ function springboard_group_field_widget_form_alter(&$element, &$form_state, $con
 
 /**
  * Drupal ajax bug fix for multiple select form elements.
+ *
+ * @see springboard_group_field_widget_form_alter()
  */
 function springboard_group_element_select_validate(&$element, &$form_state) {
   if (isset($element['#ajax'])) {
@@ -435,6 +439,8 @@ function springboard_group_element_select_validate(&$element, &$form_state) {
 
 /**
  * Drupal ajax bug fix for multiple select form elements.
+ *
+ * @see springboard_group_field_widget_form_alter()
  */
 function springboard_group_element_after_build($element, &$form_state) {
   springboard_group_element_select_validate($element, $form_state);
