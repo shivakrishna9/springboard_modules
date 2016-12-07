@@ -112,7 +112,6 @@ class FundraiserDonationDestination extends MigrateDestination {
    *  successful. FALSE on failure.
    */
   public function import(stdClass $entity, stdClass $row) {
-    //drush_print_r($row);
     $donation = $this->buildDonationObject($entity);
 
     $migration = Migration::currentMigration();
@@ -258,7 +257,6 @@ class FundraiserDonationDestination extends MigrateDestination {
   }
 
   public function buildDonationObject($values) {
-    //drush_print_r($values);
     $migration = Migration::currentMigration();
 
     $donation = new stdClass();
@@ -361,9 +359,6 @@ class FundraiserDonationDestination extends MigrateDestination {
   public function createRecurringSeries($donation, $row) {
     $info = $donation->gateway;
     $migration = Migration::currentMigration();
-
-     //drush_print_r($donation->donation);
-     //drush_print_r($info);
 
     // Ensure the payment method supports recurring.
     if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) { // Allows recurring
