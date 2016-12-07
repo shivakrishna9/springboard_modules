@@ -91,14 +91,16 @@ function springboard_group_og_context_handler($item = NULL) {
  *
  * @return mixed
  */
-function springboard_group_get_group_context() {
+function springboard_group_get_group_context($node = NULL) {
   $gid = NULL;
 
   // First check if we're on a grouped node.
   // BTW, this only happens (so far) in an administrative context,
   // so no big deal performance-wise.
   if (arg(0) == 'node') {
-    $node = menu_get_object();
+    if (empty($node)) {
+      $node = menu_get_object();
+    }
     if (!empty($node->nid) && !empty($node->vid) && !og_is_group('node', $node->nid)) {
       $wrapper = entity_metadata_wrapper('node', $node);
       foreach ($node as $key => $property) {
