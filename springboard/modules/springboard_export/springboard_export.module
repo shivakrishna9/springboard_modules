@@ -6,7 +6,6 @@
  * Apply date_popup-based filtering to the advocacy report's data export display.
  */
 function springboard_export_views_query_alter(&$view, &$query) {
-dpm(variable_get('joshtest', ''));
   if ($view->name != 'sba_action_submissions' || $view->current_display != 'views_data_export_1') {
     return;
   }
@@ -17,12 +16,13 @@ dpm(variable_get('joshtest', ''));
   if (isset($view->drush_order) && isset($dw_field_map[$view->drush_order])) {
     $sort = isset($view->drush_sort) ? $view->drush_sort : 'asc';
     $order_by = $dw_field_map[$view->drush_order]['field']; 
-    $view->query->orderby = array(
-      array(
-        'field' => $order_by,
-        'direction' => $sort,
-      ),
+    $order_info = array(
+      'field' => $order_by,
+      'direction' => $sort,
     );
+
+    // If the drush command specifies an order then apply the view's default order secondarily:
+    array_unshift($view->query->orderby, $order_info);
   }
 
   // Apply filters from the drush sb-export-message-actions-csv (drush sb-emac) command:
@@ -65,28 +65,62 @@ dpm(variable_get('joshtest', ''));
 }
 
 function _springboard_export_action_dw_to_drupal_field_map() {
-  $prefix = 'users_webform_submissions'; // For clarity
+  $prefix = 'users_webform_submissions__field_data'; // For clarity
   $map = array(
-    'created_at' =>     array('table' => 'webform_submissions', 'field' => 'submitted', 'op' => '='),
-    'device_browser' => array('table' => $prefix . '__field_data_sbp_device_browser', 'field' => 'sbp_device_browser_value', 'op' => 'LIKE'),
-    'device_name' =>    array('table' => $prefix . '__field_data_sbp_device_name', 'field' => 'sbp_device_name_value', 'op' => 'LIKE'),
-    'device_os' =>      array('table' => $prefix . '__field_data_sbp_device_os', 'field' => 'sbp_device_os_value', 'op' => 'LIKE'),
-    'device_type' =>    array('table' => $prefix . '__field_data_sbp_device_type', 'field' => 'sbp_device_type_value', 'op' => 'LIKE'),
-    'first_name' =>     array('table' => $prefix . '__field_data_sbp_first_name', 'field' => 'sbp_first_name_value', 'op' => 'LIKE'),
-    'form_id' =>        array('table' => 'node', 'field' => 'nid', 'op' => '='),
-    'last_name' =>      array('table' => $prefix . '__field_data_sbp_last_name', 'field' => 'sbp_last_name_value', 'op' => 'LIKE'),
-    'ip_address' =>     array('table' => 'webform_submissions', 'field' => 'remote_addr', 'op' => 'LIKE'),
-    'mail' =>           array('table' => 'users_webform_submissions', 'field' => 'mail', 'op' => 'LIKE'),
-    'submission_id' =>  array('table' => 'webform_submissions', 'field' => 'sid', 'op' => '='),
+    'action_type'         => array('table' => 'node', 'field' => 'type', 'op' => 'LIKE'),
+    'cid'                 => array('table' => $prefix . '_sbp_cid', 'field' => 'sbp_cid_value', 'op' => 'LIKE'),
+    'created_at'          => array('table' => 'webform_submissions', 'field' => 'submitted', 'op' => '='),
+    'contact_id'          => array('table' => $prefix . '_sbp_salesforce_contact_id', 'field' => 'sbp_salesforce_contact_id_value', 'op' => 'LIKE'),
+    'device_browser'      => array('table' => $prefix . '_sbp_device_browser', 'field' => 'sbp_device_browser_value', 'op' => 'LIKE'),
+    'device_name'         => array('table' => $prefix . '_sbp_device_name', 'field' => 'sbp_device_name_value', 'op' => 'LIKE'),
+    'device_os'           => array('table' => $prefix . '_sbp_device_os', 'field' => 'sbp_device_os_value', 'op' => 'LIKE'),
+    'device_type'         => array('table' => $prefix . '_sbp_device_type', 'field' => 'sbp_device_type_value', 'op' => 'LIKE'),
+    'first_name'          => array('table' => $prefix . '_sbp_first_name', 'field' => 'sbp_first_name_value', 'op' => 'LIKE'),
+    'form_id'             => array('table' => 'node', 'field' => 'nid', 'op' => '='),
+    'initial_referrer'    => array('table' => $prefix . '_sbp_initial_referrer', 'field' => 'sbp_initial_referrer_value', 'op' => 'LIKE'),
+    'last_name'           => array('table' => $prefix . '_sbp_last_name', 'field' => 'sbp_last_name_value', 'op' => 'LIKE'),
+    'legislative_issues'  => array('table' => 'taxonomy_term_data_node', 'field' => 'tid', 'op' => '='),
+    'ip_address'          => array('table' => 'webform_submissions', 'field' => 'remote_addr', 'op' => 'LIKE'),
+    'mail'                => array('table' => 'users_webform_submissions', 'field' => 'mail', 'op' => 'LIKE'),
+    'ms'                  => array('table' => $prefix . '_sbp_ms', 'field' => 'sbp_ms_value', 'op' => 'LIKE'),
+    'organization_issues' => array('table' => 'taxonomy_term_data_node', 'field' => 'tid', 'op' => '='), 
+    'referrer'            => array('table' => $prefix . '_sbp_referrer', 'field' => 'sbp_referrer_value', 'op' => 'LIKE'),
+    'search_engine'       => array('table' => $prefix . '_sbp_search_engine', 'field' => 'sbp_search_engine_value', 'op' => 'LIKE'),
+    'search_string'       => array('table' => $prefix . '_sbp_search_string', 'field' => 'sbp_search_string_value', 'op' => 'LIKE'), 
+    'submission_id'       => array('table' => 'webform_submissions', 'field' => 'sid', 'op' => '='),
+    'user_agent'          => array('table' => $prefix . '_sbp_user_agent', 'field' => 'sbp_user_agent_value', 'op' => 'LIKE'),
   );
 
   // Add value alteration function where appropriate:
   $map['created_at']['preprocess'] = 'strtotime';
-
+  $map['legislative_issues']['preprocess'] = '_springboard_export_get_legislative_issues_tid';   
+  $map['organization_issues']['preprocess'] = '_springboard_export_get_organization_issues_tid';   
   return $map;
 }
 
-
+/**
+ * Helper vocabulary-specific functions to return the term ID for a term name:
+ */
+function _springboard_export_get_legislative_issues_tid($term_name) {
+  $terms = taxonomy_get_term_by_name($term_name, 'sba_legislative_issues'); 
+  if (is_array($terms)) {
+    $term = array_shift($terms);
+  }
+  if (isset($term->tid)) {
+    return $term->tid; 
+  }
+  return '';
+}
+function _springboard_export_get_organization_issues_tid($term_name) {
+  $term = taxonomy_get_term_from_name($term_name, 'sba_organization_issues'); 
+  if (is_array($terms)) {
+    $term = array_shift($terms);
+  }
+  if (isset($term->tid)) {
+    return $term->tid;   
+  }
+  return '';
+}
 
 /**
  * Implements hook_form_FORM_ID_alter().

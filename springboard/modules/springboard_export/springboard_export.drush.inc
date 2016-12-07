@@ -65,6 +65,7 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
   $debug = FALSE; // Set this to true to prevent CSV export file generation.
 
   // Apply filters, sorting; run the data export view:
+  $dw_field_map = _springboard_export_action_dw_to_drupal_field_map();
   $drush_options = (array) json_decode(drush_get_option('json'));
   while ($current_page < $max_page) {
     $view = views_get_view($view_id);
@@ -91,7 +92,7 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
         case 'order':
           $order = $option_value;
           break;
-        case 'transaction_date':
+/*        case 'transaction_date':
           unset($min_date);
           unset($max_date);
           $expected_date_format = 'L, F j, Y';
@@ -111,7 +112,7 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
             $view->exposed_input['date_filter']['min']['date'] = date($expected_date_format, $min_date);
             $view->exposed_input['date_filter']['max']['date'] = date($expected_date_format, $max_date);
           }
-          break;
+          break; */
         case 'debug':
           if ($option_value != 0) {
             $debug = TRUE;
@@ -119,7 +120,13 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
           break;
         default:
           if (!empty($option_value)) {
-            $view->drush_filters[$option_name] = $option_value;
+            if (isset($dw_field_map[$option_name])) {
+              $view->drush_filters[$option_name] = $option_value;
+            }
+            else {
+              echo json_encode(array('error' => 'Export failed due to unsupported filter: \'' . $option_name . '\'; aborting.'));
+              return;
+            }
           }
           break;
       }
@@ -134,7 +141,7 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
     // Fetch the data:
     $view->pre_execute();
     $view->execute();
-    //variable_set('joshtest', $view->build_info['query']->__toString());
+
     // Output this page's results to a file:
     if (isset($view->result) && count($view->result) > 0) {
       $output = $view->render();
@@ -143,7 +150,7 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
       $total_results += count($view->result);
       if (!$debug) {
         if (!file_put_contents($filename, $output)) {
-          echo json_encode(array('error' => 'Export failed for file: "' . $filename . '"; aborting.'));
+          echo json_encode(array('error' => 'Export failed for file: \'' . $filename . '\'; aborting.'));
           return;
         }
       }
