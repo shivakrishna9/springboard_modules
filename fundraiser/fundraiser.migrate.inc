@@ -16,9 +16,6 @@ function fundraiser_migrate_api() {
       'fundraiser_example' => array(
         'title' => t('Fundraiser Example Sustainer Migration'),
       ),
-      'irusa' => array(
-        'title' => t('IRUSA Sustainer Migration'),
-      ),
     ),
     'migrations' => array(
       'FundraiserExampleDonation' => array(
@@ -28,17 +25,6 @@ function fundraiser_migrate_api() {
       'FundraiserExampleDonor' => array(
         'class_name' => 'FundraiserExampleDonor',
         'group_name' => 'fundraiser_example',
-      ),
-      'IrusaDonation' => array(
-        'class_name' => 'IrusaDonationMigration',
-        'group_name' => 'irusa',
-        'dependencies' => array(
-          'IrusaDonor',
-        ),
-      ),
-      'IrusaDonor' => array(
-        'class_name' => 'IrusaDonorMigration',
-        'group_name' => 'irusa',
       ),
     ),
   );
