@@ -544,6 +544,17 @@ function springboard_group_check_none_option($form) {
  * Implements hook_preprocess_page().
  */
 function springboard_group_preprocess_page(&$vars) {
+  if (variable_get('springboard_group_debug_context', NULL) && user_access('administer group')) {
+    if (arg(0) == 'node' || in_array(current_path(), springboard_group_context_menu_paths())) {
+      $context = springboard_group_get_group_context();
+      if (is_numeric($context)) {
+        $node = node_load($context);
+        $context = check_plain($node->title);
+      }
+      drupal_set_message(t("Group context: @context", array('@context' => $context)));
+    }
+  }
+
   // Add the group context selector to pages.
   springboard_group_context_selector__preprocess_page($vars);
 }
@@ -602,10 +613,11 @@ function springboard_group_page_alter(&$page) {
 function springboard_group_clone_access_alter(&$access, $node) {
   $user_groups = og_get_groups_by_user();
   $context = springboard_group_get_group_context($node);
-  if (!empty($context) && $context != '_all' && $context != "_none") {
+  if (!empty($context)) {
     // Check if user has create permission for the content type.
     global $user;
-    $perms = springboard_group_get_group_member_perms($context, $user);
+    $account = $user;
+    $perms = springboard_group_get_group_member_perms($context, $account);
     if (!empty($perms)) {
       $node_access = in_array('create ' . $node->type . ' content', array_keys($perms));
       if (!user_access('administer group') && empty($node_access)) {

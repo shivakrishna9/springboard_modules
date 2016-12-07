@@ -112,10 +112,10 @@ function springboard_group_get_group_context($node = NULL) {
           $gid = !empty($group[0]->nid) ? $group[0]->nid : FALSE;
         }
       }
-      // GID can be false if the node is not grouped.
-      return $gid;
+
     }
-    // @todo - deal with node/add.
+    // GID can be false if the node is not grouped.
+    return $gid;
   }
 
   // If we've gotten this far, we should be dealing with a pre-defined path

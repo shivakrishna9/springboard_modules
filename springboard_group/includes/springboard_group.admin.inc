@@ -363,6 +363,19 @@ function springboard_group_advanced_settings() {
     '#default_value' => variable_get('springboard_group_show_non_member', NULL),
   );
 
+  $form['debug'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Debug group context.',
+    '#description' => t('Show a message with current group context on every group-relevant page.'),
+    '#collapsible' => TRUE,
+  );
+
+  $form['debug']['springboard_group_debug_context'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show debug message'),
+    '#default_value' => variable_get('springboard_group_debug_context', NULL),
+  );
+
   $form['altered_views'] = array(
     '#type' => 'fieldset',
     '#title' => 'Groups-enabled Springboard views',
