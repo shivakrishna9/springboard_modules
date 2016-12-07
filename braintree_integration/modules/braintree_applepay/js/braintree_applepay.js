@@ -141,12 +141,9 @@
                   state: event.payment.billingContact.administrativeArea,
                   zip: event.payment.billingContact.postalCode
                 }, autofill);
-                BI.$form.submit();
               }
-              else {
-                // User will need to press submit again.
-                return;
-              }
+              BI.$form.submit();
+              // Otherwise the user will need to press submit again.
             });
           };
 
