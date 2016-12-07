@@ -107,15 +107,14 @@ function springboard_group_advocacy_build_subscription_form(&$form, $subscriptio
 
   if (!empty($form['#node']->nid)) {
     // Retrieve stored subscription settings for this node.
-    $settings = springboard_group_advocacy_get_saved_group_subscription($form['#node']->nid);
-    if (!empty($settings['master_subscription_type']) && $settings['master_subscription_type'] != $subscription['subscription_type']) {
+    if (!empty($form['#node']->master_subscription_type) && $form['#node']->master_subscription_type != $subscription['subscription_type']) {
       // If the subscription level is stored in this node is incompatible
       // with the master subscription, set a warning.
-      if (!in_array($settings['group_subscription_type'], array_keys($options))) {
+      if (!in_array($form['#node']->group_subscription_type, array_keys($options))) {
         $subscription_conflict = TRUE;
         drupal_set_message(t("This group's advocacy subscription setting is out of date. The master subscription on the API server is @level. The master subscription when this group was last updated was @oldlevel. Please update the group subscription level.", array(
           '@level' => check_plain($subscription['subscription_type']),
-          '@oldlevel' => check_plain($settings['master_subscription_type']),
+          '@oldlevel' => check_plain($form['#node']->master_subscription_type),
         )));
       }
     }
@@ -123,8 +122,8 @@ function springboard_group_advocacy_build_subscription_form(&$form, $subscriptio
 
   $default_subscription_type = [];
   // Get the previously stored subscription level if any.
-  if (!empty($settings['group_subscription_type'])  && $subscription_conflict == FALSE) {
-    $default_subscription_type = $settings['group_subscription_type'];
+  if (!empty($form['#node']->group_subscription_type)  && $subscription_conflict == FALSE) {
+    $default_subscription_type = $form['#node']->group_subscription_type;
   }
   elseif (count($options) == 1 && $subscription_conflict == FALSE) {
     // If there's no previously stored subscription level, and there is only
@@ -156,8 +155,8 @@ function springboard_group_advocacy_build_subscription_form(&$form, $subscriptio
 
   // Retrieve set the allowed states, if the subscription is state-limited.
   $default_saved_states = array();
-  if (!empty($settings['allowed_states']) && $subscription_conflict == FALSE) {
-    $default_saved_states = unserialize($settings['allowed_states']);
+  if (!empty($form['#node']->allowed_states) && $subscription_conflict == FALSE) {
+    $default_saved_states = $form['#node']->allowed_states;
   }
   $form['advocacy_settings']['allowed_states'] = array(
     '#type' => 'checkboxes',

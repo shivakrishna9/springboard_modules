@@ -26,6 +26,8 @@ function springboard_group_advocacy_node_update($node) {
 
 /**
  * Implements hook_node_load().
+ *
+ * Items needed for node cloning.
  */
 function springboard_group_advocacy_node_load($nodes, $types) {
   if (!in_array('springboard_group', $types)) {
@@ -37,7 +39,7 @@ function springboard_group_advocacy_node_load($nodes, $types) {
       if (!empty($subscription)) {
         $node->master_subscription_type = $subscription['master_subscription_type'];
         $node->group_subscription_type = $subscription['group_subscription_type'];
-        $node->allowed_states = !empty($subscription['allowed_states']) && is_array($subscription['allowed_states']) ? $subscription['allowed_states'] : [];
+        $node->allowed_states = !empty($subscription['allowed_states']) && is_array(unserialize($subscription['allowed_states'])) ? unserialize($subscription['allowed_states']) : [];
       }
     }
   }
