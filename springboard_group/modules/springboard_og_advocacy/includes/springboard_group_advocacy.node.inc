@@ -25,6 +25,25 @@ function springboard_group_advocacy_node_update($node) {
 }
 
 /**
+ * Implements hook_node_load().
+ */
+function springboard_group_advocacy_node_load($nodes, $types) {
+  if (!in_array('springboard_group', $types)) {
+    return;
+  }
+  foreach ($nodes as $nid => $node) {
+    if ($node->type == 'springboard_group') {
+      $subscription = db_query('select * from {sb_og_advocacy} where gid = :gid', (array(':gid' => $node->nid)))->fetchAll();
+      if (!empty($subscription[0])) {
+        $node->master_subscription_type = $subscription[0]->master_subscription_type;
+        $node->group_subscription_type = $subscription[0]->group_subscription_type;
+        $node->allowed_states = !empty($subscription[0]->allowed_states) && is_array($subscription[0]->allowed_states) ? $subscription[0]->allowed_states : [];
+      }
+    }
+  }
+}
+
+/**
  * Save the group's advocacy subscription data.
  *
  * @param object $node
@@ -38,7 +57,7 @@ function springboard_group_advocacy_save($node) {
 
     // If the subscription level permits state subscriptions, save them;
     // otherwise, remove any previously existing state data.
-    $allowed_states = $node->group_subscription_type != 'federal-and-states' && $node->group_subscription_type != 'states-only' ? array_filter($node->us_states) : [];
+    $allowed_states = $node->group_subscription_type != 'federal-and-states' && $node->group_subscription_type != 'states-only' ? array_filter($node->allowed_states) : [];
 
     $data = array(
       'gid' => $node->nid,

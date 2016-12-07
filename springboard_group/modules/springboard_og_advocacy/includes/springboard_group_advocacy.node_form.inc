@@ -159,7 +159,7 @@ function springboard_group_advocacy_build_subscription_form(&$form, $subscriptio
   if (!empty($settings['allowed_states']) && $subscription_conflict == FALSE) {
     $default_saved_states = unserialize($settings['allowed_states']);
   }
-  $form['advocacy_settings']['us_states'] = array(
+  $form['advocacy_settings']['allowed_states'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Available states'),
     '#options' => $state_options,
