@@ -33,11 +33,11 @@ function springboard_group_advocacy_node_load($nodes, $types) {
   }
   foreach ($nodes as $nid => $node) {
     if ($node->type == 'springboard_group') {
-      $subscription = db_query('select * from {sb_og_advocacy} where gid = :gid', (array(':gid' => $node->nid)))->fetchAll();
-      if (!empty($subscription[0])) {
-        $node->master_subscription_type = $subscription[0]->master_subscription_type;
-        $node->group_subscription_type = $subscription[0]->group_subscription_type;
-        $node->allowed_states = !empty($subscription[0]->allowed_states) && is_array($subscription[0]->allowed_states) ? $subscription[0]->allowed_states : [];
+      $subscription = springboard_group_advocacy_get_saved_group_subscription($nid);
+      if (!empty($subscription)) {
+        $node->master_subscription_type = $subscription['master_subscription_type'];
+        $node->group_subscription_type = $subscription['group_subscription_type'];
+        $node->allowed_states = !empty($subscription['allowed_states']) && is_array($subscription['allowed_states']) ? $subscription['allowed_states'] : [];
       }
     }
   }
