@@ -159,21 +159,28 @@
           return true;
         };
 
+        var $submit = $('.fundraiser-donation-form #edit-submit');
+        var $submitMessage = $('.fundraiser_submit_message');
+
+        var $span = $('<span/>').addClass('donation-processing-spinner');
+        var $p = $('<p/>').addClass('donation-processing').text('Processing ').append($span);
+        var $div = $('<div/>').addClass('donation-processing-wrapper').append($p);
+        $div.hide();
+
+        // Add the processing button now since the background needs to be loaded
+        // and doing it on submit might cause the background not to load in
+        // time.
+        $submit.after($div);
+
         // On submission hide the button and replace it with a new value.
         // Wrap the click in a once trigger to be sure that we bind it only
         // once.
         $('.fundraiser-donation-form').once(function() {
-          $('.fundraiser-donation-form').submit(function() {
+          $('.fundraiser-donation-form').on('submit.donationValidate', function() {
             // Validate the form
             if (formIsValid()) {
-              var $submit = $('.fundraiser-donation-form #edit-submit');
-              var $submitMessage = $('.fundraiser_submit_message');
-
-              var $span = $('<span/>').addClass('donation-processing-spinner');
-              var $p = $('<p/>').addClass('donation-processing').text('Processing ').append($span);
-              var $div = $('<div/>').addClass('donation-processing-wrapper').append($p);
-              $submit.after($div);
               $submit.add($submitMessage).hide();
+              $div.show();
 
               // Scroll to donate button if it's not in view.
               var docTop = $(window).scrollTop();
@@ -194,7 +201,20 @@
                   scrollTop: newTop
                 }, 100);
               }
-              return true;
+
+              // A strange issue with Safari happens where the ellipsis of the
+              // "Processing..." text on the submit button doesn't animate, and
+              // the "focus"ing of the submit button doesn't occur. I have a
+              // suspicion it's because the Payment sheet still has "focus" when
+              // the rest of the submission callbacks occur, or it's something
+              // to do with the rest of the submission callbacks firing "too
+              // fast", if that's possible. Either way, slowing it down a bit
+              // seems to resolve things.
+              if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
+                setTimeout(function() {
+                  $('.fundraiser-donation-form').off('submit.donationValidate').submit();
+                }, 500);
+              }
             }
             return false;
           });
