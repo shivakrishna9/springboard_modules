@@ -49,6 +49,8 @@ function commerce_sage_payments_drush_command() {
  *   The absolute path to the directory where the file is.
  * @param string $filename
  *   The filename, including extension.
+ * @param bool $test_run
+ *   Whether to skip the call to Sage, TRUE or FALSE.
  */
 function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path = NULL, $filename = NULL, $test_run = NULL) {
 
