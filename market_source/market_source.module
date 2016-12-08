@@ -59,6 +59,13 @@ function market_source_menu() {
     'access arguments' => array('administer market source'),
     'file' => 'market_source.admin.inc',
   );
+  $items['ms_campaigns/autocomplete'] = array (
+    'title' => 'Campaign IDs Autocomplete',
+    'description' => 'Callback for campaign ID autocomplete fields.',
+    'type' => MENU_CALLBACK,
+    'page callback' => 'market_source_campaign_id_autocomplete',
+    'access arguments' => array('alter webform components'),
+  );
   return $items;
 }
 
@@ -251,21 +258,9 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
     if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
       if ($form_key == 'cid') {
         if (module_exists('salesforce_sync')) {
-          // Check if we should reset the cache
-          $reset = FALSE;
-          if (!empty($_GET['campaign-cache-clear'])) {
-            $reset = TRUE;
-          }
-          $campaigns = market_source_get_campaigns($reset);
-          $select_options = array();
-          foreach ($campaigns as $campaign_id => $campaign) {
-            $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
-          }
-          if (is_array($campaigns)) {
-            asort($select_options);
-            $form['value']['#type'] = 'select';
-            $form['value']['#options'] = $select_options;
-          }
+          $form['value']['#type'] = 'textfield';
+          $form['value']['#autocomplete_path'] = 'ms_campaigns/autocomplete';
+
           // Add a link to clear the cache
           $form['value']['#suffix'] = l('Clear the campaign cache', current_path(), array('query' => array('campaign-cache-clear' => 1)));
           $form['value']['#suffix'] .= '<div>' . t("To update the list of campaigns in the dropdown click the link above to clear the campaign cache.") . '</div>';
@@ -930,4 +925,29 @@ function market_source_get_campaign_options($reset = FALSE) {
   }
 
   return $options;
+}
+
+/**
+ * Autocomplete callback for Campaign ID value.
+ *
+ * @param $query
+ * The search parameters.
+ */
+
+function market_source_campaign_id_autocomplete($query='') {
+  // Check if we should reset the cache
+  $reset = FALSE;
+  if (!empty($_GET['campaign-cache-clear'])) {
+    $reset = TRUE;
+  }
+
+  $matches = array();
+  $campaigns = market_source_get_campaigns($reset);
+  foreach ($campaigns as $campaign_id => $campaign) {
+    if(preg_match('/.*' . $query . '.*/i', $campaign_id) || preg_match('/.*' . $query . '.*/i', $campaign['name'])) {
+      $matches[$campaign_id] = $campaign['name'] . " [$campaign_id]";
+    }
+  }
+
+  drupal_json_output($matches);
 }
