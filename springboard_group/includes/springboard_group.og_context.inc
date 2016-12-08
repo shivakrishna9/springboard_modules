@@ -97,7 +97,7 @@ function springboard_group_get_group_context($node = NULL) {
   // listing pages.
   $gid = NULL;
 
-  // First check if we're on a grouped node.
+  // First check if we're on a grouped node or node listing page.
   // BTW, this only happens (so far) in an administrative context,
   // so no big deal performance-wise.
   if (arg(0) == 'node' || !empty($node)) {
@@ -128,7 +128,7 @@ function springboard_group_get_group_context($node = NULL) {
     }
   }
   if (!$has_path) {
-    return [];
+    return NULL;
   }
 
   // This would have been set by
@@ -242,6 +242,19 @@ function springboard_group_context_entityreference($form, $form_state) {
 function springboard_group_context_selector__preprocess_page(&$vars) {
   $path = current_path();
   $og_paths = springboard_group_context_menu_paths();
+
+  // Debug function.
+  if (variable_get('springboard_group_debug_context', NULL) && user_access('administer group')) {
+    if (arg(0) == 'node' || in_array($path, $og_paths)) {
+      $context = springboard_group_get_group_context();
+      if (is_numeric($context)) {
+        $node = node_load($context);
+        $context = check_plain($node->title);
+      }
+      drupal_set_message(t("Group context: @context", array('@context' => $context)));
+    }
+  }
+
   if (in_array($path, $og_paths) && isset($_SESSION['springboard_group_context_multiple'])) {
     $build = array(
       'selector' => drupal_get_form('springboard_group_context_selector_form', $_SESSION['springboard_group_context_multiple']),
