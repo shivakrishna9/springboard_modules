@@ -133,8 +133,10 @@ function fundraiser_offline_form_alter(&$form, $form_state, $form_id) {
           unset($form['submitted']['payment_information']['payment_fields']['credit']['#states']['optional']);
           // Re-add required field flags for cc# and exp date
           //$form['submitted']['payment_information']['payment_fields']['credit']['card_number']['#required'] = TRUE;
-          foreach (element_children($form['submitted']['payment_information']['payment_fields']['credit']['expiration_date']) as $field) {
-            $form['submitted']['payment_information']['payment_fields']['credit']['expiration_date'][$field]['#required'] = TRUE;
+          if (!empty($form['submitted']['payment_information']['payment_fields']['credit']['expiration_date'])) {
+            foreach (element_children($form['submitted']['payment_information']['payment_fields']['credit']['expiration_date']) as $field) {
+              $form['submitted']['payment_information']['payment_fields']['credit']['expiration_date'][$field]['#required'] = TRUE;
+            }
           }
         }
       }
