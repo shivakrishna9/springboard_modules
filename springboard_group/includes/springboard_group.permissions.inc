@@ -22,7 +22,7 @@ function springboard_group_permission() {
     ),
 
     // Grants access to the native OG admin UI, which we have re-permissioned
-    // access to using hook_menu_alter, to hide it becasue it's confusing.
+    // access to using hook_menu_alter, to hide it because it's confusing.
     // You need this permission to access it rather than
     // 'administer group'.
     'access og default admin ui' => array(
