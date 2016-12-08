@@ -215,6 +215,9 @@
                   $('.fundraiser-donation-form').off('submit.donationValidate').submit();
                 }, 500);
               }
+              else {
+                return true;
+              }
             }
             return false;
           });
