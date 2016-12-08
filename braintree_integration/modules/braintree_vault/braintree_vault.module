@@ -234,13 +234,17 @@ function braintree_customer_id_save($account, $customer_id) {
   if (is_array($account)) {
     $account = (object) $account;
   }
+  if (property_exists($account, 'customer')) {
+    $account = $account->customer;
+  }
   if (user_load_by_name($account->mail) !== FALSE) {
     return;
   }
 
   $customer_id = intval($customer_id);
   $user_wrapper = entity_metadata_wrapper('user', $account);
-  if ($vault_field = variable_get('braintree_vault_field', '') && !empty($customer_id)) {
+  $vault_field = variable_get('braintree_vault_field', '');
+  if (!empty($vault_field) && !empty($customer_id)) {
     $user_wrapper->{$vault_field}->set($customer_id);
     $user_wrapper->save();
     return TRUE;
