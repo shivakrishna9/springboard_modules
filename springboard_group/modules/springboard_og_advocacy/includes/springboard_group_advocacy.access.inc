@@ -69,31 +69,51 @@ function springboard_group_springboard_target_target_access($op, $item_id) {
 }
 
 /**
+ * Implements hook_springboard_advocacy_user_can_create_advocacy_type_alter().
+ *
+ * Shows advocacy menu if true.
+ */
+function springboard_group_advocacy_springboard_advocacy_user_can_create_advocacy_type_alter(&$access) {
+  if ($access == FALSE) {
+    $access = springboard_group_advocacy_user_can_create_advocacy_type();
+  }
+}
+
+/**
  * Check for group-based advocacy content type permissions.
  *
- * Show advocacy menu if true.
+ * Cycle through all of a users group memberships and group roles and check if
+ * the user can create advocacy content in any of them.
+ *
+ * @param object $account
+ *   A user account object.
+ *
+ * @return bool
+ *   TRUE if the user can create advocacy content in any group.
  */
-function springboard_group_advocacy_user_can_create_advocacy_type() {
-  $access = springboard_advocacy_user_can_create_advocacy_type();
-  if ($access == FALSE) {
-    $groups = og_get_entity_groups();
-    if (!empty($groups['node'])) {
-      foreach ($groups['node'] as $gid) {
-        if ($roles = og_get_user_roles('node', $gid)) {
-          $perms = og_role_permissions($roles);
-          $role_permissions = [];
-          foreach ($perms as $perm) {
-            $role_permissions = array_merge($role_permissions, array_keys(array_filter($perm)));
-          }
-          $content_perms = array(
-            'create sba_message_action content',
-            'create sba_social_action content',
-            'create sba_springboard petition content',
-          );
-          foreach ($content_perms as $content_perm) {
-            if (in_array($content_perm, $role_permissions)) {
-              $access = TRUE;
-            }
+function springboard_group_advocacy_user_can_create_advocacy_type($account = NULL) {
+  global $user;
+  if (empty($account)) {
+    $account = $user;
+  }
+  $groups = og_get_entity_groups('user', $account);
+  $access = FALSE;
+  if (!empty($groups['node'])) {
+    foreach ($groups['node'] as $gid) {
+      if ($roles = og_get_user_roles('node', $gid)) {
+        $perms = og_role_permissions($roles);
+        $role_permissions = [];
+        foreach ($perms as $perm) {
+          $role_permissions = array_merge($role_permissions, array_keys(array_filter($perm)));
+        }
+        $content_perms = array(
+          'create sba_message_action content',
+          'create sba_social_action content',
+          'create sba_springboard petition content',
+        );
+        foreach ($content_perms as $content_perm) {
+          if (in_array($content_perm, $role_permissions)) {
+            $access = TRUE;
           }
         }
       }
@@ -101,4 +121,3 @@ function springboard_group_advocacy_user_can_create_advocacy_type() {
   }
   return $access;
 }
-

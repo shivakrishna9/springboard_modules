@@ -14,28 +14,6 @@ require_once __DIR__ . '/includes/springboard_group_advocacy.permissions.inc';
 require_once __DIR__ . '/includes/springboard_group_advocacy.subscription.inc';
 
 /**
- * Implements hook_menu_alter().
- */
-function springboard_group_advocacy_menu_alter(&$items) {
-
-  $paths = array(
-    'admin/springboard/advocacy/actions',
-    'admin/springboard/advocacy/message-actions/all',
-    'admin/springboard/advocacy/social-actions/all',
-    'admin/springboard/advocacy/petitions/all',
-  );
-
-  foreach ($items as $path => $item) {
-    if (in_array($path, $paths)) {
-      if (isset($item['access callback']) && $item['access callback'] == 'springboard_advocacy_user_can_create_advocacy_type') {
-        $items[$path]['access callback'] = 'springboard_group_advocacy_user_can_create_advocacy_type';
-      }
-    }
-  }
-}
-
-
-/**
  * Implements hook_views_api().
  */
 function springboard_group_advocacy_views_api() {
