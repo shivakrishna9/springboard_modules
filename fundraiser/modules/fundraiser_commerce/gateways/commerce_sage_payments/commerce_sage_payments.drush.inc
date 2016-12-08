@@ -31,6 +31,7 @@ function commerce_sage_payments_drush_command() {
       'gateway_id' => "The gateway id. Ex: 'commerce_sage_payments_eft|commerce_payment_commerce_sage_payments_eft' Use quotes.",
       'path' => 'Absolute path to the source file directory',
       'filename' => 'The filename',
+      'test_run' => 'Whether to run without making a call to Sage',
     ),
   );
   return $items;
@@ -49,7 +50,23 @@ function commerce_sage_payments_drush_command() {
  * @param string $filename
  *   The filename, including extension.
  */
-function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path = NULL, $filename = NULL) {
+function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path = NULL, $filename = NULL, $test_run = NULL) {
+
+  if (!isset($test_run)) {
+    $options = array(
+      TRUE => 'Yes',
+      'No' => 'No',
+    );
+    $test_run = drush_choice($options, dt('Test run without a call to Sage?'), '!value');
+    if (empty($test_run)) {
+      // User chose "cancel'.
+      drush_print('Operation cancelled.');
+      return;
+    }
+    if ($test_run == 'No') {
+      $test_run = FALSE;
+    }
+  }
 
   // No initial input parameter.
   if (empty($gateway_id)) {
@@ -113,6 +130,7 @@ function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path =
         $gateway,
         $accounts['headers'],
         $path,
+        $test_run,
       ),
     );
   }
@@ -147,7 +165,7 @@ function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path =
  * @param array $context
  *   The context aggragator.
  */
-function commerce_sage_payments_tokenizer_batch_process($accounts, $gateway, $headers, $path, &$context) {
+function commerce_sage_payments_tokenizer_batch_process($accounts, $gateway, $headers, $path, $test_run, &$context) {
 
   foreach ($accounts as $index => $account) {
     $payment_details = array(
@@ -156,13 +174,16 @@ function commerce_sage_payments_tokenizer_batch_process($accounts, $gateway, $he
       'C_ACCT_TYPE' => $account['account_type'],
     );
 
-    $result = commerce_sage_payments_vault_request_insert($gateway['gateway_details'], $payment_details);
+    if (!$test_run) {
+      $result = commerce_sage_payments_vault_request_insert($gateway['gateway_details'], $payment_details);
+    }
 
     if (!empty($result['GUID'])) {
       $accounts[$index]['guid'] = $result['GUID'];
     }
     else {
-      $accounts[$index]['guid'] = '';
+      $fail_guid = !empty($test_run) ? 'test_run' : '';
+      $accounts[$index]['guid'] = $fail_guid;
     }
   }
 
@@ -220,6 +241,7 @@ function commerce_sage_payments_load_accounts_from_csv($path) {
     array_walk($accounts, function (&$a) use ($accounts) {
       $a = array_combine($accounts[0], $a);
     });
+
     $headers = array_shift($accounts);
   }
   return array('accounts' => $accounts, 'headers' => $headers);
