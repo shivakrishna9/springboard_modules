@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Drush utlity to retrieve payment tokens from a set of account data.
+ * Drush utility to retrieve payment tokens from a set of account data.
  *
  * Sends data from a source .csv file to Sage Vault, and combines the returned
  * data with the original data in a new .csv file in the same directory.
@@ -55,6 +55,11 @@ function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path =
   if (empty($gateway_id)) {
     $fundraiser_gateways = commerce_sage_payments_find_gateways();
     $gateway_id = drush_choice($fundraiser_gateways, dt('Choose the Sage EFT gateway to use.'));
+    if (empty($gateway_id)) {
+      // User chose "cancel'.
+      drush_print('Operation cancelled.');
+      return;
+    }
     $gateway = _fundraiser_gateway_info($gateway_id);
   }
   else {
