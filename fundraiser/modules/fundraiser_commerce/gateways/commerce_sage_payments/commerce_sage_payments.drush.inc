@@ -234,7 +234,7 @@ function commerce_sage_payments_find_gateways() {
   rules_invoke_all('commerce_payment_methods', $methods);
   $fundraiser_gateways = array();
   foreach ($methods->payment_methods as $id => $info) {
-    if (strpos($id, 'sage') !== FALSE) {
+    if (strpos($id, 'sage_payments_eft') !== FALSE) {
       $fundraiser_gateways[$id] = $id;
     }
   }
