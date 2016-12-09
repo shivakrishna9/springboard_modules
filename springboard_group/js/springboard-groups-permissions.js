@@ -58,8 +58,6 @@
           'module-rules',
           'module-commerce_payment',
           'module-springboard_target',
-          'module-contextual',
-          'module-filter',
         ];
         if ($(this).children('td:first').hasClass('module') && $.inArray(id, allow) === -1) {
           hidem = true;
