@@ -25,7 +25,6 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
     $fields['rC_Connect__Giving_Paid__c'] = TRUE;
     $fields['rC_Connect__Contact_1_Email_Type__c'] = variable_get('salesforce_ngoc_default_email_type', SALESFORCE_NGOC_DEFAULT_EMAIL_TYPE);
     $fields['rC_Connect__Address_Type__c'] = variable_get('salesforce_ngoc_default_address_type', SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE);
-    $fields['rC_Connect__Giving_Transaction_Type__c'] = variable_get('salesforce_ngoc_default_transaction_type', SALESFORCE_NGOC_DEFAULT_TRANSACTION_TYPE);
     $fields['rC_Connect__Giving_Payment_Frequency__c'] = variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY);
     $fields['rC_Connect__Payment_Method_Payment_Type__c'] = variable_get('salesforce_ngoc_default_payment_method_type', SALESFORCE_NGOC_DEFAULT_PAYMENT_METHOD_TYPE);
     // Prevents NGOC from trying to process the payment.

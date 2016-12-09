@@ -55,16 +55,6 @@ function salesforce_ngoc_admin_form() {
     '#options' => salesforce_picklist_values($batch_upload_info, 'rC_Connect__Address_Type__c'),
     '#default_value' => variable_get('salesforce_ngoc_default_address_type', SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE),
   );
-  // @TODO This should probably be set dynamically, based on whether or not the
-  // synced record is a payment or transaction. From the SF help text: "Provided
-  // by external system, Designates Transaction as a Payment from constituent or
-  // Refund to constituent."
-  $form['salesforce_ngoc']['salesforce_ngoc_default_transaction_type'] = array(
-    '#title' => t('Giving: Transaction Type'),
-    '#type' => 'textfield',
-    '#description' => '@TODO This should probably be set dynamically',
-    '#default_value' => variable_get('salesforce_ngoc_default_transaction_type', SALESFORCE_NGOC_DEFAULT_TRANSACTION_TYPE),
-  );
   // @TODO this should probably be set dynamically based on one-time or recur?
   $form['salesforce_ngoc']['salesforce_ngoc_default_frequency'] = array(
     '#title' => t('Giving: Payment Frequency'),
