@@ -41,13 +41,6 @@ function salesforce_ngoc_admin_form() {
     '#collapsed' => FALSE,
     '#description' => 'The batch upload object needs some system flags set. We set them here instead of implementing in the mapping interface because these flags have no donation counterpart.',
   );
-  $form['salesforce_ngoc']['salesforce_ngoc_default_email_type'] = array(
-    '#title' => t('Contact 1: Email Type'),
-    '#type' => 'select',
-    '#multiple' => FALSE,
-    '#options' => salesforce_picklist_values($batch_upload_info, 'rC_Connect__Contact_1_Email_Type__c'),
-    '#default_value' => variable_get('salesforce_ngoc_default_email_type', SALESFORCE_NGOC_DEFAULT_EMAIL_TYPE),
-  );
   $form['salesforce_ngoc']['salesforce_ngoc_default_address_type'] = array(
     '#title' => t('Address: Type'),
     '#type' => 'select',

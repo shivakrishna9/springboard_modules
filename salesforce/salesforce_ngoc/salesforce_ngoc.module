@@ -5,7 +5,6 @@
  * Provides Salesforce integration functionality specific to NGOC.
  */
 
-define('SALESFORCE_NGOC_DEFAULT_EMAIL_TYPE', 'Home');
 define('SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE', 'Home');
 define('SALESFORCE_NGOC_DEFAULT_PAYMENT_METHOD_TYPE', 'Third Party Charge');
 define('SALESFORCE_NGOC_DEFAULT_RECORD_TYPE', 'Donation');
