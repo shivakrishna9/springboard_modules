@@ -2709,7 +2709,7 @@ function salesforce_ngoc_create_donation_mapping() {
       'currency' => 'rC_Connect__Giving_Entered_Currency__c',
       'first_name' => 'rC_Connect__Contact_1_First_Name__c',
       'last_name' => 'rC_Connect__Contact_1_Last_Name__c',
-      'mail' => 'rC_Connect__Contact_1_Email__c',
+      'mail' => 'Contact1_Email__c',
       'address' => 'rC_Connect__Address_Street_Line_1__c',
       'address_line_2' => 'rC_Connect__Address_Street_Line_2__c',
       'city' => 'rC_Connect__Address_City__c',
