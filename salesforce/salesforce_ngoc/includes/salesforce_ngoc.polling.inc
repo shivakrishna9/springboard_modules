@@ -94,7 +94,7 @@ function salesforce_ngoc_get_child_hold_queue_items($changed_records) {
 
 
 /**
- * Moves items from hold' to 'new' queue, if parents exist in sync_map table.
+ * Moves items 'new' queue, if parents exist in salesforce_sync_map table.
  *
  * @param array $changed_records
  *    An array of Objects representing changed salesforce_ngoc_sync_map records.
@@ -116,8 +116,6 @@ function salesforce_ngoc_get_child_hold_queue_items($changed_records) {
  *        [polling_attempts] => 1
  *      )
  *    ).
- *
- * @todo Watchdog some info.
  */
 function salesforce_ngoc_release_children_from_hold_queue(&$changed_records) {
   $child_hold_queue_items = salesforce_ngoc_get_child_hold_queue_items($changed_records);
@@ -169,13 +167,18 @@ function salesforce_ngoc_release_children_from_hold_queue(&$changed_records) {
       $db_and = db_and()->condition('drupal_id', $drupal_ids, 'IN')->condition('object_type', $type);
       $update_query->condition(db_or()->condition($db_and));
     }
-    $update_query->execute();
+    $num_updated = $update_query->execute();
   }
   if (!empty($hold_queue_records_to_delete)) {
     // Since this is no longer in the hold queue, remove records from
     // {salesforce_ngoc_hold_queue_items}.
     db_query("DELETE FROM {salesforce_ngoc_hold_queue_items} WHERE id IN (:id)", array(':id' => $hold_queue_records_to_delete));
   }
+  watchdog('salesforce_ngoc', 'Number of child items released from hold queue: :released_from_queue',
+    array(
+      ':released_from_queue' => $num_updated,
+    ),
+    WATCHDOG_NOTICE, l('Salesforce Queue', 'springboard/reports/integration-reports/queue'));
 }
 
 /**
