@@ -13,13 +13,20 @@ $plugin = array(
   'process' => 'sb_social_email_process_settings',
   'share_config' => 'sb_social_email_share_js_config',
   'defaults' => 'sb_social_email_defaults',
-  'js' => FALSE,
   'button_contents' => sb_social_email_custom_button_contents(),
   'uninstall' => 'sb_social_email_uninstall',
   'token_info' => sb_social_email_token_info(),
   'token_replace' => 'sb_social_email_token_replace',
 );
 
+
+$use_addthis = variable_get('springboard_social_use_addthis', FALSE);
+if ($use_addthis) {
+  $plugin['js'] = 'plugins/social_networks/email/email.share.js';
+}
+else {
+  $plugin['js'] = FALSE;
+}
 
 function sb_social_email_token_info() {
   $email_tokens = array();
@@ -40,11 +47,15 @@ function sb_social_email_token_info() {
   return $email_tokens;
 }
 
-function sb_social_email_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE) {
+function sb_social_email_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
+  $use_addthis = variable_get('springboard_social_use_addthis', FALSE);
   foreach ($tokens as $key => $token) {
     switch ($key) {
       case 'email_share_link':
         $vars['service'] = 'email';
+        if ($use_addthis) {
+          $vars['extra'] = sb_social_email_button_extra($settings['data']['email'], $node, $submission_id);
+        }
         $vars['contents'] = sb_social_email_custom_button_contents();
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
@@ -175,10 +186,15 @@ function sb_social_email_uninstall() {
   variable_del('springboard_social_email_message');
 }
 
+function sb_social_email_button_extra($settings, $node = FALSE, $submission_id = FALSE) {
+     return 'addthis:title="' . _sb_social_replace_tokens($settings['subject'], $node, $submission_id) . '"';
+}
+
 function sb_social_email_custom_button_contents() {
   $contents = '';
   $icon = variable_get('springboard_social_email_custom_icon', '');
   $text = variable_get('springboard_social_email_custom_text', '');
+  $use_addthis = variable_get('springboard_social_use_addthis', FALSE);
   if (!empty($icon)) {
     $icon_file = file_load($icon);
     if (isset($icon_file->uri)) {
@@ -186,7 +202,7 @@ function sb_social_email_custom_button_contents() {
       $contents .= '<img src="' . $url . '">';
     }
   }
-  elseif (empty($icon) && empty($text)) {
+  elseif (empty($icon) && empty($text) && !$use_addthis) {
     $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/ml.png">';
   }
   if ($text) {

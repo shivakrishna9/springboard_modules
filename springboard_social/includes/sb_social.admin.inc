@@ -9,6 +9,7 @@
  * Admin settings form.
  */
 function sb_social_admin() {
+
   $form['springboard_social_debug_mode'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable debug mode'),
@@ -73,6 +74,32 @@ function sb_social_admin() {
       $func($form);
     }
   }
+
+  $form['addthis'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('AddThis'),
+  );
+
+  $form['addthis']['springboard_social_use_addthis'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use AddThis'),
+    '#default_value' => variable_get('springboard_social_use_addthis', 0),
+    '#description' => t("If checked, Springboard Social will use AddThis instead of Springboard's native  social integration.")
+  );
+
+  $form['addthis']['springboard_social_addthis_profile_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('AddThis Profile ID'),
+    '#default_value' => variable_get('springboard_social_addthis_profile_id', ''),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="springboard_social_use_addthis"]' => array('checked' => TRUE),
+      ),
+      'required' => array(
+        ':input[name="springboard_social_use_addthis"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
 
   if (module_exists('market_source')) {
     $form['services']['market_source'] = array(
@@ -486,6 +513,7 @@ function sb_social_node_settings($form, $edit, $node) {
     '#type' => 'submit',
     '#value' => t('Save'),
   );
+
   $form['#submit'][] = 'sb_social_settings_submit';
   return $form;
 }

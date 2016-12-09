@@ -73,13 +73,20 @@ function sb_social_facebook_token_info() {
   return $facebook_tokens;
 }
 
-function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE) {
+function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
   foreach ($tokens as $key => $token) {
     switch ($key) {
       case 'facebook_share_link':
         $vars['service'] = 'facebook';
         $vars['contents'] = sb_social_facebook_custom_button_contents();
 
+        $use_addthis = variable_get('springboard_social_use_addthis', FALSE);
+        if ($use_addthis) {
+          $vars['extra'] = '';
+          if ($extra && function_exists($extra)) {
+            $vars['extra'] = $extra($settings['data']['twitter'], $node, $submission_id);
+          }
+        }
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
@@ -318,6 +325,8 @@ function sb_social_facebook_custom_button_contents() {
   $contents = '';
   $icon = variable_get('springboard_social_facebook_custom_icon', '');
   $text = variable_get('springboard_social_facebook_custom_text', '');
+  $use_addthis = variable_get('springboard_social_use_addthis', FALSE);
+
   if (!empty($icon)) {
     $icon_file = file_load($icon);
     if (isset($icon_file->uri)) {
@@ -325,7 +334,7 @@ function sb_social_facebook_custom_button_contents() {
       $contents .= '<img src="' . $url . '">';
     }
   }
-  elseif (empty($icon) && empty($text)) {
+  elseif (empty($icon) && empty($text) && !$use_addthis) {
     $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/bk.png">';
   }
   if ($text) {

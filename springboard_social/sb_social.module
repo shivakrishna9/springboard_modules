@@ -488,6 +488,18 @@ function sb_social_block_view($delta = '') {
       foreach ($plugins as $service => $plugin) {
         $vars['service'] = $service;
         $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
+
+        $use_addthis = variable_get('springboard_social_use_addthis', FALSE);
+        if ($use_addthis) {
+          $vars['extra'] = '';
+          if (isset($plugin['button_extra'])) {
+            $func = $plugin['button_extra'];
+            if (function_exists($func)) {
+              $vars['extra'] = $func($settings['data'][$service], $node);
+            }
+          }
+        }
+
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons);
@@ -591,6 +603,12 @@ function sb_social_init() {
     'id_type' => '',
     'market_source' => '',
   );
+
+  $use_addthis = variable_get('springboard_social_use_addthis', FALSE);
+  if ($use_addthis) {
+    $js_settings['pubid'] = variable_get('springboard_social_addthis_profile_id');
+  }
+
   if (isset($_GET['sid']) && is_numeric($_GET['sid'])) {
     $submission_id = $_GET['sid'];
     // Load the original webform as we can't trust that confirmation redirects
@@ -663,7 +681,19 @@ function sb_social_init() {
         drupal_add_js($path . '/' . $plugin['js']);
       }
     }
-    drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.js', 'file');
+
+    $use_addthis = variable_get('springboard_social_use_addthis', FALSE);
+    if ($use_addthis) {
+      $prefix = !empty($_SERVER['HTTPS']) ? 'https://' : 'http://';
+      drupal_add_js($prefix . 's7.addthis.com/js/250/addthis_widget.js', array(
+        'type' => 'external',
+        'scope' => 'footer',
+      ));
+      drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
+    }
+    else {
+      drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.js', 'file');
+    }
   }
 
   drupal_add_js(array('sb_social' => $js_settings), 'setting');
@@ -811,6 +841,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       $alias = drupal_get_path_alias($path);
       $id = $alias ? array($path, $alias) : $path;
     }
+    $use_addthis = variable_get('springboard_social_use_addthis', FALSE);
     $sid = _sb_social_sid_by_id($id);
     $settings = sb_social_settings_load($sid);
     $enabled_plugins = sb_social_get_enabled_plugins();
@@ -824,7 +855,20 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
-        $func($tokens, $replacements, $settings, $node, $submission_id);
+
+        if ($use_addthis) {
+          $extra_func = isset($plugin['button_extra']) ? $plugin['button_extra'] : FALSE;
+          if ($extra_func && function_exists($extra_func)) {
+            $extra = $extra_func($settings['data'][$service], $node, $submission_id);
+          }
+          else {
+            $extra = FALSE;
+          }
+          $func($tokens, $replacements, $settings, $node, $submission_id, $extra);
+        }
+        else {
+          $func($tokens, $replacements, $settings, $node, $submission_id);
+        }
       }
     }
     $keys = array_keys($tokens);
@@ -833,6 +877,19 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
         $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
+
+        if ($use_addthis) {
+          $vars['extra'] = '';
+          // Some buttons (like email) require additional html attributes.
+          // The button_extra callback provides these values.
+          if (isset($plugin['button_extra'])) {
+            $func = $plugin['button_extra'];
+            if (function_exists($func)) {
+              $vars['extra'] = $func($settings['data'][$service], $node, $submission_id);
+            }
+          }
+        }
+
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons);

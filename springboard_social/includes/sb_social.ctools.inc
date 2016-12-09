@@ -23,3 +23,11 @@ function sb_social_ctools_plugin_type() {
   );
   return $plugins;
 }
+
+function sb_social_plugin_post_alter(&$plugin, &$info) {
+  dpm($info);
+  // Override a function defined by the plugin.
+  if ($info['type'] == 'email') {
+    $plugin['my_function'] = 'new_function';
+  }
+}
