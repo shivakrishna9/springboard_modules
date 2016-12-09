@@ -178,18 +178,17 @@ function salesforce_ngoc_has_unsyncd_parents($object_type, $drupal_object){
  *
  * @param array $item
  *   A salesforce_mapping or salesforce_genmap queue item.
- * @param array $parents
+ * @param array $parent_records
  */
-function salesforce_ngoc_write_hold_queue_items($item, $parents) {
-  // @todo $parent is a reserved keyword, we should change this var name.
-  foreach ($parents as $parent) {
-    reset($parent);
-    $key = key($parent);
+function salesforce_ngoc_write_hold_queue_items($item, $parent_records) {
+  foreach ($parent_records as $parent_record) {
+    reset($parent_record);
+    $key = key($parent_record);
     $record = array(
       'drupal_id' => $item['drupal_id'],
       'object_type' => $item['object_type'],
       'parent_type' => $key,
-      'parent_drupal_id' => $parent[$key],
+      'parent_drupal_id' => $parent_record[$key],
     );
     drupal_write_record('salesforce_ngoc_hold_queue_items', $record);
   }
