@@ -149,9 +149,9 @@ function springboard_group_advocacy_views_default_views_alter(&$views) {
       $group_field['affiliate_id']['id'] = 'affiliate_id';
       $group_field['affiliate_id']['table'] = 'advocacy';
       $group_field['affiliate_id']['field'] = 'affiliate_id';
-      $group_field['affiliate_id']['label'] = 'Affiliate Group';
+      $group_field['affiliate_id']['label'] = 'Owner';
       if ($display_name == 'block_1') {
-        springboard_group_views_add_group_field($fields, 3, $group_field);
+        springboard_group_views_add_group_field($fields, 5, $group_field);
       }
       else {
         springboard_group_views_add_group_field($fields, 2, $group_field);

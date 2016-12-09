@@ -182,7 +182,7 @@ function springboard_advocacy_views_data() {
   );
 
   $data['advocacy']['child_groups'] = array(
-    'title' => t('Child Groups'),
+    'title' => t('Sub-groups'),
     'help' => t('Display child groups of a group.'),
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',

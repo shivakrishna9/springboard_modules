@@ -162,13 +162,39 @@ function springboard_group_views_default_views_alter(&$views) {
         $handler->display->display_options['relationships']['og_membership_related_node_group']['table'] = 'og_membership';
         $handler->display->display_options['relationships']['og_membership_related_node_group']['field'] = 'og_membership_related_node_group';
         $fields =& $handler->display->display_options['fields'];
+
+        // Place the field in the appropriate column position per view display.
+        $index = 2;
+        switch ($view_name) {
+          case 'sba_actions';
+            $index = 5;
+            break;
+
+          case 'sbv_forms';
+            switch ($display_name) {
+              // Recent forms block.
+              case 'block_3':
+                $index = 6;
+                break;
+
+              // Recent donation forms.
+              case 'block_4':
+                $index = 5;
+                break;
+
+              // All donations.
+              case 'block_1':
+                $index = 3;
+            }
+        }
+
         $group_field = [];
         $group_field['title_sb_group']['id'] = 'title_sb_group';
         $group_field['title_sb_group']['table'] = 'node';
         $group_field['title_sb_group']['field'] = 'title';
-        $group_field['title_sb_group']['label'] = 'Group';
+        $group_field['title_sb_group']['label'] = 'Owner';
         $group_field['title_sb_group']['relationship'] = 'og_membership_related_node_group';
-        springboard_group_views_add_group_field($fields, 2, $group_field);
+        springboard_group_views_add_group_field($fields, $index, $group_field);
       }
     }
   }
