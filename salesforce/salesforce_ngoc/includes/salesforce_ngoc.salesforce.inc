@@ -31,6 +31,11 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
     // Depends on one-time or recurring gift.
     $fields['rC_Connect__Giving_Giving_Frequency__c'] = 'One Payment';
     $fields['rC_Connect__Giving_Record_Type__c'] = variable_get('salesforce_ngoc_default_record_type', SALESFORCE_NGOC_DEFAULT_RECORD_TYPE);
+    // Per tom: "for online donations the Address: Preferred Billing and
+    // Address: Preferred Shipping should be set to TRUE.  (For advocacy
+    // actions these should be set to FALSE.)" which appears to be the default
+    // so not explicitly setting FALSE for those.
+    $fields['rC_Connect__Address_Preferred_Shipping__c'] = TRUE;
   }
 }
 
