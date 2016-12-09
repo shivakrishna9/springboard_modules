@@ -875,6 +875,31 @@ function webform_user_node_load($nodes, $types) {
     }
     $nodes[$webform_user['nid']]->map = $map;
   }
+
+  // Check that a webform's user-related components are mapped to the user profile fields.
+  if(preg_match('/node\/[0-9]*?/',$_GET['q'])){ // only on node specific pages
+  foreach ($nodes as $nid => $node) {
+    // Only do this for the node which is being viewed/edited, if it is a webform user node, and if the active user has access to edit the node.
+    if (preg_match('/node\/' . $node->nid . '?/', $_GET['q']) && _webform_user_is_webform_user_node_type($node->type) && node_access('update', $node)) {
+      // Load the list of webform_user profile filelds for reference.
+      $profile_fields = _webform_user_get_profile_fields();
+      $mappable = array();
+      // Create a useful array of the profile fields keys and lowercase labels.
+      foreach($profile_fields as $field) {
+        $mappable[$field['name']] = strtolower($field['title']);
+      }
+      // Check each webform component to see if either its field key or label matches one of the available profile fields.
+      foreach($node->webform['components'] as $cid => $component) {
+        if(in_array($component['form_key'], array_keys($mappable)) || in_array(strtolower($component['name']), $mappable)) {
+          // If it does match one of the mappable fields, check that it is mapped. If not, set a warning message.
+          if(!in_array($cid, array_keys($node->map))) {
+            drupal_set_message(t("The @field field is currently not mapped to the Salesforce contact profile. Please go to Form Components --> !link to map.", array('@field' => $component['name'], '!link' => l("User map", 'node/' . $node->nid . '/form-components/user_mapping'))), 'warning', FALSE);
+          }
+        }
+      }
+    }
+  }
+}
 }
 
 /**
