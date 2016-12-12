@@ -10,6 +10,8 @@
  */
 function sb_social_admin() {
 
+  $form['#attached']['js'][] = drupal_get_path('module', 'sb_social') . '/scripts/sb-social-admin.js';
+
   $form['springboard_social_debug_mode'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable debug mode'),
