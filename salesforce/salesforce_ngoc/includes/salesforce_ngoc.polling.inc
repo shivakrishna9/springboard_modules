@@ -183,11 +183,13 @@ function salesforce_ngoc_release_children_from_hold_queue(&$changed_records) {
     // {salesforce_ngoc_hold_queue_items}.
     db_query("DELETE FROM {salesforce_ngoc_hold_queue_items} WHERE id IN (:id)", array(':id' => $hold_queue_records_to_delete));
   }
-  watchdog('salesforce_ngoc', 'Number of child items released from hold queue: :released_from_queue',
-    array(
-      ':released_from_queue' => $num_updated,
-    ),
-    WATCHDOG_NOTICE, l('Salesforce Queue', 'springboard/reports/integration-reports/queue'));
+  if (!empty($num_updated)) {
+    watchdog('salesforce_ngoc', ':num_updated child items released from hold queue',
+      array(
+        ':num_updated' => $num_updated,
+      ),
+      WATCHDOG_NOTICE, l('Salesforce Queue', 'springboard/reports/integration-reports/queue'));
+  }
 }
 
 /**
@@ -256,7 +258,7 @@ function salesforce_ngoc_batch_upload_compare($ngoc_sync_map_records, $batch_upl
     'SB_Donation_Id__c' => 'did',
   );
   // For each batch_upload object retrieved form SF, see if the values are
-  // different than the ones stored in {salesforce_ngoc_sync_map}
+  // different than the ones stored in {salesforce_ngoc_sync_map}.
   foreach ($batch_upload_sobjects as $batch_upload_sobject) {
     $values_have_changed = FALSE;
     $ngoc_sync_map_record = $ngoc_sync_map_records[$batch_upload_sobject->Id];
