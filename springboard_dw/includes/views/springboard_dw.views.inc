@@ -21,15 +21,15 @@ function springboard_dw_views_data() {
     ),
   );
   // Define the fields:
-  $data['sp_dw_advocacy_stats_psudo']['actions_taken'] = array(
-    'title' => t('Actions Token'),
+  $data['sp_dw_advocacy_stats_psudo']['actions_count'] = array(
+    'title' => t('Actions Count'),
     'help' => t('Fetches the total number of actions taken for this advocacy form.'),
     'field' => array(
       'handler' => 'springboard_dw_views_handler_field',
     ),
   );
-  $data['sp_dw_advocacy_stats_psudo']['messages_generated'] = array(
-    'title' => t('Messages Generated'),
+  $data['sp_dw_advocacy_stats_psudo']['messages_count'] = array(
+    'title' => t('Messages Count'),
     'help' => t('Fetches the total number of messages generated for this advocacy form.'),
     'field' => array(
       'handler' => 'springboard_dw_views_handler_field',
@@ -42,36 +42,45 @@ function springboard_dw_views_data() {
       'handler' => 'springboard_dw_views_handler_field',
     ),
   );
-  $data['sp_dw_advocacy_stats_psudo']['first_submission_date'] = array(
-    'title' => t('First Submission Date'),
+  $data['sp_dw_advocacy_stats_psudo']['first_action_date'] = array(
+    'title' => t('First Action Date'),
     'help' => t('Fetches the date of the first submission for this advocacy form.'),
     'field' => array(
       'handler' => 'springboard_dw_views_handler_field',
     ),
   );
-  $data['sp_dw_advocacy_stats_psudo']['latest_submission_date'] = array(
-    'title' => t('Latest Submission Date'),
+  $data['sp_dw_advocacy_stats_psudo']['latest_action_date'] = array(
+    'title' => t('Latest Action Date'),
     'help' => t('Fetches the date of the most recent submission for this advocacy form.'),
     'field' => array(
       'handler' => 'springboard_dw_views_handler_field',
     ),
   );
-  $data['sp_dw_advocacy_stats_psudo']['first_submission_id'] = array(
-    'title' => t('First Submission ID'),
-    'help' => t('Fetches the id of the first submission for this advocacy form.'),
+  $data['sp_dw_advocacy_stats_psudo']['first_action_id'] = array(
+    'title' => t('First Action ID'),
+    'help' => t('Fetches the id of the first action for this advocacy form.'),
     'field' => array(
       'handler' => 'springboard_dw_views_handler_field',
     ),
   );
-  $data['sp_dw_advocacy_stats_psudo']['latest_submission_id'] = array(
-    'title' => t('Latest Submission ID'),
-    'help' => t('Fetches the id of the most recent submission for this advocacy form.'),
+  $data['sp_dw_advocacy_stats_psudo']['latest_action_id'] = array(
+    'title' => t('Latest Action ID'),
+    'help' => t('Fetches the id of the most recent action for this advocacy form.'),
     'field' => array(
       'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_advocacy_stats_psudo']['form_id'] = array(
+    'title' => t('Form ID'),
+    'help' => t('The Form ID of the form from which action statistics will be fetched.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
     ),
   );
   // End advocacy lifetime stats view type
-
 
   // Defines a view type which displays lifetime performance of a given donation form from the warehouse:
   $data['sp_dw_donation_stats_psudo']['table'] = array(
