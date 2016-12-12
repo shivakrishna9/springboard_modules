@@ -76,6 +76,12 @@ function salesforce_ngoc_admin_form() {
     '#description' => 'The maximum number of Salesforce Batch Upload objects that will be retrieved in one job. The Salesforce Retrieve command has a max of 2,000 objects.',
 
   );
+  $form['salesforce_ngoc_standalone_cron_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Batch Upload polling on standalone cron.'),
+    '#description' => t('If this option is enabled, the polling for changes to batch upload objects will removed from the standard cron run. This task will need to be cronned separately via sitename/salesforce_ngoc_cron'),
+    '#default_value' => variable_get('salesforce_ngoc_standalone_cron_enabled', 0),
+  );
   return system_settings_form($form);
 }
 

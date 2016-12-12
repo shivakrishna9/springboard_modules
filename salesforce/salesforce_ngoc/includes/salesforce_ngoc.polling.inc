@@ -301,13 +301,15 @@ function salesforce_ngoc_get_batch_upload_sobjects($sf_ids) {
     'SB_User_Id__c',
     'SB_Donation_Id__c',
   );
-  try {
-    $sfapi = salesforce_get_api();
-    $soap = new SalesforceSoapPartner($sfapi);
-    $sobjects = $soap->retrieve(implode(',', $sf_fields), "rC_Connect__Batch_Upload__c", $sf_ids);
-  }
-  catch (Exception $e) {
-    watchdog('salesforce_ngoc', $e->getMessage(), NULL, WATCHDOG_ERROR);
+  if (!empty($sf_ids)) {
+    try {
+      $sfapi = salesforce_get_api();
+      $soap = new SalesforceSoapPartner($sfapi);
+      $sobjects = $soap->retrieve(implode(',', $sf_fields), "rC_Connect__Batch_Upload__c", $sf_ids);
+    }
+    catch (Exception $e) {
+      watchdog('salesforce_ngoc', $e->getMessage(), NULL, WATCHDOG_ERROR);
+    }
   }
   // Key the array by Salesforce Id to make them easier to access later.
   $keyed_array = array();

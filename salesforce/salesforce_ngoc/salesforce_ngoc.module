@@ -19,8 +19,13 @@ require_once 'includes/salesforce_ngoc.sync_map.inc';
  * Implements hook_cron().
  */
 function salesforce_ngoc_cron() {
-  watchdog('salesforce_ngoc', 'Standard cron run.', NULL, WATCHDOG_INFO);
-  salesforce_ngoc_poll_batch_upload();
+  if (variable_get('salesforce_ngoc_standalone_cron_enabled', 0)) {
+    return 0;
+  }
+  else {
+    watchdog('salesforce_ngoc', 'Standard cron run.', NULL, WATCHDOG_INFO);
+    salesforce_ngoc_poll_batch_upload();
+  }
 }
 
 /**
@@ -111,5 +116,8 @@ function salesforce_ngoc_standalone_cron() {
  * @todo make configurable.
  */
 function salesforce_ngoc_standalone_cron_access() {
-  return TRUE;
+  if (variable_get('salesforce_ngoc_standalone_cron_enabled', 0)) {
+    return TRUE;
+  }
+  return FALSE;
 }
