@@ -1529,10 +1529,30 @@ function _fundraiser_webform_results_page_content($node) {
   $output = '';
   $form = array();
 
+  if (!isset($node->type)) {
+    return;
+  }
+ 
+  if (in_array($node->type, array('sba_message_action', 'sba_social_action', 'petition'))) {
+    $header_view_name = 'springboard_dw_action_stats_report';
+    $header_view_display = 'block';
+    $table_view_name = 'sba_action_submissions';
+    $table_view_display = 'page_1'; 
+  }
+  elseif ($node->type == 'donation_form') {
+    $header_view_name = 'springboard_dw_donation_stats_report';
+    $header_view_display = 'block_1';
+    $table_view_name = 'sbv_donations';
+    $table_view_display = 'page_2';
+  }
+  else {
+    return;
+  }
+
   // Add the DW-based, lifetime performance stats at the top:
-  $view = views_get_view('springboard_dw_donation_stats_report');
+  $view = views_get_view($header_view_name);
   if (isset($view) && $view != FALSE && is_object($view)) {
-    $view->set_display('block_1');
+    $view->set_display($header_view_display);
     $view->pre_execute(array($node->nid));
     $view->execute();
     $title = isset($view->build_info['title']) ? $view->build_info['title'] : t('Lifetime Performance');
@@ -1544,14 +1564,14 @@ function _fundraiser_webform_results_page_content($node) {
     );
   }
 
-  $view = views_get_view('sbv_donations');
+  $view = views_get_view($table_view_name);
   if (isset($view) && $view != FALSE && is_object($view)) {
-    $view->set_display('page_2');
+    $view->set_display($table_view_display);
     $view->pre_execute(array($node->nid));
     $view->execute();
     $title = isset($view->build_info['title']) ? $view->build_info['title'] : t('Filter Recent Submissions - past 90 days');
     $view_content = $view->render();
-    $form['sbv_donations_content'] = array(
+    $form['sb-results-tab-override-content'] = array(
       '#type' => 'fieldset',
       '#title' => $title,
       '#description' => $view_content
