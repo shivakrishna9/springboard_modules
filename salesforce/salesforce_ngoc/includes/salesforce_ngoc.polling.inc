@@ -78,20 +78,29 @@ function salesforce_ngoc_create_sync_map_records(&$batch_upload_sobjects, &$chan
 function salesforce_ngoc_get_child_hold_queue_items($changed_records) {
   $ngoc_sync_map_uids = array_map(function($o) { return $o->uid; }, $changed_records);
   $ngoc_sync_map_dids = array_map(function($o) { return $o->did; }, $changed_records);
-
-  // @todo: if either uids or dids are empty, we get a PDO exception. Need to
-  // construct this query dynamically?
-
   // Find {salesforce_ngoc_hold_queue_items} that have parent_drupal_ids that
   // match those returned in $changed_records.
-  $hold_queue_result = db_query("SELECT id, drupal_id, object_type, parent_type, parent_drupal_id
-    FROM {salesforce_ngoc_hold_queue_items}
-    WHERE (parent_drupal_id IN (:uids) AND parent_type = 'Contact') OR
-          (parent_drupal_id IN (:dids) AND parent_type = 'Opportunity')",
-    array(':uids' => $ngoc_sync_map_uids, ':dids' => $ngoc_sync_map_dids));
-  return $hold_queue_result;
+  // Either uids or dids can be empty, which gets a PDO exception. So we need to
+  // construct this query dynamically. The resulting query looks something like:
+  // SELECT id, drupal_id, object_type, parent_type, parent_drupal_id
+  // FROM salesforce_ngoc_hold_queue_items
+  // WHERE (parent_drupal_id IN (:uids) AND parent_type = 'Contact') OR
+  // (parent_drupal_id IN (:dids) AND parent_type = 'Opportunity').
+  $query = db_select('salesforce_ngoc_hold_queue_items', 's')
+    ->fields('s', array('id', 'drupal_id', 'object_type', 'parent_type', 'parent_drupal_id'));
+  $contact_condition = db_and()->condition('parent_drupal_id', $ngoc_sync_map_uids, 'IN')->condition('parent_type', 'Contact', '=');
+  $opportunity_condition = db_and()->condition('parent_drupal_id', $ngoc_sync_map_dids, 'IN')->condition('parent_type', 'Opportunity', '=');
+  if (!empty($ngoc_sync_map_uids) && !empty($ngoc_sync_map_dids)) {
+    $query->condition(db_or()->condition($contact_condition)->condition($opportunity_condition));
+  }
+  elseif (!empty($ngoc_sync_map_uids)) {
+    $query->condition($contact_condition);
+  }
+  elseif (!empty($ngoc_sync_map_dids)) {
+    $query->condition($opportunity_condition);
+  }
+  return $query->execute();
 }
-
 
 /**
  * Moves items 'new' queue, if parents exist in salesforce_sync_map table.
