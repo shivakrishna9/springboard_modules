@@ -169,7 +169,26 @@ function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path =
  */
 function commerce_sage_payments_tokenizer_batch_process($accounts, $gateway, $headers, $path, $test_run, &$context) {
 
+
   foreach ($accounts as $index => $account) {
+
+    // Translate the masked file headers into the format Sage expects.
+    $account['routing_number'] = 'fail';
+    $account['account_number'] = 'fail';
+    $account['account_type'] = 'fail';
+    if (isset($account['Account or Card Number'])) {
+      $account['routing_number'] = substr($account['Account or Card Number'], 0, 8);
+      $account['account_number'] = substr($account['Account or Card Number'], 9);
+    }
+    if (isset($account['AccountType'])) {
+      if ($account['AccountType'] == 'SAVING') {
+        $account['account_type'] = 'SAV';
+      }
+      if ($account['AccountType'] == 'CHECKING') {
+        $account['account_type'] = 'DDA';
+      }
+    }
+
     $payment_details = array(
       'ROUTING_NUMBER' => $account['routing_number'],
       'ACCOUNT_NUMBER' => $account['account_number'],
@@ -187,6 +206,9 @@ function commerce_sage_payments_tokenizer_batch_process($accounts, $gateway, $he
       $fail_guid = !empty($test_run) ? 'test_run' : '';
       $accounts[$index]['guid'] = $fail_guid;
     }
+    $accounts[$index]['routing_number'] = $account['routing_number'];
+    $accounts[$index]['account_number'] = $account['account_number'];
+    $accounts[$index]['account_type'] = $account['account_type'];
   }
 
   $context['results']['path'] = $path;
@@ -213,7 +235,10 @@ function commerce_sage_payments_tokenizer_batch_process_complete($success, $resu
       }
     }
 
-    array_push($headers, 'GUID');
+    array_push($headers, 'payment_token');
+    array_push($headers, 'routing_number');
+    array_push($headers, 'account_number');
+    array_push($headers, 'account_type');
     array_unshift($updated_accounts, $headers);
     $file = fopen($path . "/destination.csv", "w");
     foreach ($updated_accounts as $line) {
@@ -225,7 +250,10 @@ function commerce_sage_payments_tokenizer_batch_process_complete($success, $resu
     // An error occurred.
     // $operations contains the operations that remained unprocessed.
     $error_operation = reset($operations);
-    $message = t('An error occurred while processing %error_operation with arguments: @arguments', array('%error_operation' => $error_operation[0], '@arguments' => print_r($error_operation[1], TRUE)));
+    $message = t('An error occurred while processing %error_operation with arguments: @arguments', array(
+      '%error_operation' => $error_operation[0],
+      '@arguments' => print_r($error_operation[1], TRUE)
+    ));
     drush_print($message);
   }
 }
@@ -241,7 +269,7 @@ function commerce_sage_payments_load_accounts_from_csv($path) {
   if (!empty($file)) {
     $accounts = array_map('str_getcsv', $file);
     array_walk($accounts, function (&$a) use ($accounts) {
-      $a = array_combine($accounts[0], $a);
+        $a = array_combine($accounts[0], $a);
     });
 
     $headers = array_shift($accounts);
