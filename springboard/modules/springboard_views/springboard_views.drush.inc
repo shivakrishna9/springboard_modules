@@ -6,7 +6,8 @@
  * Adds a drush command which saves a CSV file containing donation data from the Drupal DB.
  */
 function springboard_views_drush_command() {
-  return array(
+  return array();
+/*  return array(
     'sb-export-donations-csv' => array(
       'aliases' => array('sb-edc'),
       'description' => t('Exports a CSV file containing donation data from the Drupal DB.'),
@@ -26,7 +27,7 @@ function springboard_views_drush_command() {
       ),
       'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
     ),
-  );
+  ); */
 }
 
 /**

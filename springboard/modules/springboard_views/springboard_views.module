@@ -492,17 +492,17 @@ function springboard_views_views_query_alter(&$view, &$query) {
   }
 
   // Apply sort and order from the drush sb-export-donations-csv (drush sb-edc) command:
-  if (isset($view->drush_order) && isset($view->drush_sort)) {
+/*  if (isset($view->drush_order) && isset($view->drush_sort)) {
     $sort = $view->drush_sort;
     $order_by = $view->drush_order;
     $view->query->orderby = array(array(
       'field' => $order_by,
       'direction' => $sort,
     ));
-  }
+  } */
 
   // Apply filters from the drush sb-export-donations-csv (drush sb-edc) command:
-  if (isset($view->drush_filters) && is_array($view->drush_filters)) {
+/*  if (isset($view->drush_filters) && is_array($view->drush_filters)) {
     foreach ($view->drush_filters as $filter_key => $filter_value) {
       switch ($filter_key) {
         case 'amount':
@@ -679,7 +679,7 @@ function springboard_views_views_query_alter(&$view, &$query) {
     if ($condition_data['value'] == '%%' || $condition_data['value'] == '') {
       unset($query->where[1]['conditions'][$key]);
     }
-  }
+  } */
 }
 
 /**

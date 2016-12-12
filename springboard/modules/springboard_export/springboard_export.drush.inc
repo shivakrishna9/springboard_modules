@@ -18,6 +18,16 @@ function springboard_export_drush_command() {
     'springboard_advocacy',
   );
   return array(
+    'sb-export-donations-csv' => array(
+      'aliases' => array('sb-edc'),
+      'description' => t('Exports a CSV file containing donation data from the Drupal DB.'),
+      'callback' => 'springboard_export_drush_export_donations_csv',
+      'options' => array(
+        'json' => t('JSON any key/value search filters, sort (the field on which to sort), and order (asc or desc).'),
+      ),
+      'drupal dependencies' => $drupal_dependencies,
+      'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
+    ),
     'sb-export-action-submissions-csv' => array(
       'aliases' => array('sb-easc'),
       'description' => t('Exports a CSV file containing advocacy action submission data from the Drupal DB.'),
@@ -31,24 +41,45 @@ function springboard_export_drush_command() {
   );
 }
 
-
 /**
- * Callback for drush sb-easc
+ * Callback for drush sb-export-donations-csv (alias: sb-edc)
  */
-function springboard_export_drush_export_action_submissions_csv() {
-  _springboard_export_drush_export_action_data_csv('views_data_export_1', 'sba_action_submissions');
+function springboard_export_drush_export_donations_csv() {
+  $drush_field_map = _springboard_export_donation_drush_to_drupal_field_map();
+  _springboard_export_drush_export_view_data_csv(
+    'sbv_donations',
+    'views_data_export_1',
+    'donations',
+    $drush_field_map
+  );
 }
 
 /**
- * Fetch and generate advocacy CSV output.
- *
- * @param $export_display_id
- *   Denotes the views data export display to be used for fetching and rendering csv file content.
+ * Callback for drush sb-export-action-submissions-cs (alias: sb-easc)
+ */
+function springboard_export_drush_export_action_submissions_csv() {
+  $drush_field_map = _springboard_export_action_drush_to_drupal_field_map();
+  _springboard_export_drush_export_view_data_csv(
+    'sba_action_submissions',
+    'views_data_export_1',
+    'action-subsmissions',
+    $drush_field_map
+  );
+}
+
+/**
+ * Fetch and generate Views Data Export-based CSV output.
  *
  * @param $view_id
  *   View from which data is queried.
+ * @param $export_display_id
+ *   Denotes the views data export display to be used for fetching and rendering csv file content.
+ * @param $filename_descr
+ *   Used as part of the filename for this export.
+ * @param $drush_field_map
+ *   Defines how to alter the query for this view based on drush filtering and sorting.
  */
-function _springboard_export_drush_export_action_data_csv($export_display_id, $view_id) {
+function _springboard_export_drush_export_view_data_csv($view_id, $export_display_id, $filename_descr, $drush_field_map) {
   // Grant full access so the view can be executed:
   $file_paths = array();
   $start = time();
@@ -65,9 +96,9 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
   $debug = FALSE; // Set this to true to prevent CSV export file generation.
 
   // Apply filters, sorting; run the data export view:
-  $dw_field_map = _springboard_export_action_dw_to_drupal_field_map();
   $drush_options = (array) json_decode(drush_get_option('json'));
   while ($current_page < $max_page) {
+    // Prepare the data export view for execution:
     $view = views_get_view($view_id);
     if (!isset($view) || $view == FALSE || !is_object($view)) {
       echo json_encode(array('error' => 'View ' . $view_id . ' could not be loaded; aborting.'));
@@ -75,10 +106,12 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
     }
     $view->set_display($export_display_id);
     $view->init_handlers();    
-
-    // Set the appropriate offset; if items per page is missing then assume 25K/page:
     $view->set_items_per_page($items_per_page);
     $view->set_offset($current_page * $items_per_page);
+
+    // Tell the query alter this query might need altering and provide the field map:
+    $view->is_sb_export = TRUE;
+    $view->drush_field_map = $drush_field_map;
 
     // Apply filtering and sorting:
     $view->drush_filters = array();
@@ -120,11 +153,11 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
           break;
         default:
           if (!empty($option_value)) {
-            if (isset($dw_field_map[$option_name])) {
+            if (isset($drush_field_map[$option_name])) {
               $view->drush_filters[$option_name] = $option_value;
             }
             else {
-              echo json_encode(array('error' => 'Export failed due to unsupported filter: \'' . $option_name . '\'; aborting.'));
+              echo json_encode(array('error' => 'Views Data Export failed due to unsupported filter: \'' . $option_name . '\'; aborting.'));
               return;
             }
           }
@@ -145,7 +178,7 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
     // Output this page's results to a file:
     if (isset($view->result) && count($view->result) > 0) {
       $output = $view->render();
-      $filename = $output_path . '/' . date('Y-m-d--H-i-s') . '-actions-submissions-export-page-' . ($current_page + 1) . '.csv';
+      $filename = $output_path . '/' . date('Y-m-d--H-i-s') . '-' . $filename_descr . '-export-page-' . ($current_page + 1) . '.csv';
       $file_paths[] = $filename;
       $total_results += count($view->result);
       if (!$debug) {
@@ -168,10 +201,12 @@ function _springboard_export_drush_export_action_data_csv($export_display_id, $v
 
   $duration = (time() - $start) . 's';
   $export_summary = array(
+    'total_results_exported' => $total_results,
+    'view_id' => $view_id,
+    'view_display' => $export_display_id,
     'start' => date('Y-m-d - H:i:s', $start),
     'end' => date('Y-m-d - H:i:s'),
     'duration' => $duration,
-    'total_results_exported' => $total_results,
     'internal_file_paths' => $file_paths,
     'export_file_count' => count($s3_pre_signed_urls),
     'export_file_paths' => $s3_pre_signed_urls,
