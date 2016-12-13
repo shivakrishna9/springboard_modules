@@ -9,6 +9,208 @@
  */
 function springboard_dw_views_default_views() {
   $views = array();
+
+
+
+  // springboard_dw_donation_stats_report
+  $view = new view();
+  $view->name = 'springboard_dw_donation_stats_report';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'sp_dw_donation_stats_psudo';
+  $view->human_name = 'Springboard DW Donation Statistics';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Lifetime Performance';
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'administer springboard';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'none';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['style_plugin'] = 'default';
+  $handler->display->display_options['style_options']['row_class_special'] = FALSE;
+  $handler->display->display_options['row_plugin'] = 'fields';
+  /* Field: Springboard DW Donation Stats: First Donation ID */
+  $handler->display->display_options['fields']['first_donation_id']['id'] = 'first_donation_id';
+  $handler->display->display_options['fields']['first_donation_id']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['fields']['first_donation_id']['field'] = 'first_donation_id';
+  $handler->display->display_options['fields']['first_donation_id']['label'] = '';
+  $handler->display->display_options['fields']['first_donation_id']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['first_donation_id']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['first_donation_id']['element_default_classes'] = FALSE;
+  /* Field: Springboard DW Donation Stats: Latest Donation ID */
+  $handler->display->display_options['fields']['latest_donation_id']['id'] = 'latest_donation_id';
+  $handler->display->display_options['fields']['latest_donation_id']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['fields']['latest_donation_id']['field'] = 'latest_donation_id';
+  $handler->display->display_options['fields']['latest_donation_id']['label'] = '';
+  $handler->display->display_options['fields']['latest_donation_id']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['latest_donation_id']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['latest_donation_id']['element_default_classes'] = FALSE;
+  /* Field: Springboard DW Donation Stats: Total Amount Donated */
+  $handler->display->display_options['fields']['raised']['id'] = 'raised';
+  $handler->display->display_options['fields']['raised']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['fields']['raised']['field'] = 'raised';
+  $handler->display->display_options['fields']['raised']['label'] = 'raised';
+  $handler->display->display_options['fields']['raised']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Donation Stats: Total Donations */
+  $handler->display->display_options['fields']['gifts']['id'] = 'gifts';
+  $handler->display->display_options['fields']['gifts']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['fields']['gifts']['field'] = 'gifts';
+  $handler->display->display_options['fields']['gifts']['label'] = 'gifts';
+  $handler->display->display_options['fields']['gifts']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Donation Stats: Total Recurring Donations */
+  $handler->display->display_options['fields']['sustainers']['id'] = 'sustainers';
+  $handler->display->display_options['fields']['sustainers']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['fields']['sustainers']['field'] = 'sustainers';
+  $handler->display->display_options['fields']['sustainers']['label'] = 'sustainers';
+  $handler->display->display_options['fields']['sustainers']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Donation Stats: Total First Time Donations */
+  $handler->display->display_options['fields']['first_time_donors']['id'] = 'first_time_donors';
+  $handler->display->display_options['fields']['first_time_donors']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['fields']['first_time_donors']['field'] = 'first_time_donors';
+  $handler->display->display_options['fields']['first_time_donors']['label'] = 'first time donors';
+  $handler->display->display_options['fields']['first_time_donors']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Donation Stats: First Donation Date */
+  $handler->display->display_options['fields']['first_submission_date']['id'] = 'first_submission_date';
+  $handler->display->display_options['fields']['first_submission_date']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['fields']['first_submission_date']['field'] = 'first_submission_date';
+  $handler->display->display_options['fields']['first_submission_date']['label'] = '';
+  $handler->display->display_options['fields']['first_submission_date']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['first_submission_date']['alter']['text'] = 'First submission received [first_submission_date]';
+  $handler->display->display_options['fields']['first_submission_date']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['first_submission_date']['alter']['path'] = 'admin/reports/springboard-dw/donations/[first_donation_id]';
+  $handler->display->display_options['fields']['first_submission_date']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Donation Stats: Latest Donation Date */
+  $handler->display->display_options['fields']['latest_submission_date']['id'] = 'latest_submission_date';
+  $handler->display->display_options['fields']['latest_submission_date']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['fields']['latest_submission_date']['field'] = 'latest_submission_date';
+  $handler->display->display_options['fields']['latest_submission_date']['label'] = '';
+  $handler->display->display_options['fields']['latest_submission_date']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['latest_submission_date']['alter']['text'] = 'Latest submission received [latest_submission_date]';
+  $handler->display->display_options['fields']['latest_submission_date']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['latest_submission_date']['alter']['path'] = 'admin/reports/springboard-dw/donations/[latest_donation_id]';
+  $handler->display->display_options['fields']['latest_submission_date']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Donation Stats: Latest fetch */
+  $handler->display->display_options['fields']['latest_fetch']['id'] = 'latest_fetch';
+  $handler->display->display_options['fields']['latest_fetch']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['fields']['latest_fetch']['field'] = 'latest_fetch';
+  $handler->display->display_options['fields']['latest_fetch']['label'] = '';
+  $handler->display->display_options['fields']['latest_fetch']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['latest_fetch']['alter']['text'] = 'updated [latest_fetch] ago';
+  $handler->display->display_options['fields']['latest_fetch']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Donation Stats: Node Status */
+  $handler->display->display_options['fields']['node_status']['id'] = 'node_status';
+  $handler->display->display_options['fields']['node_status']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['fields']['node_status']['field'] = 'node_status';
+  $handler->display->display_options['fields']['node_status']['label'] = 'Current status';
+  $handler->display->display_options['fields']['node_status']['hide_empty'] = TRUE;
+  /* Contextual filter: Springboard DW Donation Stats: Donation ID */
+  $handler->display->display_options['arguments']['donation_id']['id'] = 'donation_id';
+  $handler->display->display_options['arguments']['donation_id']['table'] = 'sp_dw_donation_stats_psudo';
+  $handler->display->display_options['arguments']['donation_id']['field'] = 'donation_id';
+  $handler->display->display_options['arguments']['donation_id']['default_action'] = 'not found';
+  $handler->display->display_options['arguments']['donation_id']['default_argument_type'] = 'fixed';
+  $handler->display->display_options['arguments']['donation_id']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['donation_id']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['donation_id']['summary_options']['items_per_page'] = '25';
+
+  /* Display: Block */
+  $handler = $view->new_display('block', 'Block', 'block_1');
+  $views[$view->name] = $view;
+  // end springboard_dw_donation_stats_report
+
+  // springboard_dw_action_stats_report
+  $view = new view();
+  $view->name = 'springboard_dw_action_stats_report';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'sp_dw_advocacy_stats_psudo';
+  $view->human_name = 'Springboard DW Action Statistics';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Lifetime Performance';
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'none';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'none';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['style_plugin'] = 'default';
+  $handler->display->display_options['row_plugin'] = 'fields';
+  /* Field: Springboard DW Advocacy Stats: First Action ID */
+  $handler->display->display_options['fields']['first_action_id']['id'] = 'first_action_id';
+  $handler->display->display_options['fields']['first_action_id']['table'] = 'sp_dw_advocacy_stats_psudo';
+  $handler->display->display_options['fields']['first_action_id']['field'] = 'first_action_id';
+  $handler->display->display_options['fields']['first_action_id']['exclude'] = TRUE;
+  /* Field: Springboard DW Advocacy Stats: Latest Action ID */
+  $handler->display->display_options['fields']['latest_action_id']['id'] = 'latest_action_id';
+  $handler->display->display_options['fields']['latest_action_id']['table'] = 'sp_dw_advocacy_stats_psudo';
+  $handler->display->display_options['fields']['latest_action_id']['field'] = 'latest_action_id';
+  $handler->display->display_options['fields']['latest_action_id']['exclude'] = TRUE;
+  /* Field: Springboard DW Advocacy Stats: Actions Count */
+  $handler->display->display_options['fields']['actions_count']['id'] = 'actions_count';
+  $handler->display->display_options['fields']['actions_count']['table'] = 'sp_dw_advocacy_stats_psudo';
+  $handler->display->display_options['fields']['actions_count']['field'] = 'actions_count';
+  $handler->display->display_options['fields']['actions_count']['label'] = 'actions taken';
+  $handler->display->display_options['fields']['actions_count']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Advocacy Stats: Messages Count */
+  $handler->display->display_options['fields']['messages_count']['id'] = 'messages_count';
+  $handler->display->display_options['fields']['messages_count']['table'] = 'sp_dw_advocacy_stats_psudo';
+  $handler->display->display_options['fields']['messages_count']['field'] = 'messages_count';
+  $handler->display->display_options['fields']['messages_count']['label'] = 'messages generated';
+  $handler->display->display_options['fields']['messages_count']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Advocacy Stats: New Contacts */
+  $handler->display->display_options['fields']['new_contacts']['id'] = 'new_contacts';
+  $handler->display->display_options['fields']['new_contacts']['table'] = 'sp_dw_advocacy_stats_psudo';
+  $handler->display->display_options['fields']['new_contacts']['field'] = 'new_contacts';
+  $handler->display->display_options['fields']['new_contacts']['label'] = 'new contacts';
+  $handler->display->display_options['fields']['new_contacts']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Advocacy Stats: First Action Date */
+  $handler->display->display_options['fields']['first_action_date']['id'] = 'first_action_date';
+  $handler->display->display_options['fields']['first_action_date']['table'] = 'sp_dw_advocacy_stats_psudo';
+  $handler->display->display_options['fields']['first_action_date']['field'] = 'first_action_date';
+  $handler->display->display_options['fields']['first_action_date']['label'] = '';
+  $handler->display->display_options['fields']['first_action_date']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['first_action_date']['alter']['text'] = 'First submission received [first_action_date]';
+  $handler->display->display_options['fields']['first_action_date']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['first_action_date']['alter']['path'] = 'admin/reports/springboard-dw/actions/[first_action_id]';
+  $handler->display->display_options['fields']['first_action_date']['element_label_colon'] = FALSE;
+  /* Field: Springboard DW Advocacy Stats: Latest Action Date */
+  $handler->display->display_options['fields']['latest_action_date']['id'] = 'latest_action_date';
+  $handler->display->display_options['fields']['latest_action_date']['table'] = 'sp_dw_advocacy_stats_psudo';
+  $handler->display->display_options['fields']['latest_action_date']['field'] = 'latest_action_date';
+  $handler->display->display_options['fields']['latest_action_date']['label'] = '';
+  $handler->display->display_options['fields']['latest_action_date']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['latest_action_date']['alter']['text'] = 'Latest submission received [latest_action_date]';
+  $handler->display->display_options['fields']['latest_action_date']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['latest_action_date']['alter']['path'] = 'admin/reports/springboard-dw/actions/[latest_action_id]';
+  $handler->display->display_options['fields']['latest_action_date']['element_label_colon'] = FALSE;
+  /* Contextual filter: Springboard DW Advocacy Stats: Form ID */
+  $handler->display->display_options['arguments']['form_id']['id'] = 'form_id';
+  $handler->display->display_options['arguments']['form_id']['table'] = 'sp_dw_advocacy_stats_psudo';
+  $handler->display->display_options['arguments']['form_id']['field'] = 'form_id';
+  $handler->display->display_options['arguments']['form_id']['default_action'] = 'default';
+  $handler->display->display_options['arguments']['form_id']['default_argument_type'] = 'node';
+  $handler->display->display_options['arguments']['form_id']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['form_id']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['form_id']['summary_options']['items_per_page'] = '25';
+
+  /* Display: Block */
+  $handler = $view->new_display('block', 'Block', 'block');
+  $views[$view->name] = $view;
+  // end springboard_dw_action_stats_report
   
   // springboard_dw_donations_report view:
   $view = new view();
@@ -503,7 +705,6 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   $handler->display->display_options['path'] = 'admin/reports/springboard-dw/donations/%';
-
   $views[$view->name] = $view;
   // End springboard_dw_donations_report view.
 
