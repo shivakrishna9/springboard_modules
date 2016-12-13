@@ -832,6 +832,10 @@ function springboard_advocacy_views_default_views() {
     'sba_organization_issues' => 'sba_organization_issues',
     'tags' => 0,
   );
+  /* Relationship: Entity Reference: Referencing entity */
+  $handler->display->display_options['relationships']['reverse_field_sba_action_id_sba_message']['id'] = 'reverse_field_sba_action_id_sba_message';
+  $handler->display->display_options['relationships']['reverse_field_sba_action_id_sba_message']['table'] = 'node';
+  $handler->display->display_options['relationships']['reverse_field_sba_action_id_sba_message']['field'] = 'reverse_field_sba_action_id_sba_message';
   /* Field: (hidden) */
   $handler->display->display_options['fields']['nid']['id'] = 'nid';
   $handler->display->display_options['fields']['nid']['table'] = 'node';
@@ -848,6 +852,13 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['fields']['sid']['alter']['path'] = 'node/[nid]/submission/[sid]';
   $handler->display->display_options['fields']['sid']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['sid']['separator'] = '';
+  /* Field: SBA Message: Sba message ID */
+  $handler->display->display_options['fields']['sba_message_id']['id'] = 'sba_message_id';
+  $handler->display->display_options['fields']['sba_message_id']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['sba_message_id']['field'] = 'sba_message_id';
+  $handler->display->display_options['fields']['sba_message_id']['relationship'] = 'reverse_field_sba_action_id_sba_message';
+  $handler->display->display_options['fields']['sba_message_id']['label'] = 'message ID';
+  $handler->display->display_options['fields']['sba_message_id']['separator'] = '';
   /* Field: Webform submissions: Sid */
   $handler->display->display_options['fields']['sid_1']['id'] = 'sid_1';
   $handler->display->display_options['fields']['sid_1']['table'] = 'webform_submissions';
@@ -893,7 +904,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['label'] = 'Operations';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/node/[nid]/submission/[sid]" class="action-view-link">View</a><span class="bar"> | </span><a href="/node/[nid]/submission/[sid]/edit" class="action-edit-link">Edit</a> | <a href="/node/[nid]/submission/[sid]/delete" class="action-delete-link">Delete</a>';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/node/[nid]/messages/sba_message/[sba_message_id]" class="action-view-link">View</a><span class="bar"> | </span><a href="/node/[nid]/messages/sba_message/[sba_message_id]" class="action-edit-link">Edit</a> | <a href="/node/[nid]/messages/sba_message/[sba_message_id]/delete" class="action-delete-link">Delete</a>';
   /* Sort criterion: Webform submissions: Submitted */
   $handler->display->display_options['sorts']['submitted']['id'] = 'submitted';
   $handler->display->display_options['sorts']['submitted']['table'] = 'webform_submissions';
@@ -954,7 +965,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['sbp_first_name_value']['group'] = 1;
   $handler->display->display_options['filters']['sbp_first_name_value']['exposed'] = TRUE;
   $handler->display->display_options['filters']['sbp_first_name_value']['expose']['operator_id'] = 'sbp_first_name_value_op';
-  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['label'] = 'First name (sbp_first_name)';
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['label'] = 'First name';
   $handler->display->display_options['filters']['sbp_first_name_value']['expose']['operator'] = 'sbp_first_name_value_op';
   $handler->display->display_options['filters']['sbp_first_name_value']['expose']['identifier'] = 'sbp_first_name_value';
   $handler->display->display_options['filters']['sbp_first_name_value']['expose']['remember_roles'] = array(
@@ -1014,6 +1025,166 @@ function springboard_advocacy_views_default_views() {
   $handler = $view->new_display('views_data_export', 'Data export', 'views_data_export_1');
   $handler->display->display_options['pager']['type'] = 'some';
   $handler->display->display_options['style_plugin'] = 'views_data_export_csv';
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: (hidden) */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['ui_name'] = '(hidden)';
+  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['nid']['element_default_classes'] = FALSE;
+  /* Field: (hidden) */
+  $handler->display->display_options['fields']['sid']['id'] = 'sid';
+  $handler->display->display_options['fields']['sid']['table'] = 'webform_submissions';
+  $handler->display->display_options['fields']['sid']['field'] = 'sid';
+  $handler->display->display_options['fields']['sid']['ui_name'] = '(hidden)';
+  $handler->display->display_options['fields']['sid']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['sid']['alter']['path'] = 'node/[nid]/submission/[sid]';
+  $handler->display->display_options['fields']['sid']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['sid']['separator'] = '';
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = 'action_name';
+  $handler->display->display_options['fields']['title']['link_to_node'] = FALSE;
+  /* Field: Content: Type */
+  $handler->display->display_options['fields']['type']['id'] = 'type';
+  $handler->display->display_options['fields']['type']['table'] = 'node';
+  $handler->display->display_options['fields']['type']['field'] = 'type';
+  $handler->display->display_options['fields']['type']['label'] = 'action_type';
+  /* Field: User: Last name */
+  $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_last_name']['label'] = 'Last';
+  $handler->display->display_options['fields']['sbp_last_name']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['sbp_last_name']['element_default_classes'] = FALSE;
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'contact';
+  $handler->display->display_options['fields']['sbp_first_name']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['sbp_first_name']['alter']['text'] = '[sbp_first_name] [sbp_last_name]';
+  /* Field: User: Salesforce Contact Id */
+  $handler->display->display_options['fields']['sbp_salesforce_contact_id']['id'] = 'sbp_salesforce_contact_id';
+  $handler->display->display_options['fields']['sbp_salesforce_contact_id']['table'] = 'field_data_sbp_salesforce_contact_id';
+  $handler->display->display_options['fields']['sbp_salesforce_contact_id']['field'] = 'sbp_salesforce_contact_id';
+  $handler->display->display_options['fields']['sbp_salesforce_contact_id']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_salesforce_contact_id']['label'] = 'contact_id';
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid_1']['id'] = 'nid_1';
+  $handler->display->display_options['fields']['nid_1']['table'] = 'node';
+  $handler->display->display_options['fields']['nid_1']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid_1']['label'] = 'form_id';
+  /* Field: Webform submissions: Remote address */
+  $handler->display->display_options['fields']['remote_addr']['id'] = 'remote_addr';
+  $handler->display->display_options['fields']['remote_addr']['table'] = 'webform_submissions';
+  $handler->display->display_options['fields']['remote_addr']['field'] = 'remote_addr';
+  $handler->display->display_options['fields']['remote_addr']['label'] = 'ip_address';
+  /* Field: User: Campaign ID */
+  $handler->display->display_options['fields']['sbp_cid']['id'] = 'sbp_cid';
+  $handler->display->display_options['fields']['sbp_cid']['table'] = 'field_data_sbp_cid';
+  $handler->display->display_options['fields']['sbp_cid']['field'] = 'sbp_cid';
+  $handler->display->display_options['fields']['sbp_cid']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_cid']['label'] = 'cid';
+  /* Field: User: Referrer */
+  $handler->display->display_options['fields']['sbp_referrer']['id'] = 'sbp_referrer';
+  $handler->display->display_options['fields']['sbp_referrer']['table'] = 'field_data_sbp_referrer';
+  $handler->display->display_options['fields']['sbp_referrer']['field'] = 'sbp_referrer';
+  $handler->display->display_options['fields']['sbp_referrer']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_referrer']['label'] = 'referrer';
+  /* Field: User: Initial Referrer */
+  $handler->display->display_options['fields']['sbp_initial_referrer']['id'] = 'sbp_initial_referrer';
+  $handler->display->display_options['fields']['sbp_initial_referrer']['table'] = 'field_data_sbp_initial_referrer';
+  $handler->display->display_options['fields']['sbp_initial_referrer']['field'] = 'sbp_initial_referrer';
+  $handler->display->display_options['fields']['sbp_initial_referrer']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_initial_referrer']['label'] = 'initial_referrer';
+  /* Field: User: Search Engine */
+  $handler->display->display_options['fields']['sbp_search_engine']['id'] = 'sbp_search_engine';
+  $handler->display->display_options['fields']['sbp_search_engine']['table'] = 'field_data_sbp_search_engine';
+  $handler->display->display_options['fields']['sbp_search_engine']['field'] = 'sbp_search_engine';
+  $handler->display->display_options['fields']['sbp_search_engine']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_search_engine']['label'] = 'search_engine';
+  /* Field: User: Search String */
+  $handler->display->display_options['fields']['sbp_search_string']['id'] = 'sbp_search_string';
+  $handler->display->display_options['fields']['sbp_search_string']['table'] = 'field_data_sbp_search_string';
+  $handler->display->display_options['fields']['sbp_search_string']['field'] = 'sbp_search_string';
+  $handler->display->display_options['fields']['sbp_search_string']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_search_string']['label'] = 'seach_string';
+  /* Field: User: User Agent */
+  $handler->display->display_options['fields']['sbp_user_agent']['id'] = 'sbp_user_agent';
+  $handler->display->display_options['fields']['sbp_user_agent']['table'] = 'field_data_sbp_user_agent';
+  $handler->display->display_options['fields']['sbp_user_agent']['field'] = 'sbp_user_agent';
+  $handler->display->display_options['fields']['sbp_user_agent']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_user_agent']['label'] = 'user_agent';
+  /* Field: User: Device Type */
+  $handler->display->display_options['fields']['sbp_device_type']['id'] = 'sbp_device_type';
+  $handler->display->display_options['fields']['sbp_device_type']['table'] = 'field_data_sbp_device_type';
+  $handler->display->display_options['fields']['sbp_device_type']['field'] = 'sbp_device_type';
+  $handler->display->display_options['fields']['sbp_device_type']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_device_type']['label'] = 'device_type';
+  /* Field: User: Device Name */
+  $handler->display->display_options['fields']['sbp_device_name']['id'] = 'sbp_device_name';
+  $handler->display->display_options['fields']['sbp_device_name']['table'] = 'field_data_sbp_device_name';
+  $handler->display->display_options['fields']['sbp_device_name']['field'] = 'sbp_device_name';
+  $handler->display->display_options['fields']['sbp_device_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_device_name']['label'] = 'device_name';
+  /* Field: User: Device OS */
+  $handler->display->display_options['fields']['sbp_device_os']['id'] = 'sbp_device_os';
+  $handler->display->display_options['fields']['sbp_device_os']['table'] = 'field_data_sbp_device_os';
+  $handler->display->display_options['fields']['sbp_device_os']['field'] = 'sbp_device_os';
+  $handler->display->display_options['fields']['sbp_device_os']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_device_os']['label'] = 'device_os';
+  /* Field: User: Device Browser */
+  $handler->display->display_options['fields']['sbp_device_browser']['id'] = 'sbp_device_browser';
+  $handler->display->display_options['fields']['sbp_device_browser']['table'] = 'field_data_sbp_device_browser';
+  $handler->display->display_options['fields']['sbp_device_browser']['field'] = 'sbp_device_browser';
+  $handler->display->display_options['fields']['sbp_device_browser']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_device_browser']['label'] = 'device_browser';
+  /* Field: Content: All taxonomy terms */
+  $handler->display->display_options['fields']['term_node_tid']['id'] = 'term_node_tid';
+  $handler->display->display_options['fields']['term_node_tid']['table'] = 'node';
+  $handler->display->display_options['fields']['term_node_tid']['field'] = 'term_node_tid';
+  $handler->display->display_options['fields']['term_node_tid']['label'] = 'legislative_issues';
+  $handler->display->display_options['fields']['term_node_tid']['separator'] = '|';
+  $handler->display->display_options['fields']['term_node_tid']['link_to_taxonomy'] = FALSE;
+  $handler->display->display_options['fields']['term_node_tid']['limit'] = TRUE;
+  $handler->display->display_options['fields']['term_node_tid']['vocabularies'] = array(
+    'sba_legislative_issues' => 'sba_legislative_issues',
+    'sba_organization_issues' => 0,
+    'tags' => 0,
+  );
+  /* Field: Content: All taxonomy terms */
+  $handler->display->display_options['fields']['term_node_tid_1']['id'] = 'term_node_tid_1';
+  $handler->display->display_options['fields']['term_node_tid_1']['table'] = 'node';
+  $handler->display->display_options['fields']['term_node_tid_1']['field'] = 'term_node_tid';
+  $handler->display->display_options['fields']['term_node_tid_1']['label'] = 'organization_issue';
+  $handler->display->display_options['fields']['term_node_tid_1']['separator'] = '|';
+  $handler->display->display_options['fields']['term_node_tid_1']['link_to_taxonomy'] = FALSE;
+  $handler->display->display_options['fields']['term_node_tid_1']['limit'] = TRUE;
+  $handler->display->display_options['fields']['term_node_tid_1']['vocabularies'] = array(
+    'sba_organization_issues' => 'sba_organization_issues',
+    'sba_legislative_issues' => 0,
+    'tags' => 0,
+  );
+  /* Field: SBA Message: Created */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['relationship'] = 'reverse_field_sba_action_id_sba_message';
+  $handler->display->display_options['fields']['created']['label'] = 'created_at';
+  $handler->display->display_options['fields']['created']['separator'] = '';
+  /* Field: SBA Message: Changed */
+  $handler->display->display_options['fields']['changed']['id'] = 'changed';
+  $handler->display->display_options['fields']['changed']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['changed']['field'] = 'changed';
+  $handler->display->display_options['fields']['changed']['relationship'] = 'reverse_field_sba_action_id_sba_message';
+  $handler->display->display_options['fields']['changed']['label'] = 'updated_at';
+  $handler->display->display_options['fields']['changed']['separator'] = '';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Content: Type */
@@ -1022,6 +1193,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['value'] = array(
     'sba_message_action' => 'sba_message_action',
+    'springboard_petition' => 'springboard_petition',
     'sba_social_action' => 'sba_social_action',
   );
   $handler->display->display_options['filters']['type']['group'] = 1;
@@ -1202,6 +1374,26 @@ function springboard_advocacy_views_default_views() {
     'page' => 'page',
     'default' => 0,
   );
+
+  /* Display: Results Tab */
+  $handler = $view->new_display('page', 'Results Tab', 'page_1');
+  $handler->display->display_options['defaults']['header'] = FALSE;
+  /* Header: Global: View area */
+  $handler->display->display_options['header']['view']['id'] = 'view';
+  $handler->display->display_options['header']['view']['table'] = 'views';
+  $handler->display->display_options['header']['view']['field'] = 'view';
+  $handler->display->display_options['header']['view']['view_to_insert'] = 'springboard_dw_donation_stats_report:block_1';
+  $handler->display->display_options['defaults']['arguments'] = FALSE;
+  /* Contextual filter: Content: Nid */
+  $handler->display->display_options['arguments']['nid']['id'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['table'] = 'node';
+  $handler->display->display_options['arguments']['nid']['field'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['default_action'] = 'default';
+  $handler->display->display_options['arguments']['nid']['default_argument_type'] = 'node';
+  $handler->display->display_options['arguments']['nid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['nid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['path'] = 'admin/reports/springboard/actions/%';
   $views[$view->name] = $view;  
   // End sba_action_submissions
 
