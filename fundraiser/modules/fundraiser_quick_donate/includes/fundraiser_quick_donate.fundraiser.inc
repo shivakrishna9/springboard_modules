@@ -326,7 +326,13 @@ function fundraiser_quick_donate_fundraiser_donation_submit_alter($form, $form_s
     $donation->data['is_quick_donate'] = TRUE;
     if (!empty($card)) {
       $donation->donation['payment_fields'][$payment_info['payment_method']]['card_number'] = $card->card_number;
-      $donation->donation['payment_fields'][$payment_info['payment_method']]['card_type'] = $card->card_type;
+
+      $card_types = commerce_payment_credit_card_types();
+      $card_type = $card->card_type;
+      if (!empty($card_types[$card_type])) {
+        $card_type = $card_types[$card_type];
+      }
+      $donation->donation['payment_fields'][$payment_info['payment_method']]['card_type'] = $card_type;
       $donation->donation['payment_fields'][$payment_info['payment_method']]['card_expiration_month'] = $card->card_exp_month;
       $donation->donation['payment_fields'][$payment_info['payment_method']]['card_expiration_year'] = $card->card_exp_year;
       $donation->donation['payment_fields'][$payment_info['payment_method']]['quickdonate'] = TRUE;
