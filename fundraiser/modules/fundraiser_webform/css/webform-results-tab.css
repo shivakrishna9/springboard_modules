@@ -12,10 +12,12 @@
   font-size: 11px;
   padding: 2px 4px;
 }
+.view-springboard-dw-action-stats-report,
 .view-springboard-dw-donation-stats-report {
   font-size: 11px;
   min-width: 500px;
 }
+.view-springboard-dw-action-stats-report .views-field-node-status,
 .view-springboard-dw-donation-stats-report .views-field-node-status {
   color: #888;
   font-size: 10px;
@@ -23,6 +25,9 @@
   margin-top: 42px;
   position: absolute;
 }
+.view-springboard-dw-action-stats-report .views-field-actions-count,
+.view-springboard-dw-action-stats-report .views-field-messages-count,
+.view-springboard-dw-action-stats-report .views-field-new-contacts,
 .view-springboard-dw-donation-stats-report .views-field-raised,
 .view-springboard-dw-donation-stats-report .views-field-gifts,
 .view-springboard-dw-donation-stats-report .views-field-sustainers,
@@ -32,9 +37,13 @@
   text-align: center;
   width: 23%;
 }
+.view-springboard-dw-donation-stats-report .views-field-actions-count,
 .view-springboard-dw-donation-stats-report .views-field-raised {
   width: 28%
 }
+.view-springboard-dw-action-stats-report .views-field-actions-count .field-content,
+.view-springboard-dw-action-stats-report .views-field-messages-count .field-content,
+.view-springboard-dw-action-stats-report .views-field-new-contacts .field-content,
 .view-springboard-dw-donation-stats-report .views-field-raised .field-content,
 .view-springboard-dw-donation-stats-report .views-field-gifts .field-content,
 .view-springboard-dw-donation-stats-report .views-field-sustainers .field-content,
@@ -44,6 +53,8 @@
   font-size: 25px;
   position: relative;
 }
+.view-springboard-dw-action-stats-report .views-field-first-action-date,
+.view-springboard-dw-action-stats-report .views-field-latest-action-date,
 .view-springboard-dw-donation-stats-report .views-field-first-submission-date,
 .view-springboard-dw-donation-stats-report .views-field-latest-submission-date, 
 .view-springboard-dw-donation-stats-report .views-field-latest-fetch {
@@ -52,14 +63,18 @@
   position: absolute;
   right: 5px;
 }
+.view-springboard-dw-action-stats-report .views-field-latest-action-date,
 .view-springboard-dw-donation-stats-report .views-field-latest-submission-date {
   margin-top: 12px;
 }
+.view-springboard-dw-action-stats-report .views-field-first-action-date .field-content,
+.view-springboard-dw-action-stats-report .views-field-latest-action-date .field-content,
 .view-springboard-dw-donation-stats-report .views-field-first-submission-date .field-content,
 .view-springboard-dw-donation-stats-report .views-field-latest-submission-date .field-content {
   position: relative;
   top: 30px;
 }
+.view-springboard-dw-action-stats-report .views-field-latest-fetch .field-content,
 .view-springboard-dw-donation-stats-report .views-field-latest-fetch .field-content {
   color: #ddd;
   position: relative;

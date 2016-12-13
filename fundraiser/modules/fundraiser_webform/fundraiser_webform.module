@@ -1557,7 +1557,7 @@ function _fundraiser_webform_results_page_content($node) {
     $view->execute();
     $title = isset($view->build_info['title']) ? $view->build_info['title'] : t('Lifetime Performance');
     $view_content = $view->render();
-    $form['springboard_dw_donation_stats_content'] = array(
+    $form['springboard_dw_lifetime_stats_content'] = array(
       '#type' => 'fieldset',
       '#title' => $title,
       '#description' => $view_content
@@ -1578,7 +1578,7 @@ function _fundraiser_webform_results_page_content($node) {
     );
   }
   if (!empty($form)) {
-    $form['#attached']['css'] = array(drupal_get_path('module', 'fundraiser_webform') . '/css/donation-results-tab.css');
+    $form['#attached']['css'] = array(drupal_get_path('module', 'fundraiser_webform') . '/css/webform-results-tab.css');
     $output = drupal_render($form);
   }
   return $output;
