@@ -28,8 +28,7 @@ class springboard_dw_donation_stats_views_plugin_query extends views_plugin_quer
 
     $start = microtime(TRUE);
     $method = 'GET';
-    $target_donation_id = 10;
-    //$target_donation_id = $view->args[0];
+    $target_donation_id = $view->args[0];
     $params = array('formId' => $target_donation_id);
     $view->result = array();
 
