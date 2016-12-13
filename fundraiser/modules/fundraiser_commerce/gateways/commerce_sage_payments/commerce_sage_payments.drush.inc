@@ -14,7 +14,7 @@
 function commerce_sage_payments_drush_help($command) {
   switch ($command) {
     case 'drush:sage-tokenizer':
-      return dt('Generates sage payment tokens from an uploaded csv file.');
+      return dt('Generates sage payment tokens from an uploaded .csv file. Can be used with or without arguments. Missing arguments will be prompted for. After processing, payment API request results will be added to the original data, and saved in a new file, destination.csv.');
   }
 }
 
@@ -27,11 +27,12 @@ function commerce_sage_payments_drush_help($command) {
 function commerce_sage_payments_drush_command() {
   $items['sage-tokenizer'] = array(
     'description' => 'Obtain sage payment tokens using a source file',
+    'module' => 'commerce_sage_payments',
     'arguments' => array(
       'gateway_id' => "The gateway id. Ex: 'commerce_sage_payments_eft|commerce_payment_commerce_sage_payments_eft' Use quotes.",
-      'path' => 'Absolute path to the source file directory',
-      'filename' => 'The filename',
-      'test_run' => 'Whether to run without making a call to Sage',
+      'path' => 'Absolute path to the .csv source file directory',
+      'filename' => 'The .csv filename, including extension.',
+      'test_run' => 'TRUE or FALSE. If TRUE, API request will not be sent to Sage.',
     ),
   );
   return $items;
@@ -116,13 +117,13 @@ function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path =
   $source_file = $path . '/' . $filename;
 
   if (!file_exists($source_file)) {
-    drush_print('Cannot find your csv file.');
+    drush_print('Cannot find your .csv file. Please check your arguments and try again.');
     return;
   }
 
   $accounts = commerce_sage_payments_load_accounts_from_csv($source_file);
 
-  $chunks = array_chunk($accounts['accounts'], 100);
+  $chunks = array_chunk($accounts['accounts'], 40);
   $operations = array();
   foreach ($chunks as $chunk) {
     $operations[] = array(
@@ -139,7 +140,7 @@ function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path =
 
   $batch = array(
     'operations' => $operations,
-    'title' => t('Creating missing webform users'),
+    'title' => t('Processing account tokens.'),
     'init_message' => t('Initializing'),
     'error_message' => t('An error occurred'),
     'finished' => 'commerce_sage_payments_tokenizer_batch_process_complete',
@@ -169,13 +170,14 @@ function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path =
  */
 function commerce_sage_payments_tokenizer_batch_process($accounts, $gateway, $headers, $path, $test_run, &$context) {
 
-
   foreach ($accounts as $index => $account) {
 
-    // Translate the masked file headers into the format Sage expects.
+    // Set default values for the new columns in the destination.csv file.
     $account['routing_number'] = 'fail';
     $account['account_number'] = 'fail';
     $account['account_type'] = 'fail';
+
+    // Translate the source .csv file headers into the format Sage expects.
     if (isset($account['Account or Card Number'])) {
       $account['routing_number'] = substr($account['Account or Card Number'], 0, 8);
       $account['account_number'] = substr($account['Account or Card Number'], 9);
@@ -206,6 +208,7 @@ function commerce_sage_payments_tokenizer_batch_process($accounts, $gateway, $he
       $fail_guid = !empty($test_run) ? 'test_run' : '';
       $accounts[$index]['guid'] = $fail_guid;
     }
+
     $accounts[$index]['routing_number'] = $account['routing_number'];
     $accounts[$index]['account_number'] = $account['account_number'];
     $accounts[$index]['account_type'] = $account['account_type'];
@@ -260,20 +263,25 @@ function commerce_sage_payments_tokenizer_batch_process_complete($success, $resu
 
 
 /**
- * @param $path
+ * @param path to file $path
+ *
  * @return array
  */
 function commerce_sage_payments_load_accounts_from_csv($path) {
-  $file = file($path);
-  $accounts = [];
-  if (!empty($file)) {
-    $accounts = array_map('str_getcsv', $file);
-    array_walk($accounts, function (&$a) use ($accounts) {
-        $a = array_combine($accounts[0], $a);
-    });
-
-    $headers = array_shift($accounts);
+  $headers = NULL;
+  $accounts = array();
+  if (($handle = fopen($path, 'r')) !== FALSE) {
+    while (($row = fgetcsv($handle, 1000, ',')) !== FALSE) {
+      if (empty($headers)) {
+        $headers = $row;
+      }
+      else {
+        $accounts[] = array_combine($headers, $row);
+      }
+    }
+    fclose($handle);
   }
+
   return array('accounts' => $accounts, 'headers' => $headers);
 }
 
