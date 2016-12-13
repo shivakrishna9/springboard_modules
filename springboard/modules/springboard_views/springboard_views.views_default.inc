@@ -1796,6 +1796,10 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nothing']['label'] = 'Actions';
   $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/springboard/donations/[order_id]/payment" class="action-payment-link">Payment</a><span class="bar"> | </span><a href="/springboard/donations/[order_id]/payment/[transaction_id]/refund" class="action-refund-link">Refund</a>';
   $handler->display->display_options['fields']['nothing']['element_class'] = 'table-actions';
+  /* Sort criterion: Fundraiser donations: Changed time */
+  $handler->display->display_options['sorts']['changed']['id'] = 'changed';
+  $handler->display->display_options['sorts']['changed']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['sorts']['changed']['field'] = 'changed';
   /* Filter criterion: Commerce Order: Order status */
   $handler->display->display_options['filters']['status']['id'] = 'status';
   $handler->display->display_options['filters']['status']['table'] = 'commerce_order';
@@ -1996,7 +2000,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['style_options']['attach_text'] = 'Download as .CSV';
   $handler->display->display_options['style_options']['provide_file'] = 0;
   $handler->display->display_options['style_options']['filename'] = 'donation-export-%timestamp-full.csv';
-  $handler->display->display_options['style_options']['parent_sort'] = 1;
+  $handler->display->display_options['style_options']['parent_sort'] = 0;
   $handler->display->display_options['style_options']['quote'] = 1;
   $handler->display->display_options['style_options']['trim'] = 0;
   $handler->display->display_options['style_options']['replace_newlines'] = 0;
@@ -2115,6 +2119,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['extra_props']['table'] = 'fundraiser_donation';
   $handler->display->display_options['fields']['extra_props']['field'] = 'extra_props';
   $handler->display->display_options['fields']['extra_props']['label'] = 'extra_props';
+  $handler->display->display_options['defaults']['sorts'] = FALSE;
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
@@ -2315,7 +2320,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['table'] = 'field_data_field_fundraiser_internal_name';
   $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['field'] = 'field_fundraiser_internal_name_value';
   $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['relationship'] = 'nid';
-  $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['operator'] = 'empty';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['operator'] = 'contains';
   $handler->display->display_options['filters']['field_fundraiser_internal_name_value_1']['group'] = 1;
   /* Filter criterion: User: Device Browser (sbp_device_browser) */
   $handler->display->display_options['filters']['sbp_device_browser_value']['id'] = 'sbp_device_browser_value';
@@ -2640,6 +2645,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['date_filter']['group'] = 1;
   $handler->display->display_options['filters']['date_filter']['exposed'] = TRUE;
   $handler->display->display_options['filters']['date_filter']['expose']['operator_id'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['label'] = 'Donation date between:';
   $handler->display->display_options['filters']['date_filter']['expose']['operator'] = 'date_filter_op';
   $handler->display->display_options['filters']['date_filter']['expose']['identifier'] = 'date_filter';
   $handler->display->display_options['filters']['date_filter']['expose']['remember_roles'] = array(
@@ -2648,6 +2654,7 @@ function springboard_views_views_default_views() {
     3 => 0,
     4 => 0,
     5 => 0,
+    6 => 0,
   );
   $handler->display->display_options['filters']['date_filter']['form_type'] = 'date_popup';
   $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
