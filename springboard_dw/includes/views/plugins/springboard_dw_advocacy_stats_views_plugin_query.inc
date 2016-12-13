@@ -28,17 +28,15 @@ class springboard_dw_advocacy_stats_views_plugin_query extends views_plugin_quer
 
     $start = microtime(TRUE);
     $method = 'GET';
-$target_action_id = 'Advocacy-D-Test-Messa-56ec40b05e722';
+    $target_action_id = 'Advocacy-D-Test-Messa-56ec40b05e722';
     $params = array('actionId' => $target_action_id);
     $view->result = array();
 
     // Fetch the statistics
-$params['authenticationToken'] = 'Xz3f787v12seWa';    
     $endpoint = 'metrics/action/count';
     $response = springboard_dw_api_call($endpoint, $params, $method);
     $response_data = json_decode((string) $response->getBody(), TRUE);
     if (!empty($response_data)) {
-      dpm($response_data);
       foreach ($response_data as $response_key => $value) {
         if (!is_array($value)) {
           continue;
