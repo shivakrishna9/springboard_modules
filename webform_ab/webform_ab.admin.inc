@@ -406,19 +406,26 @@ function _webform_ab_get_internal_name($nid) {
  *
  */
 function _webform_ab_has_testing_started($test_node) {
+  $meets_thresholds = _webform_ab_check_threshold($test_node);
+  if (!$meets_thresholds) {
+    return FALSE;
+  }
+
   $enabled_win_conditions = array();
   $enabled_win_conditions_query = db_query("SELECT plugin_key FROM {webform_ab_win_conditions} " .
     "WHERE test_nid = :webform_ab_nid", array(':webform_ab_nid' => $test_node->nid));
   foreach ($enabled_win_conditions_query as $condition_data) {
     $enabled_win_conditions[] = $condition_data->plugin_key;;
   }
-
   $win_conditions = _webform_ab_get_win_condition_plugins();
   foreach ($win_conditions as $plugin_key => $plugin) {
+
     if (!in_array($plugin_key, $enabled_win_conditions)) {
       continue;
     }
+
     if ($has_ab_test_started_function = ctools_plugin_get_function($plugin, 'current value')) {
+
       foreach ($test_node->included_webforms as $webform_nid => $data) {
         if (function_exists($has_ab_test_started_function)) {
           if ($has_ab_test_started_function($webform_nid, array(), $test_node)) {
