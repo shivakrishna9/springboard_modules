@@ -236,7 +236,7 @@ function webform_ab_webform_list_add($form, &$form_state, $node) {
       $disabled_descr = t('There are no more webforms available to be added to this Multivariate test.');
     }
     else {
-      $disabled_descr = t('Webforms cannot be added or removed because testing has started.');
+      $disabled_descr = t('Webforms cannot be added or removed because testing has started. Click "Reset Data" to add or remove tests.');
     }
     $form['add_form_id']['#description'] = $disabled_descr;
   }
