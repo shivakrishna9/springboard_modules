@@ -401,14 +401,20 @@ function _webform_ab_get_internal_name($nid) {
 /**
  * Returns TRUE if any webform_ab tests are populated with data.
  *
- * @param $test__node
+ * @param object $test_node
  *   Node Object of the a/b test node.
+ *
+ * @return bool
+ *   TRUE or FALSE whether testing ahs started.
  *
  */
 function _webform_ab_has_testing_started($test_node) {
-  $meets_thresholds = _webform_ab_check_threshold($test_node);
-  if (!$meets_thresholds) {
-    return FALSE;
+
+  $hits = db_query('SELECT COUNT(hit_id) as hits FROM {webform_ab_hits} WHERE test_nid = :test_nid ', array(':test_nid' => $test_node->nid))->fetchField();
+
+  if (!$hits) {
+    // Test hasn't started yet.
+    return;
   }
 
   $enabled_win_conditions = array();
