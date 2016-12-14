@@ -2234,12 +2234,24 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
       if (!empty($gateway_info['allow_recurring']) && !empty($gateway_info['offsite_recurring'])) {
         $form[$name]['settings']['offsite_recurring'] = array(
           '#type' => 'checkbox',
-          '#title' => t('Offsite recurring donations'),
+          '#title' => t('Gateway recurring donations'),
+          '#attributes' => array('class' => array('offsite-recurring-checkbox')),
           '#description' => t('Handle recurring donations offsite at the gateway.'),
           '#default_value' => isset($settings['payment_method']['settings']['offsite_recurring']) ? $settings['payment_method']['settings']['offsite_recurring'] : FALSE,
         );
       }
-      // Make sitewide submit button text customizable for each payment method.
+
+      if (!empty($gateway_info['allow_recurring']) && !empty($gateway_info['offsite_recurring_external'])) {
+        $form[$name]['settings']['offsite_recurring_external'] = array(
+          '#type' => 'checkbox',
+          '#attributes' => array('class' => array('offsite-recurring-checkbox')),
+          '#title' => t('3rd Party recurring donations'),
+          '#description' => t('Handle recurring donations offsite at a 3rd party processor.'),
+          '#default_value' => isset($settings['payment_method']['settings']['offsite_recurring_external']) ? $settings['payment_method']['settings']['offsite_recurring_external'] : FALSE,
+        );
+      }
+
+        // Make sitewide submit button text customizable for each payment method.
       $form[$name]['settings']['submit_text'] = array(
         '#type' => 'textfield',
         '#title' => t('Submit button text'),

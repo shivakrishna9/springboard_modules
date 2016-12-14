@@ -13,6 +13,7 @@ function commerce_psi_credit_fundraiser_commerce_fundraiser_gateway_info() {
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
     'offsite_recurring' => array('credit'),
+    'offsite_recurring_external' => array('credit'),
     'form callback' => 'commerce_psi_credit_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_psi_credit_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_psi_credit_fundraiser_commerce_scrub',
