@@ -6,7 +6,32 @@
 
 // Use the autoloaded Guzzle client and client exception handlers.
 use GuzzleHttp\Client as guzzle_client;
-use GuzzleHttp\Exception\ClientException as guzzle_client_exception;
+use GuzzleHttp\Exception\RequestException as guzzle_client_exception;
+
+Class GuzzleResponseExceptionMarshall {
+  function __construct() {
+    $this->statusCode = 500;
+  }
+
+  /**
+   * Get the generic status code, or the one set with the setter method.
+   * @return int
+   */
+  public function getStatusCode() {
+    return $this->statusCode;
+  }
+
+  /**
+   * Setter method to set the status code to be returned by the class.
+   * @param $code
+   * @return int
+   */
+  public function setStatusCode($code) {
+    $this->statusCode = $code;
+
+    return $this->statusCode;
+  }
+}
 
 /**
  * Returns a new instance of Guzzle Http client.
@@ -88,15 +113,21 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST') {
 
   // Clean up the item and add authentication to the form params.
   $params = springboard_dw_api_prep_call($params);
-  try {
-    // Attempt Guzzle client request.
-    if ($method == 'GET') {
-      $request_params = array('query' => $params);
-    }
-    else {
-      $request_params = array('form_params' => $params);  
-    }
 
+  // Guzzle requires parameters to be labeled differently depending on the
+  // HTTP verb.
+  if ($method == 'GET') {
+    $request_params = array('query' => $params);
+  }
+  else {
+    $request_params = array('form_params' => $params);
+  }
+
+  // Set a reasonable timeout for the request.
+  $request_params['timeout'] = 1;
+
+  // Attempt the Guzzle API request and capture any exceptions encountered.
+  try {
     $api_response = $api_client->request(
       $method,
       $endpoint,
@@ -120,9 +151,32 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST') {
     return $api_response;
   }
   catch (guzzle_client_exception $e) {
+    // Setup an array of the API call details prepped for logging the failure.
+    $api_call['endpoint'] = $endpoint;
+    $api_call['method'] = $method;
+    $api_call['params'] = $params;
+    $api_call['responseCode'] = $e->hasResponse() ? $e->getResponse(): 500;
+    $api_call['exception'] = $e->getMessage();
+    $api_call['fullUrl'] = $endpoint . '?' . http_build_query(springboard_dw_api_prep_call
+      ($api_call['params']));
+
     // Log the full API call failure details to watchdog if logging is enabled.
-    $watchdog_string = '<pre>' . print_r($e, TRUE) . '</pre>';
+    $watchdog_string = "<pre>Springboard DW API Client Exception:\n". print_r($api_call, TRUE) . '</pre>';
     springboard_dw_watchdog_log($watchdog_string);
+
+    // Create a non-200 response to indicate there was an exception on the
+    // server.
+    $api_response = new GuzzleResponseExceptionMarshall;
+
+    // If the exception has a response code status use that.
+    if ($e->hasResponse()) {
+      $exceptionStatusCode = $e->getResponse();
+
+      $api_response->setStatusCode($exceptionStatusCode);
+    }
+
+    // Return the API response.
+    return $api_response;
   }
 }
 
