@@ -149,9 +149,15 @@ function springboard_group_form_rules_ui_edit_element_alter(&$form, &$form_state
     // It's a custom UI managed rule.
     $rule = rules_config_load('rules_' . $rule_name);
   }
+
+  // This field is required to be on this form, but if you change
+  // the value it gets blanked because ajax. So we include it and hide it.
+  // The submit hook doesn't fire, because ajax, but if you don't include the
+  // element, the value is lost.
   if (!empty($rule)) {
     springboard_group_rules_add_group_widget($form, $form_state, $rule);
   }
+  $form['og_group_ref_rules_config']['#access'] = FALSE;
 }
 
 /**
@@ -269,8 +275,16 @@ function springboard_group_rules_config_form__validate($form, &$form_state, $cal
     $rule = rules_config_load('rules_' . $rule_name);
   }
 
-  $this_rule_old_gids = og_get_entity_groups('rules_config', $rule);
+  $this_rule_old_gids = og_get_entity_groups('rules_config', $rule, array(), 'og_group_ref_rules_config');
+  if (isset($this_rule_old_gids['node'])) {
+    $this_rule_old_gids = $this_rule_old_gids['node'];
+  }
+  else {
+    $this_rule_old_gids = [];
+
+  }
   $this_rule_new_gids = springboard_group_get_gids_from_element($form, $form_state);
+
 
   // Select all records so we can search inside the serizalied gateways field.
   $donation_forms = db_query("SELECT nid, gateways FROM {fundraiser}");
@@ -295,20 +309,32 @@ function springboard_group_rules_config_form__validate($form, &$form_state, $cal
       while ($matching_node = $matching_nodes->fetchAssoc()) {
         // Get the wrapped node so we can get its groups.
         // @todo can we fold this into the common functions that wrappers use?
-        $wrapped_node = node_load($matching_node['nid']);
-        $wrapped_node_groups = og_get_entity_groups('node', $wrapped_node);
+        $donation_form_node = node_load($matching_node['nid']);
+        $donation_form_node_groups = og_get_entity_groups('node', $donation_form_node);
         if (!empty($this_rule_old_gids)) {
-          $valid = array_intersect($this_rule_new_gids, $wrapped_node_groups['node']);
+          if ((!empty($this_rule_new_gids) && !empty($donation_form_node_groups['node']))) {
+            $valid = array_intersect($this_rule_new_gids, $donation_form_node_groups['node']);
+          }
+          elseif (empty($this_rule_new_gids) && !empty($donation_form_node_groups['node'])) {
+            $valid = FALSE;
+          }
+          elseif (!empty($this_rule_new_gids) && empty($donation_form_node_groups['node'])) {
+            $valid = FALSE;
+          }
+          else {
+            $valid = TRUE;
+          }
           if (empty($valid)) {
-            $in_use[] = (array) $wrapped_node;
+            $in_use[] = (array) $donation_form_node;
           }
         }
         else {
+
           // This rule had no group to begin with.
-          $valid = !empty($wrapped_node_groups['node']);
+          $valid = !empty($donation_form_node_groups['node']);
           // If there's no match we have a problem.
           if (empty($valid) && !empty($this_rule_new_gids)) {
-            $in_use[] = (array) $wrapped_node;
+            $in_use[] = (array) $donation_form_node;
           }
         }
       }
