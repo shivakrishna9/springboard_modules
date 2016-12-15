@@ -27,6 +27,11 @@ function springboard_dw_process_queue() {
     if (call_user_func($callback, $item->data)) {
       try {
         $queue->deleteItem($item);
+
+        // Log the success to drush.
+        $item_id = $item->item_id;
+        drush_print("Processing queue item: $item_id completed!");
+
       } catch (Exception $e) {
         // In case of exception log it and leave the item in the queue
         // to be processed again later.
@@ -43,7 +48,8 @@ function springboard_dw_process_queue() {
       $item_id.\n" . print_r($item, TRUE) . "</pre>";
 
       // Log this to Drush for debugging.
-      drush_log($error_log_string, 'warning');
+      drush_print("Processing queue item: $item_id failed!");
+      // drush_log($error_log_string, 'warning');
 
       // If watchdog logging is enabled for item processing and API request
       // failures log this queue process failure here.
