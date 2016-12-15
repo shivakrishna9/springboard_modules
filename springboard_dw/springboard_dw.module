@@ -1523,9 +1523,9 @@ function springboard_dw_map_donation_item_transaction_date_change($donation,
 /**
  * Extracts non-standard fields and returns an array of extra_props.
  *
- * @param object $donation
+ * @param array $donation
  *   The donation from which properties are to be extracted.
- * @param object $donation_item
+ * @param array $donation_item
  *   The donation item being prepared for the queue.
  */
 function springboard_dw_extract_donation_extra_props($donation, $donation_item) {
@@ -1927,20 +1927,9 @@ function springboard_dw_contact($item) {
   // Make the API call.
   $api_response = springboard_dw_api_call($api_endpoint, $item);
 
-  // Looks like the api response was good.
-  if ($api_response->getStatusCode() == 200) {
-
-    return TRUE;
-  }
-  else {
-    // Log the API error.
-    springboard_dw_api_log_error('Error sending contact API call.',
-      $api_endpoint, $item, json_decode($api_response->getBody()),
-      $api_response->getStatusCode());
-
-    // Respond back with failure to retry in the queue.
-    return FALSE;
-  }
+  // Return back TRUE if status code is 200, FALSE IF ANYTHING ELSE
+  return springboard_dw_generate_queue_item_response
+  ($api_response->getStatusCode());
 
 }
 
