@@ -240,8 +240,8 @@ function braintree_customer_subscriptions($customer_id) {
     $customer = braintree_customer_load($customer_id);
   }
   else {
-    $customer = $customer_id;
-    $customer_id = $customer->id;
+    $customer = (array) $customer_id;
+    $customer_id = $customer['id'];
   }
 
   $subscriptions = array();
