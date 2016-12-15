@@ -256,6 +256,9 @@ function springboard_group_og_group_field_ajax_callback(&$form, &$form_state) {
     '#commands' => array(),
   );
 
+  ctools_include('ajax');
+  ctools_include('modal');
+
   // Update the pagewrapper fieldset.
   if (!empty($form['springboard_display']['page_wrappers_settings']['page_wrappers'])) {
     $ajax['#commands'][] = ajax_command_replace("#page-wrappers-assignments", render($form['springboard_display']['page_wrappers_settings']['page_wrappers']));
