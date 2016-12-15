@@ -10,19 +10,18 @@
  * Called from springboard_group_node_form_alter().
  */
 function springboard_group_fundraiser_node_form__alter(&$form, &$form_state, $callback) {
-
+  // An ajax reload has occurred.
+  if (!empty($form_state['values'])) {
+    if ($callback != 'springboard_group_og_group_field_ajax_callback' && !empty($callback)) {
+      return;
+    }
+  }
   // Add the ajax wrapper to the form prior to Ajax reload.
   $form['payment_methods']['gateways']['#prefix'] = '<div id = "springboard-groups-payment-ajax-wrapper">';
   $form['payment_methods']['gateways']['#suffix'] = '</div>';
   $form['#validate'][] = 'springboard_group_fundraiser_node_form_gateway_validate_gateway';
   springboard_group_fundraiser_rebuild_form($form, $form_state);
 
-  // An ajax reload has occurred.
-  if (!empty($form_state['values'])) {
-    if ($callback != 'springboard_group_og_group_field_ajax_callback') {
-      return;
-    }
-  }
 }
 
 /**

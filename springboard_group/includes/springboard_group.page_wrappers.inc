@@ -28,7 +28,7 @@ function springboard_group_page_wrappers_node_form__alter(&$form, &$form_state, 
   }
   // Ajax reload has occurred.
   if (!empty($form_state['values']['page_wrappers']) && $form['#node']->type != 'page_wrapper') {
-    if ($callback != 'springboard_group_og_group_field_ajax_callback') {
+    if ($callback != 'springboard_group_og_group_field_ajax_callback' &&  $callback != '_page_wrappers_add_js') {
       return;
     }
     // Get the updated wrappers list.
@@ -122,12 +122,30 @@ function springboard_group_page_wrappers_filter(&$wrappers, $form, $form_state) 
   // alter the available options.
   if ($wrappers_are_grouped) {
 
+    if (!empty($form_state['triggering_element'])) {
+      $trigger = $form_state['triggering_element']['#ajax']['callback'];
+    }
+
+
     // If a group has been selected limit available wrappers to
     // ones assigned to the selected group.
     // @see springboard_group_ajax_callback().
     if (!empty($form_state['values'])) {
-      $gids = springboard_group_get_gids_from_element($form, $form_state);
+      if ($trigger == 'springboard_group_og_group_field_ajax_callback') {
+        $gids = springboard_group_get_gids_from_element($form, $form_state);
+      }
+      else {
+        // Multiple pagewrappers feature is
+        // enabled and the source of this ajax call.
+        $type = $form['#node']->type;
+        $language = $form['og_group_ref_' . substr($type, 0, 19)]['#language'];
+        $gids = $form_state['input']['og_group_ref_' . substr($type, 0, 19)][$language][0]['default'];
+        if (!is_array($gids)) {
+          $gids =  array($gids);
+        }
+      }
       $wrappers = springboard_group_page_wrappers_list_wrappers_by_group($gids);
+
     }
     else {
       // We're on a freshly loaded page.
