@@ -124,7 +124,7 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST') {
   }
 
   // Set a reasonable timeout for the request.
-  $request_params['timeout'] = 1;
+  $request_params['timeout'] = 30;
 
   // Attempt the Guzzle API request and capture any exceptions encountered.
   try {
