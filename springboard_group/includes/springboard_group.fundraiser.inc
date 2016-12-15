@@ -61,12 +61,11 @@ function springboard_group_fundraiser_check_gateways($form, $form_state) {
 
 function springboard_group_fundraiser_rebuild_form(&$form, &$form_state) {
   $gateways = springboard_group_fundraiser_check_gateways($form, $form_state);
-
   $node = $form['#node'];
   $lost_gateways = [];
   if (!empty($node->gateways)) {
     foreach ($node->gateways as $key => $gateway) {
-      if (isset($gateway['id']) && !in_array($gateway['id'], $gateways)) {
+      if (isset($gateway['id']) && !in_array($gateway['id'], array_keys($gateways))) {
         $lost_gateways[] = $gateway;
       }
     }
