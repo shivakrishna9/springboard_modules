@@ -65,7 +65,7 @@ function salesforce_quick_donate_optin($account, $donation, $card_id) {
     'CC_Last_4__c' => $card_on_file->card_number,
     'CC_Exp_Month__c' => $card_on_file->card_exp_month,
     'CC_Exp_Year__c' => $card_on_file->card_exp_year,
-    'Opt_In_Date__c' => $card_on_file->created,
+    'Activation_Date__c' => $card_on_file->created,
     'Default_Payment_Method__c' => $card_on_file->instance_default,
     'Contact__c' => sprintf('[Contact:user:%d]', $account->uid),
     'Donation__c' => sprintf('[Opportunity:donation:%d]', $donation->did),
@@ -97,7 +97,7 @@ function salesforce_quick_donate_optout($card_id) {
   $sobject = new stdClass();
   $sobject->type = 'Quick_Donate_Subscription__c';
   $sobject->fields = array(
-    'Opt_Out_Date__c' => time(),
+    'Deactivation_Date__c' => time(),
     'Default_Payment_Method__c' => FALSE,
   );
 

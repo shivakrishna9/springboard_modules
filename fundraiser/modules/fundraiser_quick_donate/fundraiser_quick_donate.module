@@ -300,7 +300,7 @@ function fundraiser_quick_donate_webform_user_save_profile_map_alter(&$account, 
  */
 function fundraiser_quick_donate_webform_user_profile_fields_alter(&$fields, $node) {
   $fields = array_filter($fields, function($value) {
-    return $value['name'] != 'field_quick_donate_opt_in';
+    return ($value['name'] != 'field_quick_donate_opt_in' && $value['name'] != 'field_quick_donate_opt_out');
   });
 }
 
@@ -310,10 +310,15 @@ function fundraiser_quick_donate_webform_user_profile_fields_alter(&$fields, $no
  * Used to add a webform component for quick donations.
  */
 function fundraiser_quick_donate_fundraiser_field_info_alter(&$fields) {
-  $fields['quick_donate'] = array(
+  $fields['quick_donate_opt_in'] = array(
     '#type' => 'hidden',
     '#name' => 'sbp_quick_donate_opt_in',
     '#title' => 'Quick Donate Opt-in',
+  );
+  $fields['quick_donate_opt_out'] = array(
+    '#type' => 'hidden',
+    '#name' => 'sbp_quick_donate_opt_out',
+    '#title' => 'Quick Donate Opt-out',
   );
   return $fields;
 }
@@ -513,6 +518,19 @@ function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
   if ($default_card && $default_card == $form_state['card']->card_id) {
     // If quickdonate is not true the user is opting this card out.
     if (!$payment_fields['credit']['quickdonate']) {
+      // Update the user, setting the opt-out date.
+      $account =& $form['#donation']->user;
+      $account->field_quick_donate_opt_out = array(
+        LANGUAGE_NONE => array(
+          0 => array(
+            'value' => date("Y-m-d H:i:s"),
+            'timezone' => drupal_get_user_timezone(),
+            'timezone_db' => 'UTC',
+            'date_type' => 'datetime',
+          ),
+        ),
+      );
+      user_save($account);
       // Invoke quick donate opt-out hook.
       module_invoke_all('fundraiser_quick_donate_optout', $form_state['card']->card_id, $values['uid']);
     }
@@ -617,10 +635,11 @@ function fundraiser_quick_donate_entity_presave($entity, $type) {
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * Remove the Quick Donate Opt In field from appearing on the user edit form.
+ * Remove the Quick Donate Opt In and Opt Out fields from appearing on the user edit form.
  */
 function fundraiser_quick_donate_form_user_profile_form_alter(&$form, $form_state) {
   unset($form['field_quick_donate_opt_in']);
+  unset($form['field_quick_donate_opt_out']);
 }
 
 /**
