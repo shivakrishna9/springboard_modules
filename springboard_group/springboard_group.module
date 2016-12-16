@@ -605,7 +605,14 @@ function springboard_group_page_alter(&$page) {
  * Implements hook_clone_access_alter().
  */
 function springboard_group_clone_access_alter(&$access, $node) {
+  global $user;
+  if (empty($user->uid)) {
+    return;
+  }
   $user_groups = og_get_groups_by_user();
+  if (empty($user_groups['node'])) {
+    return;
+  }
   $context = springboard_group_get_group_context($node);
   if (!empty($context)) {
     // Check if user has create permission for the content type.
