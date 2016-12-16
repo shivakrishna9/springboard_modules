@@ -113,8 +113,6 @@
                 url: db.uri + '/' + Drupal.encodePath(searchString) + affiliate,
                 dataType: 'json',
                 success: function (matches) {
-                    console.log(matches);
-
                     if (typeof matches.status == 'undefined' || matches.status != 0) {
                         //db.cache[searchString] = matches;
                         if (db.searchString == searchString) {
