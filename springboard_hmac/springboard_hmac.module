@@ -200,14 +200,19 @@ function springboard_hmac_verify_payload($parsed_payload) {
     }
   }
 
-  // Is there a springboard cookie and
-  // does the cookie user id not match the payload ID?
-//      if (module_exists('springboard_cookie')) {
-//        $cookie = springboard_cookie_get_cookie();
-//        if (!user_access('administer springboard hmac') && isset($cookie['uid']) && $parsed_payload['uid'] != $cookie['uid']) {
-//          return t('Payload User ID does not match Springboard Cookie User ID.');
-//        }
-//      }
+  return NULL;
+}
+
+/**
+ * Confirm the HMAC payload's user ID matches the Springboard cookie.
+ */
+function springboard_hmac_verify_user_cookie($payload) {
+  if (!user_is_logged_in()) {  // If the user is logged in, don't worry about the cookie.
+    $cookie = springboard_cookie_get_cookie();
+    if (!user_access('administer springboard hmac') && (empty($cookie['uid']) || $payload['uid'] != $cookie['uid'])) {
+      return t('Payload User ID does not match Springboard Cookie User ID.');
+    }
+  }
   return NULL;
 }
 
@@ -465,6 +470,19 @@ function springboard_hmac_springboard_hmac_success($payload) {
       }
       break;
   }
+}
+
+/**
+ * Implements hook_springboard_hmac_verify_payload().
+ */
+function springboard_hmac_springboard_hmac_verify_payload($payload) {
+  // Built-in actions.
+  switch ($payload['action']) {
+    case 'lr':  // Log in and redirect.
+      // Require a non-logged-in user to match the Springboard cookie.
+      return springboard_hmac_verify_user_cookie($payload);
+  }
+  return NULL;
 }
 
 /**

@@ -272,6 +272,16 @@ function form_layouts_form_layouts_info() {
     'hide title' => TRUE,
   );
 
+  $templates['two_column_hybrid_donation'] = array(
+    'name' => t('Hybrid two column: donation form'),
+    'types' => array('fundraiser'),
+    'theme' => 'two_column_hybrid_donation',
+    'pattern' => 'two_column_hybrid_donation_\'0-9\'+',
+    'template' => 'two-column-hybrid-donation',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'hide title' => FALSE,
+  );
+
   if (module_exists('springboard_petition')) {
     $templates = array_merge(_springboard_petition_get_form_layouts_templates(), $templates);
   }
