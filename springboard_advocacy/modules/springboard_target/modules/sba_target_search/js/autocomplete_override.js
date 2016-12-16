@@ -102,9 +102,15 @@
         }
         this.timer = setTimeout(function () {
             db.owner.setStatus('begin');
+            var affiliate = '';
+            if (typeof(Drupal.settings.sbaSubscriptionLevel) !== "undefined") {
+                if (typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
+                    affiliate = '/' + Drupal.settings.sbaSubscriptionLevel + '/' + Drupal.settings.sbaAllowedStates;
+                }
+            }
             $.ajax({
                 type: 'GET',
-                url: db.uri + '/' + Drupal.encodePath(searchString),
+                url: db.uri + '/' + Drupal.encodePath(searchString) + affiliate,
                 dataType: 'json',
                 success: function (matches) {
                     if (typeof matches.status == 'undefined' || matches.status != 0) {
