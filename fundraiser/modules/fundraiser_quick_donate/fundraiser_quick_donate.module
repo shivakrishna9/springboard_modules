@@ -491,7 +491,19 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
  * @see fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quick_donate__alter()
  * @see fundraiser_update_billing_form()
  */
-function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
+function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
+  // Check if the expiration date changed. If it has and this is a recurring
+  // series, we need to add the submission handler from the
+  // fundraiser_sustainers module to the submission handler array.
+  if (module_exists('fundraiser_sustainers')) {
+    $exp_month_match = $form['payment_fields']['credit']['expiration_date']['card_expiration_month']['#default_value'] == $form_state['input']['payment_fields']['credit']['expiration_date']['card_expiration_month'];
+    $exp_year_match = $form['payment_fields']['credit']['expiration_date']['card_expiration_year']['#default_value'] == $form_state['input']['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+    if (!$exp_month_match || !$exp_year_match) {
+      $form_state['values']['master_did'] = $form_state['donation']->recurring->master_did;
+      fundraiser_sustainers_update_billing_form_submit($form, $form_state);
+    }
+  }
+
   $values = $form_state['values'];
   $payment_fields = $values['payment_fields'];
   $payment_method = $values['payment_method'];
