@@ -535,6 +535,9 @@ function webform_user_webform_validate($form, &$form_state) {
  * Submit the results of a webform with webform user.
  */
 function webform_user_webform_submit($form, &$form_state) {
+  // Test whether this submit handler can be asynchronous.
+  return;
+
   global $user;
   $node = node_load($form_state['values']['details']['nid']);
   $submission = webform_get_submission($node->nid, $form_state['values']['details']['sid']);
