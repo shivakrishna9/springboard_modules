@@ -278,6 +278,18 @@ function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
     'weight' => 1,
   );
 
+  // Reports > Integration Reports > Salesforce NGOConnect Batch Upload.
+  if (module_exists('salesforce_ngoc')) {
+    $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/batch-upload'] = array(
+      'link_path' => 'admin/springboard/reports/integration-reports/batch-upload',
+      'link_title' => 'Salesforce NGOConnect Batch Upload',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 0,
+      'customized' => 1,
+      'weight' => 3,
+    );
+  }
+
   // Reports > Integration Reports > Queue.
   $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/queue'] = array(
     'link_path' => 'admin/springboard/reports/integration-reports/queue',

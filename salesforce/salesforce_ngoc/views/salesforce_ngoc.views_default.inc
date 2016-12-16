@@ -20,9 +20,10 @@ function salesforce_ngoc_views_default_views() {
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'Salesforce NGOC batch upload items';
+  $handler->display->display_options['title'] = 'Salesforce NGOConnect Batch Upload';
   $handler->display->display_options['use_more_always'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'none';
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'access springboard dashboard';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
@@ -130,7 +131,7 @@ function salesforce_ngoc_views_default_views() {
       'empty_column' => 0,
     ),
   );
-  /* Field: NGOC Batch Upload Sync Map: Date created */
+  /* Field: NGOC Batch Upload Sync Map: Created */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['fields']['created']['field'] = 'created';
@@ -142,16 +143,17 @@ function salesforce_ngoc_views_default_views() {
   $handler->display->display_options['fields']['sf_status']['id'] = 'sf_status';
   $handler->display->display_options['fields']['sf_status']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['fields']['sf_status']['field'] = 'sf_status';
-  $handler->display->display_options['fields']['sf_status']['label'] = 'status';
+  $handler->display->display_options['fields']['sf_status']['label'] = 'Status';
   /* Field: NGOC Batch Upload Sync Map: Batch_upload_sfid */
   $handler->display->display_options['fields']['batch_upload_sfid']['id'] = 'batch_upload_sfid';
   $handler->display->display_options['fields']['batch_upload_sfid']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['fields']['batch_upload_sfid']['field'] = 'batch_upload_sfid';
+  $handler->display->display_options['fields']['batch_upload_sfid']['label'] = 'Batch Upload SF ID';
   /* Field: NGOC Batch Upload Sync Map: Account_sfid */
   $handler->display->display_options['fields']['account_sfid']['id'] = 'account_sfid';
   $handler->display->display_options['fields']['account_sfid']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['fields']['account_sfid']['field'] = 'account_sfid';
-  $handler->display->display_options['fields']['account_sfid']['label'] = 'SF Objects';
+  $handler->display->display_options['fields']['account_sfid']['label'] = 'SF Objects Created';
   $handler->display->display_options['fields']['account_sfid']['alter']['alter_text'] = TRUE;
   $handler->display->display_options['fields']['account_sfid']['alter']['text'] = 'Account: [account_sfid]';
   $handler->display->display_options['fields']['account_sfid']['alter']['nl2br'] = TRUE;
@@ -177,36 +179,66 @@ function salesforce_ngoc_views_default_views() {
   $handler->display->display_options['fields']['did']['id'] = 'did';
   $handler->display->display_options['fields']['did']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['fields']['did']['field'] = 'did';
+  $handler->display->display_options['fields']['did']['label'] = 'Order ID';
+  $handler->display->display_options['fields']['did']['hide_empty'] = TRUE;
   $handler->display->display_options['fields']['did']['separator'] = '';
   /* Field: NGOC Batch Upload Sync Map: Uid */
   $handler->display->display_options['fields']['uid']['id'] = 'uid';
   $handler->display->display_options['fields']['uid']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['fields']['uid']['field'] = 'uid';
+  $handler->display->display_options['fields']['uid']['label'] = 'User ID';
+  $handler->display->display_options['fields']['uid']['hide_empty'] = TRUE;
   $handler->display->display_options['fields']['uid']['separator'] = '';
   /* Field: NGOC Batch Upload Sync Map: Module */
   $handler->display->display_options['fields']['module']['id'] = 'module';
   $handler->display->display_options['fields']['module']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['fields']['module']['field'] = 'module';
+  $handler->display->display_options['fields']['module']['label'] = 'SB Module';
   /* Field: NGOC Batch Upload Sync Map: Lasted_polled */
   $handler->display->display_options['fields']['lasted_polled']['id'] = 'lasted_polled';
   $handler->display->display_options['fields']['lasted_polled']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['fields']['lasted_polled']['field'] = 'lasted_polled';
+  $handler->display->display_options['fields']['lasted_polled']['label'] = 'Last Polled';
   $handler->display->display_options['fields']['lasted_polled']['date_format'] = 'short';
   $handler->display->display_options['fields']['lasted_polled']['second_date_format'] = 'long';
   /* Field: NGOC Batch Upload Sync Map: Polling_attempts */
   $handler->display->display_options['fields']['polling_attempts']['id'] = 'polling_attempts';
   $handler->display->display_options['fields']['polling_attempts']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['fields']['polling_attempts']['field'] = 'polling_attempts';
-  $handler->display->display_options['fields']['polling_attempts']['label'] = 'attempts';
-  /* Sort criterion: NGOC Batch Upload Sync Map: Date created */
+  $handler->display->display_options['fields']['polling_attempts']['label'] = 'Attempts';
+  /* Sort criterion: NGOC Batch Upload Sync Map: Created */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
   $handler->display->display_options['sorts']['created']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['sorts']['created']['field'] = 'created';
   $handler->display->display_options['sorts']['created']['order'] = 'DESC';
+  /* Filter criterion: Date: Date (salesforce_ngoc_sync_map) */
+  $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['table'] = 'salesforce_ngoc_sync_map';
+  $handler->display->display_options['filters']['date_filter']['field'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['group'] = 1;
+  $handler->display->display_options['filters']['date_filter']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['date_filter']['expose']['operator_id'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['label'] = 'Created';
+  $handler->display->display_options['filters']['date_filter']['expose']['use_operator'] = TRUE;
+  $handler->display->display_options['filters']['date_filter']['expose']['operator'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['identifier'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  $handler->display->display_options['filters']['date_filter']['form_type'] = 'date_popup';
+  $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
+    'salesforce_ngoc_sync_map.created' => 'salesforce_ngoc_sync_map.created',
+  );
   /* Filter criterion: NGOC Batch Upload Sync Map: Sf_status */
   $handler->display->display_options['filters']['sf_status']['id'] = 'sf_status';
   $handler->display->display_options['filters']['sf_status']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['filters']['sf_status']['field'] = 'sf_status';
+  $handler->display->display_options['filters']['sf_status']['group'] = 1;
   $handler->display->display_options['filters']['sf_status']['exposed'] = TRUE;
   $handler->display->display_options['filters']['sf_status']['expose']['operator_id'] = 'sf_status_op';
   $handler->display->display_options['filters']['sf_status']['expose']['label'] = 'Status';
@@ -220,13 +252,44 @@ function salesforce_ngoc_views_default_views() {
     5 => 0,
     6 => 0,
   );
+  $handler->display->display_options['filters']['sf_status']['is_grouped'] = TRUE;
+  $handler->display->display_options['filters']['sf_status']['group_info']['label'] = 'Status';
+  $handler->display->display_options['filters']['sf_status']['group_info']['identifier'] = 'sf_status';
+  $handler->display->display_options['filters']['sf_status']['group_info']['group_items'] = array(
+    1 => array(
+      'title' => 'New',
+      'operator' => '=',
+      'value' => 'New',
+    ),
+    2 => array(
+      'title' => 'To Process',
+      'operator' => 'contains',
+      'value' => 'To Process',
+    ),
+    3 => array(
+      'title' => 'Processed',
+      'operator' => 'contains',
+      'value' => 'Processed',
+    ),
+    4 => array(
+      'title' => 'Flagged',
+      'operator' => 'contains',
+      'value' => 'Flagged',
+    ),
+    5 => array(
+      'title' => 'Committed',
+      'operator' => 'contains',
+      'value' => 'Committed',
+    ),
+  );
   /* Filter criterion: NGOC Batch Upload Sync Map: Batch_upload_sfid */
   $handler->display->display_options['filters']['batch_upload_sfid']['id'] = 'batch_upload_sfid';
   $handler->display->display_options['filters']['batch_upload_sfid']['table'] = 'salesforce_ngoc_sync_map';
   $handler->display->display_options['filters']['batch_upload_sfid']['field'] = 'batch_upload_sfid';
+  $handler->display->display_options['filters']['batch_upload_sfid']['group'] = 1;
   $handler->display->display_options['filters']['batch_upload_sfid']['exposed'] = TRUE;
   $handler->display->display_options['filters']['batch_upload_sfid']['expose']['operator_id'] = 'batch_upload_sfid_op';
-  $handler->display->display_options['filters']['batch_upload_sfid']['expose']['label'] = 'Batch upload sfid';
+  $handler->display->display_options['filters']['batch_upload_sfid']['expose']['label'] = 'Batch Upload SF ID';
   $handler->display->display_options['filters']['batch_upload_sfid']['expose']['operator'] = 'batch_upload_sfid_op';
   $handler->display->display_options['filters']['batch_upload_sfid']['expose']['identifier'] = 'batch_upload_sfid';
   $handler->display->display_options['filters']['batch_upload_sfid']['expose']['remember_roles'] = array(
@@ -237,10 +300,46 @@ function salesforce_ngoc_views_default_views() {
     5 => 0,
     6 => 0,
   );
+  /* Filter criterion: NGOC Batch Upload Sync Map: Did */
+  $handler->display->display_options['filters']['did']['id'] = 'did';
+  $handler->display->display_options['filters']['did']['table'] = 'salesforce_ngoc_sync_map';
+  $handler->display->display_options['filters']['did']['field'] = 'did';
+  $handler->display->display_options['filters']['did']['group'] = 1;
+  $handler->display->display_options['filters']['did']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['did']['expose']['operator_id'] = 'did_op';
+  $handler->display->display_options['filters']['did']['expose']['label'] = 'Order ID';
+  $handler->display->display_options['filters']['did']['expose']['operator'] = 'did_op';
+  $handler->display->display_options['filters']['did']['expose']['identifier'] = 'did';
+  $handler->display->display_options['filters']['did']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  /* Filter criterion: NGOC Batch Upload Sync Map: Uid */
+  $handler->display->display_options['filters']['uid']['id'] = 'uid';
+  $handler->display->display_options['filters']['uid']['table'] = 'salesforce_ngoc_sync_map';
+  $handler->display->display_options['filters']['uid']['field'] = 'uid';
+  $handler->display->display_options['filters']['uid']['group'] = 1;
+  $handler->display->display_options['filters']['uid']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['uid']['expose']['operator_id'] = 'uid_op';
+  $handler->display->display_options['filters']['uid']['expose']['label'] = 'User ID';
+  $handler->display->display_options['filters']['uid']['expose']['operator'] = 'uid_op';
+  $handler->display->display_options['filters']['uid']['expose']['identifier'] = 'uid';
+  $handler->display->display_options['filters']['uid']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'admin/springboard/reports/integration-reports/batch-upload-item';
+  $handler->display->display_options['path'] = 'admin/springboard/reports/integration-reports/batch-upload';
   $handler->display->display_options['menu']['type'] = 'normal';
   $handler->display->display_options['menu']['title'] = 'Batch Upload Object Polling Status';
   $handler->display->display_options['menu']['weight'] = '0';
