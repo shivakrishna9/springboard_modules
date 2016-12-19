@@ -15,7 +15,6 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
     // @todo bank account (echeck) recurring is not yet fully implemented.
     'allow_recurring' => array('credit', 'bank account'),
     'allow_refund' => array('credit', 'bank account'),
-    'offsite_recurring' => array('credit'),
     'offsite_recurring_external' => array('credit'),
     'form callback' => 'commerce_litle_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_litle_fundraiser_commerce_cleanup',
