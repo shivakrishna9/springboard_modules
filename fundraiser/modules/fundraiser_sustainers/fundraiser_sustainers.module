@@ -2969,7 +2969,8 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
   unset($existing_recurring[0]); // 0 is the master, we don't need to count it.
 
   $processed = 0;
-  while ($processed <= $schedule->scheduleAmount() && $processed <= $schedule->scheduleLimit()) {
+  $limit = $schedule->scheduleLimit();
+  while ($processed <= $schedule->scheduleAmount() && $processed <= $limit) {
     // Set the increment value.
     $increment = $processed + 1;
 
@@ -3040,6 +3041,8 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       // in the series keeps it in sync with the month as we advance through
       // the existing orders.
       $previous_charge = $schedule->advanceDate($increment);
+      // Don't allow existing donations to affect the sustainer limit.
+      $limit++;
     }
 
     // Update the processed counter.
