@@ -454,6 +454,11 @@ function fundraiser_commerce_fundraiser_gateway_info() {
          || $method_instance['settings']['offsite_recurring'] == 0) {
         $this_gateway['offsite_recurring'] = array();
       }
+      if (empty($this_gateway['offsite_recurring_external'])
+        || empty($method_instance['settings']['offsite_recurring_external'])
+        || $method_instance['settings']['offsite_recurring_external'] == 0) {
+        $this_gateway['offsite_recurring_external'] = array();
+      }
       if (empty($this_gateway['offsite_processing'])) {
         $this_gateway['offsite_processing'] = array();
       }

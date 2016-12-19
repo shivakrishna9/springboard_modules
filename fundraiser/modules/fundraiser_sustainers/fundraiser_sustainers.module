@@ -499,7 +499,7 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
   if ($context['module'] == 'salesforce_donation') {
     $donation = $context['object'];
     $info = _fundraiser_get_donation_gateway($donation->did);
-    $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method']);
+    $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info, $donation->donation['payment_method']);
     $map = $context['map'];
 
     // Add recurring item marker if recurring or not.
@@ -3256,8 +3256,8 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
         $fundraiser_sustainers_series = entity_create('fundraiser_sustainers_series', $fundraiser_sustainers_series_data);
         $fundraiser_sustainers_series->save();
 
-        // Now handle the recurring object, and the rest of the orders.
-        if (!_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) { // Is not an offline recurring
+        $offsite = _fundraiser_sustainers_offsite_recurring($info, $donation->donation['payment_method']);
+        if (!$offsite) { // Is not an offline recurring.
           $info = _fundraiser_get_donation_gateway($donation->did);
           // This created donation is the master, so passing it in to create the set.
           // We can't predict the form key for these values, so ask the gateway to provide.
@@ -3750,8 +3750,11 @@ function _fundraiser_sustainers_supports_recurring($allow_recurring, $payment_me
 /**
  * Helper function, given a gateway determine if the gateway supports recurring donations.
  */
-function _fundraiser_sustainers_offsite_recurring($offsite_recurring, $payment_method) {
-  if (isset($offsite_recurring) && !empty($offsite_recurring) && in_array($payment_method, $offsite_recurring)) {
+function _fundraiser_sustainers_offsite_recurring($info, $payment_method) {
+  if (isset($info['offsite_recurring']) && !empty($info['offsite_recurring']) && in_array($payment_method, $info['offsite_recurring'])) {
+    return TRUE;
+  }
+  if (isset($info['offsite_recurring_external']) && !empty($info['offsite_recurring_external']) && in_array($payment_method, $info['offsite_recurring_external'])) {
     return TRUE;
   }
   return FALSE;

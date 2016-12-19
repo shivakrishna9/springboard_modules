@@ -13,6 +13,7 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
     'allow_refund' => array('credit'),
+    'offsite_recurring_external' => array('credit'),
     'form callback' => 'commerce_authnet_fundraiser_commerce_form',
     'cleanup callback' => 'commerce_authnet_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub',

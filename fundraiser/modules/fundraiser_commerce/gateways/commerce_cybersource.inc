@@ -12,6 +12,7 @@ function commerce_cybersource_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
+    'offsite_recurring_external' => array('credit'),
     'allow_refund' => array('credit'),
     'form callback' => 'commerce_cybersource_fundraiser_commerce_form',
     'cleanup callback' => 'commerce_cybersource_fundraiser_commerce_cleanup',

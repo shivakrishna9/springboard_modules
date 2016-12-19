@@ -16,6 +16,8 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
       'braintree_applepay' => 'applepay',
     ),
     'allow_recurring' => array('credit', 'paypal', 'applepay'),
+    'offsite_recurring_external' => array('credit', 'paypal', 'applepay'),
+
     'allow_refund' => array('credit', 'paypal', 'applepay'),
     'form callback' => 'commerce_braintree_web_fundraiser_commerce_form',
     // 'cleanup callback' => 'commerce_authnet_fundraiser_commerce_cleanup',
