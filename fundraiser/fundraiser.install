@@ -167,10 +167,6 @@ function fundraiser_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'card_id' => array(
-        'description' => 'The cardonfile card ID used to process this donation',
-        'type' => 'int',
-      ),
       // @todo Add transaction information here with the gateway.
     ),
     'primary key' => array('did'),
@@ -551,14 +547,11 @@ function fundraiser_update_7009() {
 
 /**
  * Add card_id field to fundraiser_donation.
+ * @deprecated This update hook has been moved into
+ * fundraiser_commerce_cardonfile.
  */
 function fundraiser_update_7010() {
-  $field = array(
-    'description' => 'The cardonfile card ID used to process this donation',
-    'type' => 'int',
-  );
-  db_add_field('fundraiser_donation', 'card_id', $field);
-  db_add_index('fundraiser_donation', 'card_id', array('card_id'));
+
 }
 
 /**
@@ -568,7 +561,7 @@ function fundraiser_update_7010() {
     to run in a site with a lot of donations. We'll
     examine a real-time approach in the next release.
 function fundraiser_update_7011(&$sandbox) {
-  // No action necessary if cardonfile isn't enabled 
+  // No action necessary if cardonfile isn't enabled
   if (!module_exists('commerce_cardonfile')) {
     return;
   }

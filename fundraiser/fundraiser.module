@@ -1887,15 +1887,18 @@ function fundraiser_donation_create($donation) {
     'form_url' => $form_url,
     'created' => REQUEST_TIME,
     'changed' => REQUEST_TIME,
-    'card_id' => !empty($donation->data['cardonfile']) ? $donation->data['cardonfile'] : NULL,
   );
+  drupal_alter('fundraiser_donation_record_create', $donation, $donation_record);
+
   if (is_string($donation->gateway)) {
     $donation_record['gateway'] = $donation->gateway;
   }
   elseif (is_array($donation->gateway) && isset($donation->gateway['id']) && !empty($donation->gateway['id'])) {
     $donation_record['gateway'] = $donation->gateway['id'];
   }
+
   _fundraiser_create_donation($donation_record);
+
   // Add a comment.
   global $user;
   $username = isset($user->name) ? $user->name : 'Anonymous';
@@ -1958,6 +1961,9 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->form_url) && !empty($donation->form_url)) {
     $donation_record['form_url'] = $donation->form_url;
   }
+
+  drupal_alter('fundraiser_donation_record_update', $donation, $donation_record);
+
   if (!empty($donation->data['cardonfile'])) {
     $donation_record['card_id'] = $donation->data['cardonfile'];
   }
