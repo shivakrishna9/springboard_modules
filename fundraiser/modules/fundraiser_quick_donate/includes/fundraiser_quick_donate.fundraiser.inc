@@ -305,8 +305,8 @@ function _fundraiser_quick_donate_checkout_form_hide_payment_fields(&$element) {
       $element[$child]['#states'] = array();
     }
 
-    $element[$child]['#states']['visible'][':input[name$="[cardonfile]"]'] = array('value' => 'new');
-    $element[$child]['#states']['visible']['input[type="hidden"].fundraiser-payment-methods'] = array('value' => 'credit');
+    $element[$child]['#states']['visible']['input[name$="[cardonfile]"]'] = array('value' => 'new');
+    $element[$child]['#states']['visible']['input.fundraiser-payment-methods'] = array('value' => 'credit');
     $element[$child]['#states']['optional']['input[type="radio"].fundraiser-payment-methods'] = array('!value' => 'credit');
     $element[$child]['#states']['required']['input[type="hidden"].fundraiser-payment-methods'] = array('value' => 'credit');
 
