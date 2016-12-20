@@ -98,7 +98,7 @@ function _springboard_async_fundraiser_donation_form_submit(&$form, &$form_state
   $result = springboard_async_form_enqueue($form, $form_state);
   if ($result) {
     // @todo: redirect to a real thank you page.
-    drupal_set_message(t('Your submission has been queued for asynchronous processing.'));
+    drupal_set_message(t('Thank you for your donation. Your submission has been queued for asynchronous processing.'));
   }
   else {
     watchdog('springboard_async', t('Something went wrong adding a queue object for form build ID !build_id.', array(
