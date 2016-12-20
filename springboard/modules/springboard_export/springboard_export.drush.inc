@@ -80,8 +80,10 @@ function springboard_export_drush_export_action_submissions_csv() {
  *   Defines how to alter the query for this view based on drush filtering and sorting.
  */
 function _springboard_export_drush_export_view_data_csv($view_id, $export_display_id, $filename_descr, $drush_field_map) {
+  // Ensure a minimum of 1.5GB RAM is available, which should be more than enough:
+  ini_set('memory_limit', '1536M');
+
   // Grant full access so the view can be executed:
-  $file_paths = array();
   $start = time();
   global $user;
   drupal_save_session(FALSE);
@@ -91,13 +93,17 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   $output_path = 'temporary://';
   $current_page = 0;
   $total_results = 0;
-  $items_per_page = variable_get('springboard_dw_reports_batch_count', 125000); // This determines the number of results per file.
-  $max_page = 100; // Primarily for testing; secondarily to avoid an infinite loop.
-  $debug = FALSE; // Set this to true to prevent CSV export file generation.
+  $file_paths = array();
 
+  // $items_per_page = variable_get('springboard_dw_reports_batch_count', 125000); // This determines the number of results per file.
+  $items_per_page = 125000; // Multiple pages are output to a single file to greatly reduce max memory used.
+  $max_page = 100; // To prevent an infinite loop.
+  $debug = FALSE; // Set this to true to prevent CSV export file generation.
   // Apply filters, sorting; run the data export view:
   $drush_options = (array) json_decode(drush_get_option('json'));
   while ($current_page < $max_page) {
+    $view = null;
+
     // Prepare the data export view for execution:
     $view = views_get_view($view_id);
     if (!isset($view) || $view == FALSE || !is_object($view)) {
@@ -175,10 +181,12 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
     $view->pre_execute();
     $view->execute();
 
+    // Render the output:
+    $output = _springboard_export_render_csv_page($view);
+
     // Output this page's results to a file:
     if (isset($view->result) && count($view->result) > 0) {
-      $output = $view->render();
-      $filename = $output_path . '/' . date('Y-m-d--H-i-s') . '-' . $filename_descr . '-export-page-' . ($current_page + 1) . '.csv';
+      $filename = $output_path . '/' . date('Y-m-d--H-i-s', $start) . '-' . $filename_descr . '-export-page-' . ($current_page + 1) . '.csv';
       $file_paths[] = $filename;
       $total_results += count($view->result);
       if (!$debug) {
@@ -186,18 +194,23 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
           echo json_encode(array('error' => 'Export failed for file: \'' . $filename . '\'; aborting.'));
           return;
         }
+      } 
+      else {
+        // Simulate rendering the output if in debug mode:
+        //$view->render();
       }
     }
     else {
       break;
     }
-
+    $view->destroy();
+    echo "\n" . gc_collect_cycles() . " garbage cycles collected.\n\n";
     $current_page++;
   }
 
   // Upload each file to S3 and return the pre-signed S3 URL.
   $s3_pre_signed_urls = array();
-  // $s3_pre_signed_urls = _springboard_views_drush_export_aws_files_upload($file_paths)
+  // $s3_pre_signed_urls = _springboard_views_drush_export_aws_files_upload(array($filename));
 
   $duration = (time() - $start) . 's';
   $export_summary = array(
@@ -207,7 +220,7 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
     'start' => date('Y-m-d - H:i:s', $start),
     'end' => date('Y-m-d - H:i:s'),
     'duration' => $duration,
-    'internal_file_paths' => $file_paths,
+    'internal_file_pathis' => $file_paths,
     'export_file_count' => count($s3_pre_signed_urls),
     'export_file_paths' => $s3_pre_signed_urls,
   );
@@ -226,4 +239,45 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   if ($debug) {
     echo "\n\n";
   }
+}
+
+
+/**
+ * Render the CSV output for a given page:
+ */
+function _springboard_export_render_csv_page($view) {
+  $output = '"unique_id","form_id","group_id","form_type","name","internal_name","url","created_at","updated_at","extra_props"' . "\n";
+  foreach ($view->result as $result) {
+    $node = $result->_field_data['node_fundraiser_donation_nid']['entity'];
+
+    // Fetch the extra props:
+    $extra_props = array();
+    if (isset($result->_field_data['node_fundraiser_donation_nid']['entity']->webform['components'])) {
+      $components = $result->_field_data['node_fundraiser_donation_nid']['entity']->webform['components'];
+      foreach ($components as $component) {
+        if (isset($component['value']) && !empty($component['value']) && isset($component['form_key'])) {
+          $extra_props[$component['form_key']] = $component['value'];
+        }
+      }
+    }
+
+    $row_data = array(
+      $result->commerce_order_fundraiser_donation_created . '-' . $node->nid . '-' . $result->did, // unique_id
+      $node->nid, // form_id
+      '', // group_id
+      $node->type, // form_type
+      $result->node_fundraiser_donation_title, // name
+      $result->field_field_fundraiser_internal_name[0]['raw']['value'], // internal_name
+      drupal_get_path_alias('node/' . $node->nid), // url
+      date('n/j/Y H:i:s', $result->commerce_order_fundraiser_donation_created), // created_at
+      date('n/j/Y H:i:s', $result->commerce_order_fundraiser_donation_changed), // updated_at
+      json_encode($extra_props),  // extra_props
+    );
+    // Escape double quotes:
+    foreach ($row_data as $key => $value) {
+      $row_data[$key] = str_replace('"', '""', $value);
+    } 
+    $output .= '"' . implode('", "', $row_data) . "\n";
+  }
+  return $output;
 }
