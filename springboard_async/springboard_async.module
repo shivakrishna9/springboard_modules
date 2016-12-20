@@ -6,6 +6,23 @@
  */
 
 /**
+ * Implements hook_menu().
+ */
+function springboard_async_menu() {
+  $items = array();
+
+  // Temporary placeholder callback for thank you pages.
+  $items['springboard-async-thank-you-placeholder'] = array(
+    'page callback' => 'springboard_async_thank_you_placeholder',
+    'page arguments' => array(),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
  * Implements hook_cron_queue_info().
  */
 function springboard_async_cron_queue_info() {
@@ -98,7 +115,7 @@ function _springboard_async_fundraiser_donation_form_submit(&$form, &$form_state
   $result = springboard_async_form_enqueue($form, $form_state);
   if ($result) {
     // @todo: redirect to a real thank you page.
-    drupal_set_message(t('Thank you for your donation. Your submission has been queued for asynchronous processing.'));
+    $form_state['redirect'] = 'springboard-async-thank-you-placeholder';
   }
   else {
     watchdog('springboard_async', t('Something went wrong adding a queue object for form build ID !build_id.', array(
@@ -127,4 +144,11 @@ function springboard_async_module_implements_alter(&$implementations, $hook) {
       }
       break;
   }
+}
+
+/**
+ * Placeholder callback for thank you pages.
+ */
+function springboard_async_thank_you_placeholder() {
+  return t('Thank you for your donation. Your submission has been queued for asynchronous processing.');
 }
