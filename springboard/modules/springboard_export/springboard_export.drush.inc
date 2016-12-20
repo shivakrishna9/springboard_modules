@@ -80,7 +80,7 @@ function springboard_export_drush_export_action_submissions_csv() {
  *   Defines how to alter the query for this view based on drush filtering and sorting.
  */
 function _springboard_export_drush_export_view_data_csv($view_id, $export_display_id, $filename_descr, $drush_field_map) {
-  // Ensure a minimum of 1.5GB RAM is available, which should be more than enough:
+  // Drush may have a low default memory_limit; change that to 1.5GB:
   ini_set('memory_limit', '1536M');
 
   // Grant full access so the view can be executed:
@@ -88,17 +88,16 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   global $user;
   drupal_save_session(FALSE);
   $user = user_load(1);
-  
-  //$output_path = variable_get('springboard_dw_reports_export_path', 'temporary://'); // Default output path if it is not overwritten.
-  $output_path = 'temporary://';
+
+  // Gather data needed to run the view:
+  $output_path = variable_get('springboard_dw_reports_export_path', 'temporary://'); // Default output path if it is not overwritten.
   $current_page = 0;
   $total_results = 0;
   $file_paths = array();
-
-  // $items_per_page = variable_get('springboard_dw_reports_batch_count', 125000); // This determines the number of results per file.
-  $items_per_page = 125000; // Multiple pages are output to a single file to greatly reduce max memory used.
+  $items_per_page = variable_get('springboard_dw_reports_batch_count', 125000); // This determines the number of results per file.
   $max_page = 100; // To prevent an infinite loop.
   $debug = FALSE; // Set this to true to prevent CSV export file generation.
+
   // Apply filters, sorting; run the data export view:
   $drush_options = (array) json_decode(drush_get_option('json'));
   while ($current_page < $max_page) {
@@ -204,7 +203,6 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
       break;
     }
     $view->destroy();
-    echo "\n" . gc_collect_cycles() . " garbage cycles collected.\n\n";
     $current_page++;
   }
 
@@ -233,7 +231,6 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   }
 
   // Return the job summary.
-  //return json_encode($export_summary);
   echo json_encode($export_summary);
 
   if ($debug) {
@@ -261,16 +258,26 @@ function _springboard_export_render_csv_page($view) {
       }
     }
 
+    // Populate each column's value if available; otherwise, provide an empty value:
+    $created_at = isset($result->commerce_order_fundraiser_donation_created) ? $result->commerce_order_fundraiser_donation_created : 0;
+    $updated_at = isset($result->commerce_order_fundraiser_donation_changed) ? $result->commerce_order_fundraiser_donation_created : 0;
+    $nid = isset($node->nid) ? $node->nid : '';
+    $did = isset($result->did) ? $result->did : '';
+    $form_type = isset($node->type) ? $node->type : '';
+    $name = isset($result->node_fundraiser_donation_title) ? $result->node_fundraiser_donation_title : '';
+    $internal_name = isset($result->field_field_fundraiser_internal_name[0]['raw']['value']) ?
+      $result->field_field_fundraiser_internal_name[0]['raw']['value'] : '';
+
     $row_data = array(
-      $result->commerce_order_fundraiser_donation_created . '-' . $node->nid . '-' . $result->did, // unique_id
-      $node->nid, // form_id
+      $created_at . '-' . $nid . '-' . $did, // unique_id
+      $nid, // form_id
       '', // group_id
-      $node->type, // form_type
-      $result->node_fundraiser_donation_title, // name
-      $result->field_field_fundraiser_internal_name[0]['raw']['value'], // internal_name
+      $form_type, // form_type
+      $name, // name
+      $internal_name, // internal_name
       drupal_get_path_alias('node/' . $node->nid), // url
-      date('n/j/Y H:i:s', $result->commerce_order_fundraiser_donation_created), // created_at
-      date('n/j/Y H:i:s', $result->commerce_order_fundraiser_donation_changed), // updated_at
+      $created_at > 0 ? date('n/j/Y H:i:s', $created_at) : '', // created_at
+      $updated_at > 0 ? date('n/j/Y H:i:s', $updated_at) : '', // updated_at
       json_encode($extra_props),  // extra_props
     );
     // Escape double quotes:
