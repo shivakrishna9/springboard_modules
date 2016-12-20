@@ -98,6 +98,11 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   $max_page = 100; // To prevent an infinite loop.
   $debug = FALSE; // Set this to true to prevent CSV export file generation.
 
+$output_path = 'temporary://';
+$items_per_page = 20;
+$max_page = 1;
+
+
   // Apply filters, sorting; run the data export view:
   $drush_options = (array) json_decode(drush_get_option('json'));
   while ($current_page < $max_page) {
@@ -130,27 +135,16 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
         case 'order':
           $order = $option_value;
           break;
-/*        case 'transaction_date':
+        case 'transaction_date':
           unset($min_date);
           unset($max_date);
-          $expected_date_format = 'L, F j, Y';
-          if (isset($option_value->min) && isset($option_value->max)) {
-            $min_date = strtotime($option_value->min);
-            $max_date = strtotime($option_value->max);
+          if (isset($option_value->min)) {
+            $view->drush_filters['date_filter_min'] = strtotime($option_value->min); 
           }
-          elseif (isset($option_value->min)) {
-            $min_date = strtotime($option_value->min);
-            $max_date = date("m/d/Y", time() + (60 * 60 * 24));
+          if (isset($option_value->max)) {
+            $view->drush_filters['date_filter_max'] = strtotime($option_value->max);
           }
-          elseif (isset($option_value->max)) {
-            $min_date = strtotime('1/1/1980');
-            $max_date = strtotime($option_value->max);
-          }
-          if (isset($min_date) && isset($max_date)) {
-            $view->exposed_input['date_filter']['min']['date'] = date($expected_date_format, $min_date);
-            $view->exposed_input['date_filter']['max']['date'] = date($expected_date_format, $max_date);
-          }
-          break; */
+          break; 
         case 'debug':
           if ($option_value != 0) {
             $debug = TRUE;
