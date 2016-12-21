@@ -31,7 +31,8 @@ function commerce_sage_payments_drush_command() {
     'arguments' => array(
       'gateway_id' => "The gateway id. Ex: 'commerce_sage_payments_eft|commerce_payment_commerce_sage_payments_eft' Use quotes.",
       'path' => 'Absolute path to the .csv source file directory',
-      'filename' => 'The .csv filename, including extension.',
+      'card_filename' => 'The card info .csv, including extension.',
+      'customer_code_filename' => 'The customer code .csv, including extension.',
       'test_run' => 'TRUE or FALSE. If TRUE, API request will not be sent to Sage.',
     ),
   );
@@ -48,12 +49,12 @@ function commerce_sage_payments_drush_command() {
  *   commerce_sage_payments_eft|commerce_payment_commerce_sage_payments_eft.
  * @param string $path
  *   The absolute path to the directory where the file is.
- * @param string $filename
- *   The filename, including extension.
+ * @param string $card_filename
+ *   The card_filename, including extension.
  * @param bool $test_run
  *   Whether to skip the call to Sage, TRUE or FALSE.
  */
-function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path = NULL, $filename = NULL, $test_run = NULL) {
+function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path = NULL, $card_filename = NULL, $customer_code_filename = NULL, $test_run = NULL) {
 
   if (!isset($test_run)) {
     $options = array(
@@ -110,20 +111,31 @@ function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path =
     $path = drush_prompt("Enter the absolute path to the directory where the csv file is located.", NULL, TRUE);
   }
 
-  if (empty($filename)) {
-    $filename = drush_prompt("Enter the filename of the .csv file", NULL, TRUE);
+  if (empty($card_filename)) {
+    $card_filename = drush_prompt("Enter the filename of the .csv file continaing the card information", NULL, TRUE);
   }
 
-  $source_file = $path . '/' . $filename;
+  if (empty($customer_code_filename)) {
+    $customer_card_filename = drush_prompt("Enter the filename of the .csv file continaing the customer code information", NULL, TRUE);
+  }
 
-  if (!file_exists($source_file)) {
-    drush_print('Cannot find your .csv file. Please check your arguments and try again.');
+  $card_source_file = $path . '/' . $card_filename;
+  $code_source_file = $path . '/' . $customer_code_filename;
+
+  if (!file_exists($card_source_file)) {
+    drush_print('Cannot find your card info .csv file. Please check your arguments and try again.');
     return;
   }
 
-  $accounts = commerce_sage_payments_load_accounts_from_csv($source_file);
+  if (!file_exists($code_source_file)) {
+    drush_print('Cannot find your customer code .csv file. Please check your arguments and try again.');
+    return;
+  }
 
-  $chunks = array_chunk($accounts['accounts'], 40);
+  $accounts = commerce_sage_payments_load_accounts_from_csv($card_source_file);
+  $codes = commerce_sage_payments_load_codes_from_csv($code_source_file);
+
+  $chunks = array_chunk($accounts['accounts'], 1000);
   $operations = array();
   foreach ($chunks as $chunk) {
     $operations[] = array(
@@ -133,6 +145,7 @@ function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path =
         $gateway,
         $accounts['headers'],
         $path,
+        $codes,
         $test_run,
       ),
     );
@@ -168,9 +181,14 @@ function drush_commerce_sage_payments_sage_tokenizer($gateway_id = NULL, $path =
  * @param array $context
  *   The context aggragator.
  */
-function commerce_sage_payments_tokenizer_batch_process($accounts, $gateway, $headers, $path, $test_run, &$context) {
+function commerce_sage_payments_tokenizer_batch_process($accounts, $gateway, $headers, $path, $codes, $test_run, &$context) {
 
   foreach ($accounts as $index => $account) {
+
+    if (!in_array($account['CustomerCode'], $codes)) {
+      unset($accounts[$index]);
+      continue;
+    }
 
     // Set default values for the new columns in the destination.csv file.
     $account['routing_number'] = 'fail';
@@ -237,7 +255,6 @@ function commerce_sage_payments_tokenizer_batch_process_complete($success, $resu
         $updated_accounts[] = $account;
       }
     }
-
     array_push($headers, 'payment_token');
     array_push($headers, 'routing_number');
     array_push($headers, 'account_number');
@@ -284,6 +301,23 @@ function commerce_sage_payments_load_accounts_from_csv($path) {
 
   return array('accounts' => $accounts, 'headers' => $headers);
 }
+
+/**
+ * @param path to file $path
+ *
+ * @return array
+ */
+function commerce_sage_payments_load_codes_from_csv($path) {
+  $codes = array();
+  if (($handle = fopen($path, 'r')) !== FALSE) {
+    while (($row = fgetcsv($handle, 1000, ',')) !== FALSE) {
+      $codes[] = $row[0];
+    }
+    fclose($handle);
+  }
+  return $codes;
+}
+
 
 /**
  * @return array
