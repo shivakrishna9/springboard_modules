@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @file
- * Springboard Quick Donation admin functions.
+ * Fundraiser Quick Donation admin functions.
  */
 
 /**

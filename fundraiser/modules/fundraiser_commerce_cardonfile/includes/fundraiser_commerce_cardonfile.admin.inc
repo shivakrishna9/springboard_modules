@@ -4,26 +4,50 @@
  * Fundraiser Commerce Cardonfile admin functions.
  */
 
-define('FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD', 1000);
+define('FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD', 50);
+define('FUNDRAISER_COMMERCE_CARDONFILE_CARDS_LEFT_STATIC_NAME', 'fundraiser_commerce_cardonfile_admin_settings');
 
 /**
  * Admin settings form.
  */
 function fundraiser_commerce_cardonfile_admin_settings($form, $form_state) {
-  /*$form['fundraiser_commerce_cardonfile_patch_cardonfile'] = array(
+  $number_unupdated_donations = _fundraiser_commerce_cardonfile_number_of_unupdated_donations();
+
+  $options = array(
+    '!n' => '<strong>' . $number_unupdated_donations . '</strong>',
+    '@message' => 'You can either use the following buttons to process all donations, or use the following drush command:',
+    '!command' => '<code>drush fundraiser update</code>.<br/>',
+  );
+  if ($number_unupdated_donations >= FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
+    $options['@message'] = 'Since the number of donations without associated card ids is greater than the recommmended threshold for processing all donations, it is recommmended you process a set of donations at a time. You can either use the following buttons to process a set number of donations, all donations, or use the following drush command:';
+  }
+  $message = 'There are currently !n donations without associated card ids. @message !command';
+  if ($number_unupdated_donations == 1) {
+    $message = 'There is currently !n donation without an associated card id. @message !command';
+  }
+  $form['stats'] = array(
+    '#type' => 'markup',
+    '#markup' => t($message, $options),
+  );
+  if ($number_unupdated_donations >= FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
+    $form['process_set'] = array(
+      '#type' => 'submit',
+      '#value' => t('Process @n donations', array('@n' => FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD)),
+      '#submit' => array('_fundraiser_commerce_cardonfile_process_limited_donations'),
+    );
+  }
+  $form['process_all'] = array(
+    '#type' => 'submit',
+    '#value' => t('Process all donations'),
+    '#submit' => array('_fundraiser_commerce_cardonfile_process_donations'),
+  );
+
+  $form['fundraiser_commerce_cardonfile_patch_cardonfile'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable separate billing addresses for unique cards'),
-    '#description' => t("Checking this will enable functionality to separate the user's regular address (stored in the user table) from their stored card's billing address, a feature the commerce_cardonfile module does not yet currently support."),
-    '#default_value' => variable_get('fundraiser_commerce_cardonfile_patch_cardonfile', FALSE),
-  );*/
-
-  // Consider removing.
-  /*$form['fundraiser_commerce_cardonfile_update_on_view'] = array(
-    '#type' => 'checkbox',
-    '#title' => t("Set a donation's card id record when that donation is viewed."),
-    '#description' => t(''),
-    '#default_value' => variable_get('fundraiser_commerce_cardonfile_update_on_view', FALSE),
-  );*/
+    '#description' => t("This will enable functionality to separate the user's regular address (stored in the user table) from their stored card's billing address, a feature the commerce_cardonfile module does not yet currently support."),
+    '#default_value' => variable_get('fundraiser_commerce_cardonfile_patch_cardonfile', TRUE),
+  );
 
   // $form['#submit'][] = '_fundraiser_commerce_cardonfile_patch_cardonfile';
 
@@ -31,55 +55,119 @@ function fundraiser_commerce_cardonfile_admin_settings($form, $form_state) {
 }
 
 /**
- * Submission handler.
+ * Submission handler, processes donations to update their card id values.
+ *
+ * @param array $form
+ *   The form array.
+ * @param array $form_state
+ *   The form state array.
+ * @param int $limit
+ *   The number of donations to process.
+ *
+ * @see fundraiser_commerce_cardonfile_admin_settings()
  */
-function _fundraiser_commerce_cardonfile_patch_cardonfile($form, &$form_state) {
-  if (!db_table_exists('fundraiser_commerce_cardonfile')) {
-    db_create_table('fundraiser_commerce_cardonfile', array(
-      'description' => 'Records billing records for different cardonfile records',
-      'fields' => array(
-        'donation_id' => array(
-          'type' => 'int',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-        ),
-        'card_id' => array(
-          'type' => 'int',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-        ),
-        'profile_id' => array(
-          'type' => 'int',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-        ),
-      ),
-      'indexes' => array(
-        'donation_id' => array('donation_id'),
-        'card_id' => array('card_id'),
-        'profile_id' => array('profile_id'),
-      ),
-      'unique keys' => array('card_id'),
-    ));
-  }
-
-  _fundraiser_commerce_cardonfile_update_cards($form, $form_state);
+function _fundraiser_commerce_cardonfile_process_limited_donations($form, $form_state, $limit = FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
+  _fundraiser_commerce_cardonfile_process_donations($form, $form_state, $limit);
 }
 
 /**
+ * Submission handler, processes donations to update their card id values.
  *
+ * @param array $form
+ *   The form array.
+ * @param array $form_state
+ *   The form state array.
+ *
+ * @see fundraiser_commerce_cardonfile_admin_settings()
  */
-function _fundraiser_commerce_cardonfile_update_cards($form, &$form_state) {
-  $limit = 25;
+function _fundraiser_commerce_cardonfile_process_donations($form, $form_state, $limit = NULL) {
+  $batch = array(
+    'operations' => array(
+      array(
+        '_fundraiser_commerce_cardonfile_update_donation_cardids',
+        array($limit, $limit),
+      ),
+    ),
+    'finished' => '_fundraiser_commerce_cardonfile_processed_donations',
+    'title' => t('Processing Donations'),
+    'init_message' => t('Donation processing is starting.'),
+    'progress_message' => t('Processed @current out of @total.'),
+    'error_message' => t('Donation processing has encountered an error.'),
+    'file' => drupal_get_path('module', 'fundraiser_commerce_cardonfile') . '/includes/fundraiser_commerce_cardonfile.admin.inc',
+  );
+  batch_set($batch);
+}
+
+/**
+ * Batch processor to process donations with null card ids.
+ */
+function _fundraiser_commerce_cardonfile_update_donation_cardids($limit = FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD, $max_limit = NULL, &$context = array()) {
+  if (!empty($max_limit) && $limit > $max_limit) {
+    drupal_set_message(t('The max limit cannot exceed the limit, in "_fundraiser_commerce_cardonfile_update_donation_cardids".'), 'warning');
+    return;
+  }
+
+  $sandbox = $context['sandbox'];
+
+  $cards = &drupal_static(__FUNCTION__);
+
+  if (!isset($sandbox['progress'])) {
+    // The count of donations visited so far.
+    $sandbox['progress'] = 0;
+    // Total donations that must be visited. Select donations that have a status
+    // of "payment_received" but no card_id. Only selecting donations with this
+    // status because any donations that will be processed later should have
+    // their card ids set via
+    // `fundraiser_commerce_cardonfile_fundraiser_donation_post_update`.
+    $sandbox['max'] = db_select('fundraiser_donation', 'fd')
+      ->distinct()
+      ->fields('fd', array('did'))
+      ->condition('fd.status', 'payment_received', '=')
+      ->isNull('card_id');
+
+    if (module_exists('fundraiser_sustainers')) {
+      $master_sustainer_donation_ids = db_select('fundraiser_sustainers', 'fs')->fields('fs', array('master_did'))->groupBy('master_did');
+      $sustainer_donation_ids = db_select('fundraiser_sustainers', 'fs')->fields('fs', array('did'));
+      $or = db_or();
+      $or->condition('fd.did', $master_sustainer_donation_ids, 'IN');
+      $or->condition('fd.did', $sustainer_donation_ids, 'NOT IN');
+      $sandbox['max'] = $sandbox['max']->condition($or);
+    }
+
+    if (!empty($max_limit)) {
+      $sandbox['max'] = $sandbox['max']->range(0, $max_limit);
+    }
+
+    $sandbox['max'] = $sandbox['max']->execute()->rowCount();
+    // A place to store messages during the run.
+    $sandbox['messages'] = array();
+    // Last donation read via the query.
+    $sandbox['current_donation'] = -1;
+  }
 
   // Retrieve the next group of donations to update.
   $result = db_select('fundraiser_donation', 'fd')
+    ->distinct()
     ->fields('fd', array('did', 'uid'))
     ->orderBy('fd.did', 'ASC')
     ->condition('fd.did', $sandbox['current_donation'], '>')
     ->condition('fd.status', 'payment_received', '=')
-    ->isNull('card_id')
-    ->range(0, $limit)
+    ->isNull('card_id');
+
+  if (module_exists('fundraiser_sustainers')) {
+    if (empty($master_sustainer_donation_ids)) {
+      $master_sustainer_donation_ids = db_select('fundraiser_sustainers', 'fs')->fields('fs', array('master_did'))->groupBy('master_did');
+    }
+    if (empty($sustainer_donation_ids)) {
+      $sustainer_donation_ids = db_select('fundraiser_sustainers', 'fs')->fields('fs', array('did'));
+    }
+    $or = db_or();
+    $or->condition('fd.did', $master_sustainer_donation_ids, 'IN');
+    $or->condition('fd.did', $sustainer_donation_ids, 'NOT IN');
+    $result = $result->condition($or);
+  }
+
+  $result = $result->range(0, $limit)
     ->execute()
     ->fetchAll();
 
@@ -132,44 +220,47 @@ function _fundraiser_commerce_cardonfile_update_cards($form, &$form_state) {
     ));
   }
 
-  $number_of_cards = db_query('SELECT COUNT(card_id) FROM {commerce_cardonfile}')->fetchField();
-  if ($number_of_cards > FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
-
-  }
+  // Set the "finished" status, to tell batch engine whether this function
+  // needs to run again. If you set a float, this will indicate the progress
+  // of the batch so the progress bar will update.
+  $context['finished'] = ($sandbox['progress'] >= $sandbox['max']) ? TRUE : ($sandbox['progress'] / $sandbox['max']);
 }
 
 /**
- * Submission handler for fundraiser_quick_donate_admin_settings().
+ * Donation processing batch 'finished' callback.
  */
-function fundraiser_quick_donate_admin_settings_submit($form, &$form_state) {
-  foreach ($form_state['values'] as $key => $value) {
-    if (strpos($key, FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX) === FALSE || empty($value)) {
-      continue;
-    }
-    $match = preg_match('/.*\[([0-9]+)\].*/', $value, $matches);
-    if (!$match || $match !== FALSE && count($matches) < 2) {
-      if (!is_numeric($value)) {
-        continue;
-      }
-
-      // Try to get the title based on just the node ID.
-      $query = db_query('SELECT title FROM {node} WHERE nid = :nid', array(
-        ':nid' => $value,
-      ))->fetchField();
-
-      if (empty($query)) {
-        continue;
-      }
-
-      $form_state['values'][$key] = $query . ' [' . $value . ']';
-      $matches[1] = $value;
-    }
-    $data = array(
-      'title' => $form_state['values'][$key],
-      'nid' => $matches[1],
-    );
-    $form_state['values'][$key] = serialize($data);
+function _fundraiser_commerce_cardonfile_processed_donations($success, $results, $operations) {
+  if ($success) {
+    // Here we do something meaningful with the results.
+    $message = t('@count items successfully processed:', array('@count' => count($results)));
+    $message .= theme('item_list', array('items' => $results));
+    drupal_set_message($message);
   }
-  $form_state['values']['fundraiser_quick_donate_default_help_message_format'] = $form_state['values']['fundraiser_quick_donate_default_help_message']['format'];
-  $form_state['values']['fundraiser_quick_donate_default_help_message'] = $form_state['values']['fundraiser_quick_donate_default_help_message']['value'];
+  else {
+    // An error occurred.
+    // $operations contains the operations that remained unprocessed.
+    $error_operation = reset($operations);
+    $message = t('An error occurred while processing %error_operation with arguments: @arguments', array(
+      '%error_operation' => $error_operation[0],
+      '@arguments' => print_r($error_operation[1], TRUE),
+    ));
+    drupal_set_message($message, 'error');
+  }
+
+}
+
+/**
+ * Utilify function to retrieve the number of unprocessed donations.
+ */
+function _fundraiser_commerce_cardonfile_number_of_unupdated_donations() {
+  $number_unupdated_donations = &drupal_static(FUNDRAISER_COMMERCE_CARDONFILE_CARDS_LEFT_STATIC_NAME);
+  if (!$number_unupdated_donations) {
+    if (module_exists('fundraiser_sustainers')) {
+      $number_unupdated_donations = db_query("SELECT COUNT(DISTINCT did) FROM {fundraiser_donation} WHERE card_id IS NULL AND status = 'payment_received' AND (did IN (SELECT master_did FROM {fundraiser_sustainers} GROUP BY master_did) OR did NOT IN (SELECT did FROM {fundraiser_sustainers}))")->fetchField();
+    }
+    else {
+      $number_unupdated_donations = db_query('SELECT COUNT(did) FROM {fundraiser_donation} WHERE card_id IS NULL')->fetchField();
+    }
+  }
+  return $number_unupdated_donations;
 }

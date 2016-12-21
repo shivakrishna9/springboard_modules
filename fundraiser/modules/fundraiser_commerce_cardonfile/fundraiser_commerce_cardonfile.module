@@ -69,7 +69,7 @@ function fundraiser_commerce_cardonfile_fundraiser_donation_post_create($donatio
  * billing addresses for individual cards.
  */
 function fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donation) {
-  if (empty($donation->data['cardonfile']) || empty($donation->did)) {
+  if (!variable_get('fundraiser_commerce_cardonfile_patch_cardonfile', TRUE) || empty($donation->data['cardonfile']) || empty($donation->did)) {
     return;
   }
 

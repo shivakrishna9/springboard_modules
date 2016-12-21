@@ -5,37 +5,11 @@
  */
 
 /**
- * Implements hook_schema().
+ * Implements hook_install().
+ *
+ * Sets the `fundraiser_commerce_cardonfile_patch_cardonfile` variable default
+ * to TRUE.
  */
-function fundraiser_commerce_cardonfile_schema() {
-  $schema = array();
-  $schema['fundraiser_commerce_cardonfile'] = array(
-    'description' => 'Records billing records for different cardonfile records',
-    'fields' => array(
-      'donation_id' => array(
-        'description' => 'The fundraiser_donation id.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'card_id' => array(
-        'description' => 'The cardonfile card id.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'profile_id' => array(
-        'description' => 'The commerce_customer_profile id.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-      ),
-    ),
-    'indexes' => array(
-      'donation_id' => array('donation_id'),
-      'card_id' => array('card_id'),
-      'profile_id' => array('profile_id'),
-    ),
-    'primary key' => array('donation_id'),
-  );
-  return $schema;
+function fundraiser_commerce_cardonfile_install() {
+  variable_set('fundraiser_commerce_cardonfile_patch_cardonfile', TRUE);
 }
