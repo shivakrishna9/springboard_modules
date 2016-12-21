@@ -1878,6 +1878,10 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['defaults']['css_class'] = FALSE;
   $handler->display->display_options['css_class'] = 'views-data-table';
   $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
+  $handler->display->display_options['defaults']['exposed_form'] = FALSE;
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['exposed_form']['options']['reset_button'] = TRUE;
+  $handler->display->display_options['exposed_form']['options']['expose_sort_order'] = FALSE;
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Order ID (hidden value) */
   $handler->display->display_options['fields']['order_id']['id'] = 'order_id';
@@ -1977,6 +1981,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['remote_addr']['field'] = 'remote_addr';
   $handler->display->display_options['fields']['remote_addr']['relationship'] = 'sid_2';
   $handler->display->display_options['fields']['remote_addr']['label'] = 'IP Address';
+  $handler->display->display_options['fields']['remote_addr']['empty'] = 'N/A';
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
@@ -2114,11 +2119,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['changed']['date_format'] = 'custom';
   $handler->display->display_options['fields']['changed']['custom_date_format'] = 'n/j/Y H:i:s';
   $handler->display->display_options['fields']['changed']['second_date_format'] = 'long';
-  /* Field: Fundraiser donations: Extra Props */
-  $handler->display->display_options['fields']['extra_props']['id'] = 'extra_props';
-  $handler->display->display_options['fields']['extra_props']['table'] = 'fundraiser_donation';
-  $handler->display->display_options['fields']['extra_props']['field'] = 'extra_props';
-  $handler->display->display_options['fields']['extra_props']['label'] = 'extra_props';
   $handler->display->display_options['defaults']['sorts'] = FALSE;
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
@@ -2414,6 +2414,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Filtered Page */
   $handler = $view->new_display('page', 'Filtered Page', 'page_1');
+  $handler->display->display_options['enabled'] = FALSE;
   $handler->display->display_options['defaults']['css_class'] = FALSE;
   $handler->display->display_options['css_class'] = 'views-data-table';
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
@@ -2516,6 +2517,9 @@ function springboard_views_views_default_views() {
   $handler = $view->new_display('page', 'Webform Results Tab', 'page_2');
   $handler->display->display_options['defaults']['title'] = FALSE;
   $handler->display->display_options['title'] = 'Filter Recent Submissions - past 90 days';
+  $handler->display->display_options['defaults']['exposed_form'] = FALSE;
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['exposed_form']['options']['reset_button'] = TRUE;
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Content: Nid */
   $handler->display->display_options['fields']['nid']['id'] = 'nid';
@@ -2578,6 +2582,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['remote_addr']['field'] = 'remote_addr';
   $handler->display->display_options['fields']['remote_addr']['relationship'] = 'sid_2';
   $handler->display->display_options['fields']['remote_addr']['label'] = 'IP Address';
+  $handler->display->display_options['fields']['remote_addr']['empty'] = 'N/A';
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
