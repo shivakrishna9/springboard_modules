@@ -1,6 +1,10 @@
 (function ($) {
   Drupal.behaviors.alterSBAActionsView = {
     attach: function (context, settings) {
+      // Remove collabsible fieldset from actions results tab view:
+      $('#views-exposed-form-sba-action-submissions-page-1').insertBefore('.view-id-sba_action_submissions fieldset#webform-ui-exposed-search');
+      $('.view-id-sba_action_submissions fieldset#webform-ui-exposed-search').remove();
+
       // Attach the download link and remove the default views data export link:
       $('.view-sba-action-submissions .feed-icon a').each(function () {
         if ($(this).attr('href').indexOf('export') >= 0) {
@@ -14,6 +18,7 @@
 
     // Add AJAX CSV Download queue behavior:
       $(document).ready(function() {
+        
         var downloadButton = $('#sb-queue-csv-download');
         downloadButton.before('<span id="sbv-export-download-msg"></span>');
         downloadButton.click(function (e) {

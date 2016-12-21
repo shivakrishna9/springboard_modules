@@ -3,6 +3,10 @@
     attach: function (context, settings) {
       var donationsReportTable = $('.view-sbv-donations table.views-table');
 
+      // Remove collabsible fieldset from donation results tab view:
+      $('#views-exposed-form-sbv-donations-page-2').insertBefore('.view-sbv-donations fieldset#webform-ui-exposed-search');
+      $('.view-sbv-donations fieldset#webform-ui-exposed-search').remove();
+
       // Attach help popup to the right of the submit button:
       var submitButton = $('#views-exposed-form-sbv-donations-page .views-submit-button input');
       submitButton.after('<span id="sb-db-donations-report-help"> <i class="fa fa-question-circle-o fa-lg"></i> </span>');

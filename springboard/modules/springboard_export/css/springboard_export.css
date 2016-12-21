@@ -23,7 +23,23 @@
 }
 .view-sba-action-submissions .views-exposed-widgets {
   margin-bottom: 28px;
+  zoom: 0.80;
 }
 .view-sba-action-submissions .views-exposed-widgets input.form-text {
   width: 120px;
+}
+
+/* Action results tab: */
+body.page-node #sb-queue-csv-download {
+  display: none;
+}
+body.page-node .view-sba-action-submissions .views-exposed-widgets {
+  margin-bottom: 42px;
+}
+body.page-node .view-sba-action-submissions a#sb-queue-csv-download {
+  margin-top: -76px;
+  margin-right: 12px;
+}
+body.page-node table.views-table {
+  zoom: 0.9;
 }
