@@ -58,7 +58,7 @@ function salesforce_quick_donate_optin($account, $donation, $card_id) {
   $sobject->fields = array(
     'Payment_Token_Id__c' => $card_id,
     'Payment_Method__c' => $card_on_file->payment_method,
-    'Payment_Gateway__c' => $card_on_file->instance_id,
+    'Payment_Gateway__c' => !empty($donation->gateway['title']) ? $donation->gateway['title'] : $card_on_file->instance_id,
     'Payment_Token__c' => $card_on_file->remote_id,
     'CC_Type__c' => $card_on_file->card_type,
     'Donor_Name__c' => $card_on_file->card_name,
