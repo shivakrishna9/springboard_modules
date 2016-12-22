@@ -951,3 +951,13 @@ function market_source_campaign_id_autocomplete($query='') {
 
   drupal_json_output($matches);
 }
+
+function market_source_preprocess_webform_components_form(&$vars) {
+  $campaigns = market_source_get_campaigns();
+
+  foreach($vars['form']['#node']->webform['components'] as $cid => $component) {
+    if ($component['form_key'] == 'cid') {
+      $vars['form']['#node']->webform['components'][$cid]['value'] = $campaigns[$component['value']]['name'];
+    }
+  }
+}
