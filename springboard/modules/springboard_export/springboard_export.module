@@ -5,7 +5,7 @@
  */
 function springboard_export_views_query_alter(&$view, &$query) {
   // Only proceed if the drush command has flagged this as a data export:
-dpm($query->where);
+  // dpm($query->where);
   if (!isset($view->is_sb_export) || !$view->is_sb_export) {
     return;
   } 
@@ -242,7 +242,7 @@ function springboard_export_form_views_exposed_form_alter(&$form, &$form_state) 
     // Attached CSS and jQuery related to the exposed filters:
     $form['#attached']['js'][] = array(
       'type' => 'setting',
-      'data' => array('sbExportActionsData' => $view_data),
+      'data' => array('sbExposedFilters' => $view_data),
     );
   } // End actions export
   elseif ($form['#id'] == 'views-exposed-form-sbv-donations-page' || $form['#id'] == 'views-exposed-form-sbv-donations-page-2') {
@@ -315,7 +315,7 @@ function springboard_export_form_views_exposed_form_alter(&$form, &$form_state) 
       }
       $form['#attached']['js'][] = array(
         'type' => 'setting',
-        'data' => array('sbvDonationsExport' => $view_data),
+        'data' => array('sbExposedFilters' => $view_data),
       );
     }
     $form['#attached']['css'][] = drupal_get_path('module', 'springboard_views') . '/css/springboard_views.css';
@@ -336,7 +336,7 @@ function springboard_export_menu() {
     'title' => 'AJAX callback',
     'page callback' => '_springboard_export_queue_data_export',
     'access callback' => 'user_access',
-    'access argument' => 'administer springboard advocacy',
+    'access argument' => 'access content',
     'type' => MENU_CALLBACK,
   );
   return $items;

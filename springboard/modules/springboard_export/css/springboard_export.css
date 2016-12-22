@@ -28,6 +28,21 @@
 .view-sba-action-submissions .views-exposed-widgets input.form-text {
   width: 120px;
 }
+.view-sba-action-submissions .views-exposed-widgets .form-type-textfield input {
+  border-radius: 30px;
+  font-size: 14px;
+  padding: 4px 4px 4px 10px;
+  width: 150px;
+}
+.view-sba-action-submissions .views-exposed-form .views-exposed-widget .views-submit-button,
+.view-sba-action-submissions .views-exposed-form .views-exposed-widget .views-reset-button {
+  margin-top: 0;
+  padding-left: 0;
+  margin-left: 6px;
+}
+.view-sba-action-submissions .views-exposed-form .views-exposed-widget .form-submit {
+  margin-top: 9px;
+}
 
 /* Action results tab: */
 body.page-node #sb-queue-csv-download {
@@ -41,5 +56,6 @@ body.page-node .view-sba-action-submissions a#sb-queue-csv-download {
   margin-right: 12px;
 }
 body.page-node table.views-table {
-  zoom: 0.9;
+  zoom: 0.95;
 }
+

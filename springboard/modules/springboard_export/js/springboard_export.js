@@ -33,9 +33,7 @@
             url: '/springboard-export-queue-ajax',
             dataType: 'json',
             data: {
-              'export_params' : Drupal.settings.sbExportActionsData,
-              'date_range_min' : $('.form-item-date-filter-min-date input').val(),
-              'date_range_max' : $('.form-item-date-filter-max-date input').val(),
+              'export_params' : Drupal.settings.sbExposedFilters,
             },
             context: document.body,
             success: function(data) {
@@ -52,6 +50,30 @@
         if ($('.view-empty').length) {
           downloadButton.hide();
         }
+      });
+      // Add inline filter values:
+      $('#views-exposed-form-sba-action-submissions-page .views-exposed-widget').each(function () {
+        var textFilter = $(this).find('.form-type-textfield input');
+        $(this).find('label').hide();
+        var textFilterBlurb = $(this).find('label').text().trim();
+        if (textFilter.val() == '' && textFilterBlurb != '') {
+          textFilter.val(textFilterBlurb);
+        }
+        textFilter.focus(function () {
+          if ($(this).val() == textFilterBlurb) {
+            $(this).val('');
+          }
+        });
+        textFilter.blur(function () {
+          if ($(this).val() == '') {
+            $(this).val(textFilterBlurb);
+          }
+        });
+        $('#views-exposed-form-sba-action-submissions-page').submit(function () {
+          if (textFilter.val() == textFilterBlurb) {
+            textFilter.val('');
+          }
+        });
       });
     }
   };

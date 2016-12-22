@@ -434,7 +434,7 @@
             url: '/springboard-export-queue-ajax',
             dataType: 'json',
             data: {
-              'export_params' : Drupal.settings.sbvDonationsExport,
+              'export_params' : Drupal.settings.sbExposedFilters,
               'date_range_min' : $('.form-item-date-filter-min-date input').val(),
               'date_range_max' : $('.form-item-date-filter-max-date input').val(),
               'next_charge_min' : $('.form-item-next-charge-min-date input').val(),
