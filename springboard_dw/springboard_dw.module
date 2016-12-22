@@ -2170,7 +2170,7 @@ function _springboard_dw_export_queue_data_export() {
 
   // Queue the data export job:
   $success = TRUE;
-  //$success = springboard_dw_csv_export_insert('Drupal', $data, $recipients);
+  $success = springboard_dw_csv_export_insert('DW', $data, $recipients);
 
   // Return status to jQuery:
 

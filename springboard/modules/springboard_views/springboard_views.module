@@ -219,22 +219,6 @@ function springboard_views_springboard_admin_alias_patterns() {
   );
 }
 
-/**
- * Implements hook_menu().
- */
-function springboard_views_menu() {
-  $items = array();
-  $items['sbv-export-queue-ajax'] = array(
-    'title' => 'AJAX callback',
-    'page callback' => '_springboard_views_data_export_queue',
-    'access callback' => 'user_access',
-    'access argument' => 'administer fundraiser',
-    'type' => MENU_CALLBACK,
-  );
-  return $items;
-}
-
-
 function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
   // Top Level: Reports.
   $items['admin/springboard/reports'] = array(
@@ -478,37 +462,4 @@ function springboard_views_views_pre_view(&$view, &$display_id, &$args) {
   // the default date filter is overwritten within the data export's display:
   unset($view->display['default']->handler->options['filters']['date_filter']);
   unset($view->display['views_data_export_1']->handler->options['filters']['date_filter']);
-}
-
-/**
- * sbv_donations data export queue AJAX callback.
- */
-function _springboard_views_data_export_queue() {
-  if (!isset($_POST) || empty($_POST)) {
-    drupal_json_output(array('status' => 'fail'));
-    return;
-  }
-
-  $data = $_POST['export_params'];
-
-  if (isset($_POST['date_range_min'])) {
-    $data['transaction_date']['min'] = $_POST['date_range_min'];
-  }
-  if (isset($_POST['date_range_max'])) {
-    $data['transaction_date']['max'] = $_POST['date_range_max'];
-  }
-
-  watchdog('springboard_views', 'CSV export request: ' . json_encode($data));
-
-  $recipients = array(
-    'josh.estep@jacksonriver.com',
-  );
-
-  // Queue the data export job:
-  $success = TRUE;
-  //$success = springboard_dw_csv_export_insert('Drupal', $data, $recipients);
-
-  // Return status to jQuery:
-  
-  drupal_json_output(array('status' => $success ? 'success' : 'fail'));
 }

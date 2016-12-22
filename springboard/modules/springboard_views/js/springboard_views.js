@@ -420,14 +420,26 @@
           viewParams['status'] = $('#views-exposed-form-sbv-donations-page #edit-status').val();
           downloadButton.hide();
           e.preventDefault();
+          var isRecurringValue = $('.form-item-recurs-op #edit-recurs-op').val();
+          if (isRecurringValue == 'not empty') {
+            isRecurringValue = 'yes'; 
+          } else if (isRecurringValue == 'empty') {
+            isRecurringValue = 'no'; 
+          } else {
+            isRecurringValue = ''; 
+          }
+
           $.ajax({
             type: 'POST',
-            url: '/sbv-export-queue-ajax',
+            url: '/springboard-export-queue-ajax',
             dataType: 'json',
             data: {
               'export_params' : Drupal.settings.sbvDonationsExport,
               'date_range_min' : $('.form-item-date-filter-min-date input').val(),
               'date_range_max' : $('.form-item-date-filter-max-date input').val(),
+              'next_charge_min' : $('.form-item-next-charge-min-date input').val(),
+              'next_charge_max' : $('.form-item-next-charge-max-date input').val(),
+              'is_recurring' : isRecurringValue,
             },
             context: document.body,
             success: function(data) {

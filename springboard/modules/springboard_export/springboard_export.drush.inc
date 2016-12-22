@@ -98,9 +98,7 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   $max_page = 100; // To prevent an infinite loop.
   $debug = FALSE; // Set this to true to prevent CSV export file generation.
 
-$output_path = 'temporary://';
-$items_per_page = 20;
-$max_page = 1;
+  $output_path = 'temporary://';
 
 
   // Apply filters, sorting; run the data export view:
@@ -144,7 +142,17 @@ $max_page = 1;
           if (isset($option_value->max)) {
             $view->drush_filters['date_filter_max'] = strtotime($option_value->max);
           }
-          break; 
+          break;
+        case 'next_charge_date':
+          unset($min_date);
+          unset($max_date);
+          if (isset($option_value->min)) {
+            $view->drush_filters['charge_date_min'] = strtotime($option_value->min);
+          }
+          if (isset($option_value->max)) {
+            $view->drush_filters['charge_date_max'] = strtotime($option_value->max);
+          }
+          break;
         case 'debug':
           if ($option_value != 0) {
             $debug = TRUE;
