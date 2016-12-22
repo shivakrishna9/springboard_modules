@@ -516,11 +516,18 @@ function fundraiser_commerce_get_country_options(array $countries, array $defaul
  *   A forms api array suitable for #options.
  */
 function fundraiser_commerce_get_zones_options(array $zones) {
-  $options = array();
-  foreach ($zones as $zone) {
-    if (!empty($zone->iso) && !in_array($zone->iso, array_keys($options))) {
-      $options[$zone->iso] = $zone->zone_name;
+  if ($cache = cache_get('fundraiser_commerce_zone_options')) {
+    $options = $cache->data;
+  }
+  else {
+    $options = array();
+    foreach ($zones as $zone) {
+      if (!empty($zone->iso) && !in_array($zone->iso, array_keys($options))) {
+        $options[$zone->iso] = $zone->zone_name;
+      }
     }
+
+    cache_set('fundraiser_commerce_zone_options', $options, 'cache');
   }
 
   return $options;
