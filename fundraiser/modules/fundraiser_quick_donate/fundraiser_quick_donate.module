@@ -288,6 +288,12 @@ function fundraiser_quick_donate_webform_user_save_profile_map_alter(&$account, 
         ),
       ),
     );
+    // If there was an opt-out date previously, reset it now.
+    $account->field_quick_donate_opt_out = array(
+      LANGUAGE_NONE => array(
+        0 => NULL,
+      ),
+    );
   }
 }
 
