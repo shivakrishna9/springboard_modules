@@ -27,11 +27,21 @@ function springboard_views_views_handlers() {
 }
 
 /**
+ * Implements hook_views_data_alter().
+ */
+function springboard_views_views_data_alter(&$data) {
+  $data['fundraiser_sustainers']['next_charge']['filter']['handler'] = 'date_views_filter_handler';
+}
+
+/**
  * Implements hook_form_FORM_ID_aler().
  */
 function springboard_views_form_views_exposed_form_alter(&$form, &$form_state) {
   if (isset($form['#id'])
     && ($form['#id'] == 'views-exposed-form-sbv-donations-page' || $form['#id'] == 'views-exposed-form-sbv-donations-page-2')) {
+    // Add pseudo-exposed filters for "Recuring" and "Next charge date"
+
+
     // Pass filtering and sorting data to jQuery:
     if (isset($form_state['input']) && !empty($form_state['input'])) {
       module_load_include('inc', 'springboard_views', 'springboard_views.drush');

@@ -25,9 +25,19 @@
   width: 320px;
   z-index: 10;
 }
+#views-exposed-form-sbv-donations-page .form-item-recurs-value #edit-recurs-value,
+#views-exposed-form-sbv-donations-page-2 .form-item-recurs-value #edit-recurs-value {
+  display: none;
+}
+#views-exposed-form-sbv-donations-page .form-item-recurs-value,
+#views-exposed-form-sbv-donations-page-2 .form-item-recurs-value {
+  position: absolute;
+}
 #views-exposed-form-sbv-donations-page #edit-combine-wrapper label,
 #views-exposed-form-sbv-donations-page #edit-status-wrapper label,
 #views-exposed-form-sbv-donations-page #edit-field-fundraiser-internal-name-value-wrapper label,
+#views-exposed-form-sbv-donations-page #edit-next-charge-min-inside-wrapper .container-inline-date label,
+#views-exposed-form-sbv-donations-page #edit-next-charge-max-inside-wrapper .container-inline-date label,
 #views-exposed-form-sbv-donations-page #edit-date-filter-min-inside-wrapper .container-inline-date label,
 #views-exposed-form-sbv-donations-page #edit-date-filter-max-inside-wrapper .container-inline-date label {
   display: none;
@@ -36,10 +46,20 @@
 #views-exposed-form-sbv-donations-page-2 #edit-sid-wrapper label,
 #views-exposed-form-sbv-donations-page-2 #edit-uid-raw-wrapper label,
 #views-exposed-form-sbv-donations-page-2 #edit-mail-wrapper label,
+#views-exposed-form-sbv-donations-page-2 #edit-next-charge-min-inside-wrapper .container-inline-date label,
+#views-exposed-form-sbv-donations-page-2 #edit-next-charge-max-inside-wrapper .container-inline-date label,
 #views-exposed-form-sbv-donations-page-2 #edit-date-filter-min-inside-wrapper .container-inline-date label,
 #views-exposed-form-sbv-donations-page-2 #edit-date-filter-max-inside-wrapper .container-inline-date label {
   display: none;
 }
+#views-exposed-form-sbv-donations-page #edit-next-charge-min-wrapper,
+#views-exposed-form-sbv-donations-page #edit-next-charge-max-wrapper,
+#views-exposed-form-sbv-donations-page-2 #edit-next-charge-min-wrapper,
+#views-exposed-form-sbv-donations-page-2 #edit-next-charge-max-wrapper {
+  float: left;
+}
+
+#views-exposed-form-sbv-donations-page-2 #edit-next-charge-filter-wrapper,
 #views-exposed-form-sbv-donations-page-2 #edit-date-filter-wrapper {
   margin-top: -25px;
 }

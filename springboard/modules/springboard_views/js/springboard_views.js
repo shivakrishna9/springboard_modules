@@ -2,7 +2,6 @@
   Drupal.behaviors.alterSBVDonationsView = {
     attach: function (context, settings) {
       var donationsReportTable = $('.view-sbv-donations table.views-table');
-
       // Remove collabsible fieldset from donation results tab view:
       $('#views-exposed-form-sbv-donations-page-2').insertBefore('.view-sbv-donations fieldset#webform-ui-exposed-search');
       $('.view-sbv-donations fieldset#webform-ui-exposed-search').remove();
@@ -38,6 +37,12 @@
         '<span id="db-date-range-separator">and:</span>');
       $('#views-exposed-form-sbv-donations-page #edit-date-filter-max input, ' +
         '#views-exposed-form-sbv-donations-page-2 #edit-date-filter-max input' ).after('<i class="fa fa-calendar db-calendar-icon"></i>');
+   
+     $('#views-exposed-form-sbv-donations-page #edit-next-charge-min input, ' +
+        '#views-exposed-form-sbv-donations-page-2 #edit-next-charge-min input').after('<i class="fa fa-calendar db-calendar-icon"></i> ' +
+        '<span id="db-date-range-separator">and:</span>');
+      $('#views-exposed-form-sbv-donations-page #edit-next-charge-max input, ' +
+        '#views-exposed-form-sbv-donations-page-2 #edit-next-chage-max input' ).after('<i class="fa fa-calendar db-calendar-icon"></i>');
       $('#views-exposed-form-sbv-donations-page i.db-calendar-icon, ' +
         '#views-exposed-form-sbv-donations-page-2 i.db-calendar-icon').click(function () {
         if ($('#ui-datepicker-div').length && !$('#ui-datepicker-div').is(':hidden')) {
@@ -82,6 +87,24 @@
 
       // Alter order status default option label:
       $('#views-exposed-form-sbv-donations-page #edit-status option[value="All"]').text('Order Status');
+
+      // Alter sustainers donation ID (Recurs) filter:
+      $('#views-exposed-form-sbv-donations-page #edit-recurs-op option').each(function() {
+        if ($(this).text() == 'Regular expression') {
+          $(this).text('Any');
+          $(this).parent().prepend(($(this)));
+        }
+        else if ($(this).text() == 'Is empty (NULL)') {
+          $(this).text('No');
+        }
+        else if ($(this).text() == 'Is not empty (NOT NULL)') {
+          $(this).text('Yes');
+          $(this).parent().append(($(this)));
+        }
+        else {
+          $(this).remove();
+        }
+      });
 
       // Display search info as inline field value; hide if the field is used or the form is submitted:
       var searchFilter = $('#views-exposed-form-sbv-donations-page .form-item-combine input');
@@ -299,6 +322,91 @@
           subIDXFilter.val('');
         }
       });
+
+      // Next charge date filter
+      var nextChMinFilter = $('#views-exposed-form-sbv-donations-page input#edit-next-charge-min-datepicker-popup-0');
+      var nextChMinFilterBlurb = 'mm/dd/yy';
+      if (nextChMinFilter.val() == '') {
+        nextChMinFilter.val(nextChMinFilterBlurb);
+      }
+      nextChMinFilter.focus(function () {
+        if ($(this).val() == nextChMinFilterBlurb) {
+          $(this).val('');
+        }
+      });
+      nextChMinFilter.blur(function () {
+        if ($(this).val() == '') {
+          $(this).val(nextChMinFilterBlurb);
+        }
+      });
+      $('#views-exposed-form-sbv-donations-page').submit(function () {
+        if (nextChMinFilter.val() == nextChMinFilterBlurb) {
+          nextChMinFilter.val('');
+        }
+      });
+      var nextChMaxFilter = $('#views-exposed-form-sbv-donations-page input#edit-next-charge-max-datepicker-popup-0');
+      var nextChMaxFilterBlurb = 'mm/dd/yy';
+      if (nextChMaxFilter.val() == '') {
+        nextChMaxFilter.val(nextChMaxFilterBlurb);
+      }
+      nextChMaxFilter.focus(function () {
+        if ($(this).val() == nextChMaxFilterBlurb) {
+          $(this).val(''); 
+        }
+      });
+      nextChMaxFilter.blur(function () {
+        if ($(this).val() == '') {
+          $(this).val(nextChMaxFilterBlurb);
+        } 
+      }); 
+      $('#views-exposed-form-sbv-donations-page').submit(function () {
+        if (nextChMaxFilter.val() == nextChMaxFilterBlurb) {
+          nextChMaxFilter.val('');
+        }   
+      });
+
+      var nextChMinFilter2 = $('#views-exposed-form-sbv-donations-page input#edit-next-charge-min-datepicker-popup-0');
+      var nextChMinFilter2Blurb = 'mm/dd/yy';
+      if (nextChMinFilter2.val() == '') {
+        nextChMinFilter2.val(nextChMinFilter2Blurb);
+      }
+      nextChMinFilter2.focus(function () {
+        if ($(this).val() == nextChMinFilter2Blurb) {
+          $(this).val('');
+        }
+      });
+      nextChMinFilter2.blur(function () {
+        if ($(this).val() == '') {
+          $(this).val(nextChMinFilter2Blurb);
+        }
+      });
+      $('#views-exposed-form-sbv-donations-page').submit(function () {
+        if (nextChMinFilter2.val() == nextChMinFilter2Blurb) {
+          nextChMinFilter2.val('');
+        }
+      });
+      var nextChMaxFilter2 = $('#views-exposed-form-sbv-donations-page input#edit-next-charge-max-datepicker-popup-0');
+      var nextChMaxFilter2Blurb = 'mm/dd/yy';
+      if (nextChMaxFilter2.val() == '') {
+        nextChMaxFilter2.val(nextChMaxFilter2Blurb);
+      }
+      nextChMaxFilter2.focus(function () {
+        if ($(this).val() == nextChMaxFilter2Blurb) {
+          $(this).val('');
+        }
+      });
+      nextChMaxFilter2.blur(function () {
+        if ($(this).val() == '') {
+          $(this).val(nextChMaxFilter2Blurb);
+        }
+      });
+      $('#views-exposed-form-sbv-donations-page').submit(function () {
+        if (nextChMaxFilter2.val() == nextChMaxFilter2Blurb) {
+          nextChMaxFilter2.val('');
+        }
+      });
+      // End next charge date filter
+
 
 
       // Re-position the download link and add ajax callback when it is clicked; hide on no results:
