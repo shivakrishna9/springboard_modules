@@ -1713,6 +1713,7 @@ function fundraiser_donation_validate(&$form, &$form_state) {
  * one donation processed per submission.
  */
 function fundraiser_donation_submit(&$form, &$form_state) {
+
   // Create the donation object and load it with the submitted information for the donation.
   $donation = new stdClass();
   // Using user load to avoid user object being carried by ref around.
@@ -1994,6 +1995,8 @@ function fundraiser_donation_process($donation) {
   );
 
   // Pass this down to the processing module.
+  // Note, if an implementation of this hook redirects users offsite (like
+  // PayPal WPS), the lines below this one may not execute.
   module_invoke_all('fundraiser_donation_process', $donation);
 
   // Mark the end time of the processing.
