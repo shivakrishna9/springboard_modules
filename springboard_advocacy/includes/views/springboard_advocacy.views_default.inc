@@ -858,6 +858,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['fields']['sba_message_id']['field'] = 'sba_message_id';
   $handler->display->display_options['fields']['sba_message_id']['relationship'] = 'reverse_field_sba_action_id_sba_message';
   $handler->display->display_options['fields']['sba_message_id']['label'] = 'message ID';
+  $handler->display->display_options['fields']['sba_message_id']['exclude'] = TRUE;
   $handler->display->display_options['fields']['sba_message_id']['separator'] = '';
   /* Field: Webform submissions: Sid */
   $handler->display->display_options['fields']['sid_1']['id'] = 'sid_1';

@@ -1692,7 +1692,10 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['relationships']['payment_transaction']['table'] = 'commerce_order';
   $handler->display->display_options['relationships']['payment_transaction']['field'] = 'payment_transaction';
   $handler->display->display_options['relationships']['payment_transaction']['relationship'] = 'did';
-  $handler->display->display_options['relationships']['payment_transaction']['required'] = TRUE;
+  /* Relationship: Fundraiser sustainer record: Fundraiser Donation */
+  $handler->display->display_options['relationships']['did_1']['id'] = 'did_1';
+  $handler->display->display_options['relationships']['did_1']['table'] = 'fundraiser_sustainers';
+  $handler->display->display_options['relationships']['did_1']['field'] = 'did';
   /* Field: Order ID (hidden value) */
   $handler->display->display_options['fields']['order_id']['id'] = 'order_id';
   $handler->display->display_options['fields']['order_id']['table'] = 'commerce_order';
@@ -1869,8 +1872,54 @@ function springboard_views_views_default_views() {
     6 => 0,
   );
   $handler->display->display_options['filters']['date_filter']['form_type'] = 'date_popup';
+  $handler->display->display_options['filters']['date_filter']['year_range'] = '-10:+10';
   $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
     'commerce_order.created' => 'commerce_order.created',
+  );
+  /* Filter criterion: Fundraiser sustainer record: Master donation ID */
+  $handler->display->display_options['filters']['master_did']['id'] = 'master_did';
+  $handler->display->display_options['filters']['master_did']['table'] = 'fundraiser_sustainers';
+  $handler->display->display_options['filters']['master_did']['field'] = 'master_did';
+  $handler->display->display_options['filters']['master_did']['relationship'] = 'did_1';
+  $handler->display->display_options['filters']['master_did']['operator'] = 'regular_expression';
+  $handler->display->display_options['filters']['master_did']['group'] = 1;
+  $handler->display->display_options['filters']['master_did']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['master_did']['expose']['operator_id'] = 'master_did_op';
+  $handler->display->display_options['filters']['master_did']['expose']['label'] = 'Recurs:';
+  $handler->display->display_options['filters']['master_did']['expose']['use_operator'] = TRUE;
+  $handler->display->display_options['filters']['master_did']['expose']['operator'] = 'master_did_op';
+  $handler->display->display_options['filters']['master_did']['expose']['identifier'] = 'master_did';
+  $handler->display->display_options['filters']['master_did']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  /* Filter criterion: Fundraiser sustainer record: Next charge */
+  $handler->display->display_options['filters']['next_charge']['id'] = 'next_charge';
+  $handler->display->display_options['filters']['next_charge']['table'] = 'fundraiser_sustainers';
+  $handler->display->display_options['filters']['next_charge']['field'] = 'next_charge';
+  $handler->display->display_options['filters']['next_charge']['operator'] = 'between';
+  $handler->display->display_options['filters']['next_charge']['group'] = 1;
+  $handler->display->display_options['filters']['next_charge']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['next_charge']['expose']['operator_id'] = 'next_charge_op';
+  $handler->display->display_options['filters']['next_charge']['expose']['label'] = 'Next charge date:';
+  $handler->display->display_options['filters']['next_charge']['expose']['operator'] = 'next_charge_op';
+  $handler->display->display_options['filters']['next_charge']['expose']['identifier'] = 'next_charge';
+  $handler->display->display_options['filters']['next_charge']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  $handler->display->display_options['filters']['next_charge']['form_type'] = 'date_popup';
+  $handler->display->display_options['filters']['next_charge']['year_range'] = '-10:+10';
+  $handler->display->display_options['filters']['next_charge']['date_fields'] = array(
+    'fundraiser_sustainers.next_charge' => 'fundraiser_sustainers.next_charge',
   );
 
   /* Display: Unfiltered Page */
@@ -1998,8 +2047,11 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['css_class'] = 'views-data-table';
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
   $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
+  $handler->display->display_options['defaults']['query'] = FALSE;
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['query']['options']['distinct'] = TRUE;
   $handler->display->display_options['pager']['type'] = 'some';
-  $handler->display->display_options['pager']['options']['items_per_page'] = '50000';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '20';
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['style_plugin'] = 'views_data_export_csv';
   $handler->display->display_options['style_options']['attach_text'] = 'Download as .CSV';
@@ -2012,6 +2064,10 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['style_options']['header'] = 1;
   $handler->display->display_options['style_options']['keep_html'] = 0;
   $handler->display->display_options['defaults']['relationships'] = FALSE;
+  /* Relationship: Fundraiser donations: Donating user */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
   /* Relationship: Fundraiser donations: Fundraiser node */
   $handler->display->display_options['relationships']['nid']['id'] = 'nid';
   $handler->display->display_options['relationships']['nid']['table'] = 'fundraiser_donation';
@@ -2020,15 +2076,36 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['relationships']['did']['id'] = 'did';
   $handler->display->display_options['relationships']['did']['table'] = 'fundraiser_donation';
   $handler->display->display_options['relationships']['did']['field'] = 'did';
-  /* Relationship: Fundraiser donations: Donating user */
-  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
-  $handler->display->display_options['relationships']['uid']['table'] = 'fundraiser_donation';
-  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
+  /* Relationship: Commerce Order: Owner */
+  $handler->display->display_options['relationships']['uid_1']['id'] = 'uid_1';
+  $handler->display->display_options['relationships']['uid_1']['table'] = 'commerce_order';
+  $handler->display->display_options['relationships']['uid_1']['field'] = 'uid';
+  $handler->display->display_options['relationships']['uid_1']['relationship'] = 'did';
   /* Relationship: Fundraiser donations: Webform Submission */
   $handler->display->display_options['relationships']['sid']['id'] = 'sid';
   $handler->display->display_options['relationships']['sid']['table'] = 'fundraiser_donation';
   $handler->display->display_options['relationships']['sid']['field'] = 'sid';
+  /* Relationship: Commerce Order: Payment Transaction */
+  $handler->display->display_options['relationships']['payment_transaction']['id'] = 'payment_transaction';
+  $handler->display->display_options['relationships']['payment_transaction']['table'] = 'commerce_order';
+  $handler->display->display_options['relationships']['payment_transaction']['field'] = 'payment_transaction';
+  $handler->display->display_options['relationships']['payment_transaction']['relationship'] = 'did';
+  /* Relationship: Fundraiser sustainer record: Fundraiser Donation */
+  $handler->display->display_options['relationships']['did_1']['id'] = 'did_1';
+  $handler->display->display_options['relationships']['did_1']['table'] = 'fundraiser_sustainers';
+  $handler->display->display_options['relationships']['did_1']['field'] = 'did';
   $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: Commerce Payment Transaction: Transaction ID */
+  $handler->display->display_options['fields']['transaction_id']['id'] = 'transaction_id';
+  $handler->display->display_options['fields']['transaction_id']['table'] = 'commerce_payment_transaction';
+  $handler->display->display_options['fields']['transaction_id']['field'] = 'transaction_id';
+  $handler->display->display_options['fields']['transaction_id']['relationship'] = 'payment_transaction';
+  $handler->display->display_options['fields']['transaction_id']['separator'] = '';
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid_1';
   /* Field: order_id (hidden) */
   $handler->display->display_options['fields']['order_id']['id'] = 'order_id';
   $handler->display->display_options['fields']['order_id']['table'] = 'commerce_order';
@@ -2123,50 +2200,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
-  /* Filter criterion: Global: Combine fields filter */
-  $handler->display->display_options['filters']['combine']['id'] = 'combine';
-  $handler->display->display_options['filters']['combine']['table'] = 'views';
-  $handler->display->display_options['filters']['combine']['field'] = 'combine';
-  $handler->display->display_options['filters']['combine']['operator'] = 'contains';
-  $handler->display->display_options['filters']['combine']['group'] = 1;
-  $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
-  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Search';
-  $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
-  $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
-  $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-  );
-  $handler->display->display_options['filters']['combine']['group_info']['label'] = 'Combine fields filter';
-  $handler->display->display_options['filters']['combine']['group_info']['identifier'] = 'combine';
-  $handler->display->display_options['filters']['combine']['group_info']['group_items'] = array(
-    1 => array(
-      'title' => '',
-      'operator' => 'contains',
-      'value' => '',
-    ),
-    2 => array(
-      'title' => '',
-      'operator' => 'contains',
-      'value' => '',
-    ),
-    3 => array(
-      'title' => '',
-      'operator' => 'contains',
-      'value' => '',
-    ),
-  );
-  $handler->display->display_options['filters']['combine']['fields'] = array(
-    'order_id' => 'order_id',
-    'sbp_first_name' => 'sbp_first_name',
-    'sbp_last_name' => 'sbp_last_name',
-    'mail' => 'mail',
-    'title' => 'title',
-  );
   /* Filter criterion: Commerce Order: Order status */
   $handler->display->display_options['filters']['status']['id'] = 'status';
   $handler->display->display_options['filters']['status']['table'] = 'commerce_order';
@@ -2404,6 +2437,51 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['sid']['field'] = 'sid';
   $handler->display->display_options['filters']['sid']['relationship'] = 'sid';
   $handler->display->display_options['filters']['sid']['operator'] = 'empty';
+  $handler->display->display_options['filters']['sid']['group'] = 1;
+  /* Filter criterion: Fundraiser sustainer record: Next charge */
+  $handler->display->display_options['filters']['next_charge']['id'] = 'next_charge';
+  $handler->display->display_options['filters']['next_charge']['table'] = 'fundraiser_sustainers';
+  $handler->display->display_options['filters']['next_charge']['field'] = 'next_charge';
+  $handler->display->display_options['filters']['next_charge']['operator'] = 'between';
+  $handler->display->display_options['filters']['next_charge']['group'] = 1;
+  $handler->display->display_options['filters']['next_charge']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['next_charge']['expose']['operator_id'] = 'next_charge_op';
+  $handler->display->display_options['filters']['next_charge']['expose']['label'] = 'Next charge';
+  $handler->display->display_options['filters']['next_charge']['expose']['operator'] = 'next_charge_op';
+  $handler->display->display_options['filters']['next_charge']['expose']['identifier'] = 'next_charge';
+  $handler->display->display_options['filters']['next_charge']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  $handler->display->display_options['filters']['next_charge']['form_type'] = 'date_popup';
+  $handler->display->display_options['filters']['next_charge']['year_range'] = '-10:+10';
+  $handler->display->display_options['filters']['next_charge']['date_fields'] = array(
+    'fundraiser_sustainers.next_charge' => 'fundraiser_sustainers.next_charge',
+  );
+  /* Filter criterion: Fundraiser sustainer record: Master donation ID */
+  $handler->display->display_options['filters']['master_did']['id'] = 'master_did';
+  $handler->display->display_options['filters']['master_did']['table'] = 'fundraiser_sustainers';
+  $handler->display->display_options['filters']['master_did']['field'] = 'master_did';
+  $handler->display->display_options['filters']['master_did']['relationship'] = 'did_1';
+  $handler->display->display_options['filters']['master_did']['operator'] = 'regular_expression';
+  $handler->display->display_options['filters']['master_did']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['master_did']['expose']['operator_id'] = 'master_did_op';
+  $handler->display->display_options['filters']['master_did']['expose']['label'] = 'Recurs:';
+  $handler->display->display_options['filters']['master_did']['expose']['use_operator'] = TRUE;
+  $handler->display->display_options['filters']['master_did']['expose']['operator'] = 'master_did_op';
+  $handler->display->display_options['filters']['master_did']['expose']['identifier'] = 'master_did';
+  $handler->display->display_options['filters']['master_did']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
   $handler->display->display_options['path'] = 'admin/reports/salesforce/donations/export';
   $handler->display->display_options['displays'] = array(
     'page' => 'page',

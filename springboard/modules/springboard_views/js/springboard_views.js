@@ -89,7 +89,7 @@
       $('#views-exposed-form-sbv-donations-page #edit-status option[value="All"]').text('Order Status');
 
       // Alter sustainers donation ID (Recurs) filter:
-      $('#views-exposed-form-sbv-donations-page #edit-recurs-op option').each(function() {
+      $('#views-exposed-form-sbv-donations-page #edit-master-did-op option').each(function() {
         if ($(this).text() == 'Regular expression') {
           $(this).text('Any');
           $(this).parent().prepend(($(this)));
@@ -242,7 +242,7 @@
 
       // Date picker inline labels:
       var subID4Filter = $('#views-exposed-form-sbv-donations-page-2 input#edit-date-filter-min-datepicker-popup-0');
-      var subID4Blurb = 'mm/dd/yy';
+      var subID4Blurb = 'mm/dd/yyyy';
       if (subID4Filter.val() == '') {
         subID4Filter.val(subID4Blurb);
       }
@@ -262,7 +262,7 @@
         }
       });
       var subID5Filter = $('#views-exposed-form-sbv-donations-page-2 input#edit-date-filter-max-datepicker-popup-0');
-      var subID5Blurb = 'mm/dd/yy';
+      var subID5Blurb = 'mm/dd/yyyy';
       if (subID5Filter.val() == '') {
         subID5Filter.val(subID5Blurb);
       } 
@@ -420,7 +420,7 @@
           viewParams['status'] = $('#views-exposed-form-sbv-donations-page #edit-status').val();
           downloadButton.hide();
           e.preventDefault();
-          var isRecurringValue = $('.form-item-recurs-op #edit-recurs-op').val();
+          var isRecurringValue = $('.form-item-master-did-op #edit-master-did-op').val();
           if (isRecurringValue == 'not empty') {
             isRecurringValue = 'yes'; 
           } else if (isRecurringValue == 'empty') {

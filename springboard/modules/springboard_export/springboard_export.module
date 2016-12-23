@@ -9,7 +9,7 @@ function springboard_export_views_query_alter(&$view, &$query) {
   if (!isset($view->is_sb_export) || !$view->is_sb_export) {
     return;
   } 
- 
+
   $drush_field_map = array();
   if (isset($view->drush_field_map) && is_array($view->drush_field_map)) {
     $drush_field_map = $view->drush_field_map;
@@ -25,6 +25,13 @@ function springboard_export_views_query_alter(&$view, &$query) {
     );
     // If the drush command specifies an order then apply the view's default order secondarily:
     array_unshift($view->query->orderby, $order_info);
+  }
+
+  // Remove placeholder filters (contains "" or "is empty") added to the data export display in order to set up required joins:
+  foreach ($query->where[1]['conditions'] as $condition_key => $condition) {
+    if ($condition['value'] == '%%' || $condition['operator'] == 'IS NULL') {
+      unset($query->where[1]['conditions'][$condition_key]);
+    }
   }
 
   // Apply filters from the drush command:
@@ -51,17 +58,10 @@ function springboard_export_views_query_alter(&$view, &$query) {
     }
   }
 
-  // Remove placeholder filters (contains "" or "is empty") added to the data export display in order to set up required joins:
-  foreach ($query->where[1]['conditions'] as $condition_key => $condition) {
-    if ($condition['value'] == '%%' || $condition['operator'] == 'IS NULL') {
-      unset($query->where[1]['conditions'][$condition_key]);
-    }
-  }
-
   // Re-index where conditions since placeholder filters will have been removed; this is just in case it matters:
   $query->where[1]['conditions'] = array_values($query->where[1]['conditions']);
 
-  //echo "\n\n" . print_r($query->where, 1) . "\n\n";
+  // echo "\n\n" . print_r($query->where, 1) . "\n\n";
 }
 
 /**
@@ -143,11 +143,11 @@ function _springboard_export_donation_drush_to_drupal_field_map() {
     'status'           => array('table' => 'fundraiser_donation', 'field' => 'status', 'op' => '='),
     'submission_id'    => array('table' => 'webform_submissions_fundraiser_donation', 'field' => 'sid', 'op' => '='),
     'transaction_id'   => array('table' => 'fundraiser_donation', 'field' => 'txn_id', 'op' => '='),
-    'date_filter_min'  => array('table' => 'commerce_order_fundraiser_donation', 'field' => 'created', 'op' => '>='),
-    'date_filter_max'  => array('table' => 'commerce_order_fundraiser_donation', 'field' => 'created', 'op' => '<='),
-    'next_charge_min'  => array('table' => 'fundraiser_sustainers', 'field' => 'next_charge', 'op' => '>='),
-    'next_charge_max'  => array('table' => 'fundraiser_sustainers', 'field' => 'next_charge', 'op' => '<='),
-    'is_recurring'     => array('table' => 'fundriaser_sustainers', 'field' => 'did', 'op' => '='),
+    'date_filter_min'  => array('table' => '', 'field' => '', 'op' => ''),
+    'date_filter_max'  => array('table' => '', 'field' => '', 'op' => ''),
+    'next_charge_min'  => array('table' => '', 'field' => '', 'op' => ''),
+    'next_charge_max'  => array('table' => '', 'field' => '', 'op' => ''),
+    'is_recurring'     => array('table' => 'fundraiser_sustainers', 'field' => 'master_did', 'op' => '='),
     'updated_at'       => array('table' => 'fundraiser_donation', 'field' => 'changed', 'op' => '='),
     'user_agent'       => array('table' => $prefix . '_sbp_user_agent', 'field'  => 'sbp_user_agent_value', 'op' => 'LIKE'),
     'zip'              => array('table' => $prefix . '_sbp_zip', 'field' => 'sbp_zip_value', 'op' => '='),
@@ -155,34 +155,79 @@ function _springboard_export_donation_drush_to_drupal_field_map() {
 
   // Add value alterations where appropriate:
   $map['is_recurring']['preprocess'] = '_springboard_export_process_is_recurring';
+  $map['date_filter_min']['preprocess'] = '_springboard_export_process_date_filter_min';
+  $map['date_filter_max']['preprocess'] = '_springboard_export_process_date_filter_max';
+  $map['next_charge_min']['preprocess'] = '_springboard_export_process_next_charge_min';
+  $map['next_charge_max']['preprocess'] = '_springboard_export_process_next_charge_max';
   return $map;
+}
+
+/**
+ * Helper functions to apply date filtering:
+ */
+function _springboard_export_process_next_charge_min(&$value, &$filter) {
+  $filter['table'] = '';
+  $filter['field'] = "DATE_FORMAT(ADDTIME(FROM_UNIXTIME(fundraiser_sustainers.next_charge), SEC_TO_TIME(-18000)), '%m/%d/%Y') >= " .
+    ":fundraiser_sustainers_next_charge";
+  $value = array(
+    ':fundraiser_sustainers_next_charge' => $value,
+  );
+  $filter['op'] = 'formula';
+}
+function _springboard_export_process_next_charge_max(&$value, &$filter) {
+  $filter['table'] = '';
+  $filter['field'] = "DATE_FORMAT(ADDTIME(FROM_UNIXTIME(fundraiser_sustainers.next_charge), SEC_TO_TIME(-18000)), '%m/%d/%Y') <= " .
+    ":fundraiser_sustainers_next_charge1";
+  $value = array(
+    ':fundraiser_sustainers_next_charge1' => $value,
+  );
+  $filter['op'] = 'formula';
+}
+function _springboard_export_process_date_filter_min(&$value, &$filter) {
+  $filter['table'] = '';
+  $filter['field'] = "DATE_FORMAT(ADDTIME(FROM_UNIXTIME(commerce_order_fundraiser_donation.created), SEC_TO_TIME(-18000)), '%m/%d/%Y') >= " .
+    ":commerce_order_date_filter";
+  $value = array(
+    ':commerce_order_date_filter' => $value,
+  );
+  $filter['op'] = 'formula';
+}
+function _springboard_export_process_date_filter_max(&$value, &$filter) {
+  $filter['table'] = '';
+  $filter['field'] = "DATE_FORMAT(ADDTIME(FROM_UNIXTIME(commerce_order_fundraiser_donation.created), SEC_TO_TIME(-18000)), '%m/%d/%Y') <= " .
+    ":commerce_order_date_filter1";
+  $value = array(
+    ':commerce_order_date_filter1' => $value,
+  );
+  $filter['op'] = 'formula';
 }
 
 
 /**
  * Helper function to convert yes/no is_recurring values into the desired filtering:
  */
-function _springboard_export_process_is_recurring($value, $filter) {
-  $value = '';
+function _springboard_export_process_is_recurring(&$value, &$filter) {
   if ($value == 'yes') {
-    $filter['op'] = 'not empty';
+    $filter['op'] = 'IS NOT NULL';
   }
   elseif ($value == 'no') {
-    $filter['op'] = 'empty';
+    $filter['op'] = 'IS NULL';
   }
+  // This filter's options are operator-based, with the value always being NULL:
+  $value = NULL;
 }
 
 /**
  * Helper function to convert strings to timestamps, while still accepting the filter param:
  */
-function _springboard_export_strtotime($string, $filter) {
+function _springboard_export_strtotime(&$string, &$filter) {
   $string = strtotime($string);
 }
 
 /**
  * Helper vocabulary-specific functions to return the term ID for a term name:
  */
-function _springboard_export_get_legislative_issues_tid($term_name, $filter) {
+function _springboard_export_get_legislative_issues_tid(&$term_name, &$filter) {
   $terms = taxonomy_get_term_by_name($term_name, 'sba_legislative_issues'); 
   if (is_array($terms)) {
     $term = array_shift($terms);
@@ -192,7 +237,7 @@ function _springboard_export_get_legislative_issues_tid($term_name, $filter) {
   }
   $term_name = '';
 }
-function _springboard_export_get_organization_issues_tid($term_name, $filter) {
+function _springboard_export_get_organization_issues_tid(&$term_name, &$filter) {
   $term = taxonomy_get_term_from_name($term_name, 'sba_organization_issues'); 
   if (is_array($terms)) {
     $term = array_shift($terms);
@@ -254,6 +299,10 @@ function springboard_export_form_views_exposed_form_alter(&$form, &$form_state) 
       $dw_drupal_key_map = array_flip($dw_drupal_key_map);
       $view_data = array();
 
+      // Alter data filter formats:
+      $form['next_charge']['min']['#date_format'] = 'm/d/Y';
+      $form['next_charge']['max']['#date_format'] = 'm/d/Y';
+
       foreach ($vals as $drupal_field_key => $value) {
         if (empty($value)) {
           continue;
@@ -313,6 +362,13 @@ function springboard_export_form_views_exposed_form_alter(&$form, &$form_state) 
           $view_data[$dw_drupal_key_map[$drupal_field_key]] = $value;
         }
       }
+      // Exclude empty values:
+      foreach ($view_data as $key => $value) {
+        if ($value == '') {
+          unset($view_data[$key]);
+        }
+      }
+
       $form['#attached']['js'][] = array(
         'type' => 'setting',
         'data' => array('sbExposedFilters' => $view_data),
@@ -352,15 +408,22 @@ function _springboard_export_queue_data_export() {
     drupal_json_output(array('status' => 'fail'));
     return;
   }
-
   $data = $_POST['export_params'];
+
+  // Exclude empty values:
+  foreach ($data as $key => $value) {
+    if (empty($value)) {
+      unset($data[$key]);
+    }
+  }
+
   if (isset($data['source_view'])) {
     unset($data['source_view']);
   }
-  if (isset($_POST['date_range_min'])) {
+  if (isset($_POST['date_range_min']) && $_POST['date_range_min'] != 'mm/dd/yyyy') {
     $data['transaction_date']['min'] = $_POST['date_range_min'];
   }
-  if (isset($_POST['date_range_max'])) {
+  if (isset($_POST['date_range_max']) && $_POST['date_range_min'] != 'mm/dd/yyyy') {
     $data['transaction_date']['max'] = $_POST['date_range_max'];
   }
   if (isset($_POST['next_charge_min'])) {
@@ -369,15 +432,10 @@ function _springboard_export_queue_data_export() {
   if (isset($_POST['next_charge_max'])) {
     $data['next_charge_date']['max'] = $_POST['next_charge_max'];
   }
-  if (isset($_POST['is_recurring']) && $_POST['is_recurring'] != '') {
-    $data['is_recurring'] = $_POST['is_recurring'];
-  }
 
   watchdog('springboard_export', 'CSV export request: ' . json_encode($data));
 
-  $recipients = array(
-    'josh.estep@jacksonriver.com',
-  );
+  $recipients = variable_get('springboard_export_recipients', array());
 
   // Queue the data export job:
   $success = TRUE;

@@ -25,12 +25,12 @@
   width: 320px;
   z-index: 10;
 }
-#views-exposed-form-sbv-donations-page .form-item-recurs-value #edit-recurs-value,
-#views-exposed-form-sbv-donations-page-2 .form-item-recurs-value #edit-recurs-value {
+#views-exposed-form-sbv-donations-page .form-item-master-did-value #edit-master-did-value,
+#views-exposed-form-sbv-donations-page-2 .form-item-master-did-value #edit-master-did-value {
   display: none;
 }
-#views-exposed-form-sbv-donations-page .form-item-recurs-value,
-#views-exposed-form-sbv-donations-page-2 .form-item-recurs-value {
+#views-exposed-form-sbv-donations-page .form-item-master-did-value,
+#views-exposed-form-sbv-donations-page-2 .form-item-master-did-value {
   position: absolute;
 }
 #views-exposed-form-sbv-donations-page #edit-combine-wrapper label,

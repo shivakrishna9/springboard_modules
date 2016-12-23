@@ -134,23 +134,19 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
           $order = $option_value;
           break;
         case 'transaction_date':
-          unset($min_date);
-          unset($max_date);
           if (isset($option_value->min)) {
-            $view->drush_filters['date_filter_min'] = strtotime($option_value->min); 
+            $view->drush_filters['date_filter_min'] = $option_value->min; 
           }
           if (isset($option_value->max)) {
-            $view->drush_filters['date_filter_max'] = strtotime($option_value->max);
+            $view->drush_filters['date_filter_max'] = $option_value->max;
           }
           break;
         case 'next_charge_date':
-          unset($min_date);
-          unset($max_date);
           if (isset($option_value->min)) {
-            $view->drush_filters['charge_date_min'] = strtotime($option_value->min);
+            $view->drush_filters['next_charge_min'] = $option_value->min;
           }
           if (isset($option_value->max)) {
-            $view->drush_filters['charge_date_max'] = strtotime($option_value->max);
+            $view->drush_filters['next_charge_max'] = $option_value->max;
           }
           break;
         case 'debug':

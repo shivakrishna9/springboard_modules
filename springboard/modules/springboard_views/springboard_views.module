@@ -446,20 +446,3 @@ function springboard_views_springboard_dashboard_panes() {
   );
   return $panes;
 }
-
-/**
- * Implements hook_views_pre_view().
- *
- * Remove the exposed date popup filter from the file export display to
- * eliminate a conflict between the popup and views_data_export:
- */
-function springboard_views_views_pre_view(&$view, &$display_id, &$args) {
-  if ($view->name != 'sbv_donations' || $display_id != 'views_data_export_1') {
-    return;
-  }
-
-  // Unset the date filter form both the default and export displays in case
-  // the default date filter is overwritten within the data export's display:
-  unset($view->display['default']->handler->options['filters']['date_filter']);
-  unset($view->display['views_data_export_1']->handler->options['filters']['date_filter']);
-}
