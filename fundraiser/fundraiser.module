@@ -3113,7 +3113,7 @@ function _fundraiser_get_donation_gateway($did) {
   $found_gateway = db_query('SELECT d.gateway FROM {fundraiser_donation} d ' .
     'WHERE d.did = :did', array(':did' => $did))->fetchField();
   // Now ask if any other module wants to override this result.
-  module_invoke('fundraiser_get_donation_gateway_alter', $did, $found_gateway);
+  drupal_alter('fundraiser_get_donation_gateway', $found_gateway);
   // Now translate that into something we can use by getting the rest of the dateway info.
   if (isset($found_gateway)) {
     return _fundraiser_gateway_info($found_gateway);
