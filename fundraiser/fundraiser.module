@@ -4044,7 +4044,7 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($f
       }
       else {
         // Re-set the card type if the number changed.
-        $card_save->card_type = commerce_payment_validate_credit_card_type($values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+        $card->card_type = commerce_payment_validate_credit_card_type($values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
 
         $card_save = $card;
         $confirm_message = t('The card has been updated.');
