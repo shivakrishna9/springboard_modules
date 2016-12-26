@@ -4043,20 +4043,11 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($f
         $confirm_message = t('A new card has been added.');
       }
       else {
+        // Re-set the card type if the number changed.
+        $card_save->card_type = commerce_payment_validate_credit_card_type($values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+
         $card_save = $card;
         $confirm_message = t('The card has been updated.');
-
-        // Since the update function is in the contrib commerce_authnet module,
-        // and we don't want to touch it, put code here that detects the
-        // gateway and sets the correct card type appropriately.
-        if ($payment_method['base'] == 'commerce_authnet_aim') {
-          // Ensure the card type is correct.
-          list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card->remote_id);
-          $payment_profile_xml = commerce_authnet_cim_get_customer_payment_profile_request($payment_method, $cim_customer_profile_id, $cim_payment_profile_id);
-          if (!empty($payment_profile_xml->paymentProfile->payment->creditCard)) {
-            $card_save->card_type = $payment_profile_xml->paymentProfile->payment->creditCard->cardType;
-          }
-        }
       }
 
       commerce_cardonfile_save($card_save);
