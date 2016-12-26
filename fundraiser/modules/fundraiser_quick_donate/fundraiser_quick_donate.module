@@ -288,6 +288,12 @@ function fundraiser_quick_donate_webform_user_save_profile_map_alter(&$account, 
         ),
       ),
     );
+    // If there was an opt-out date previously, reset it now.
+    $account->field_quick_donate_opt_out = array(
+      LANGUAGE_NONE => array(
+        0 => NULL,
+      ),
+    );
   }
 }
 
@@ -475,7 +481,7 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
 
   $form['payment_fields'][$gateway_type]['quickdonate'] = array(
     '#type' => 'checkbox',
-    '#title' => '&nbsp;' . t('Make this my default Quick Donate card.'),
+    '#title' => '&nbsp;' . t('Use this card for Quick Donate'),
     '#default_value' => !!$enabled,
   );
 
@@ -513,27 +519,9 @@ function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
   $payment_fields = $values['payment_fields'];
   $payment_method = $values['payment_method'];
 
-  // See if the user currently has a default card.
-  $default_card = fundraiser_quick_donate_get_default_card($values['uid']);
-  if ($default_card && $default_card == $form_state['card']->card_id) {
-    // If quickdonate is not true the user is opting this card out.
-    if (!$payment_fields['credit']['quickdonate']) {
-      // Update the user, setting the opt-out date.
-      $account =& $form['#donation']->user;
-      $account->field_quick_donate_opt_out = array(
-        LANGUAGE_NONE => array(
-          0 => array(
-            'value' => date("Y-m-d H:i:s"),
-            'timezone' => drupal_get_user_timezone(),
-            'timezone_db' => 'UTC',
-            'date_type' => 'datetime',
-          ),
-        ),
-      );
-      user_save($account);
-      // Invoke quick donate opt-out hook.
-      module_invoke_all('fundraiser_quick_donate_optout', $form_state['card']->card_id, $values['uid']);
-    }
+  // If quickdonate is not true the user may be opting this card out.
+  if (!$payment_fields['credit']['quickdonate']) {
+    fundraiser_quick_donate_opt_out_card($values['uid'], $form_state['card']->card_id);
   }
 
   // First reset all existing cards' status to 0.
@@ -616,6 +604,36 @@ function fundraiser_quick_donate_get_default_card($uid) {
 }
 
 /**
+ * Whenever a card is taken out of QD eligility, either by explicit opting out or by
+ * deletion, check if it was the QD default and if so make opt-out-related updates.
+ *
+ * @param $uid
+ * @param $card_id
+ * @throws \Exception
+ */
+function fundraiser_quick_donate_opt_out_card($uid, $card_id) {
+  // See if the user currently has a default card.
+  $default_card = fundraiser_quick_donate_get_default_card($uid);
+  if ($default_card && $default_card == $card_id) {
+    // Update the user, setting the opt-out date.
+    $account = user_load($uid);
+    $account->field_quick_donate_opt_out = array(
+      LANGUAGE_NONE => array(
+        0 => array(
+          'value' => date("Y-m-d H:i:s"),
+          'timezone' => drupal_get_user_timezone(),
+          'timezone_db' => 'UTC',
+          'date_type' => 'datetime',
+        ),
+      ),
+    );
+    user_save($account);
+    // Invoke quick donate opt-out hook.
+    module_invoke_all('fundraiser_quick_donate_optout', $card_id, $uid);
+  }
+}
+
+/**
  * Implements hook_entity_presave().
  *
  * If the 'card_number' session is set, we'll know that the card number is being
@@ -629,6 +647,15 @@ function fundraiser_quick_donate_entity_presave($entity, $type) {
   if ($type == 'commerce_cardonfile' && isset($args[2]) && $args[2] == 'cards' && isset($_SESSION['card_number']) && strlen($_SESSION['card_number']) > 4) {
     $entity->card_number = substr($_SESSION['card_number'], -4);
     unset($_SESSION['card_number']);
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function fundraiser_quick_donate_entity_delete($entity, $type) {
+  if ($type == 'commerce_cardonfile') {
+    fundraiser_quick_donate_opt_out_card($entity->uid, $entity->card_id);
   }
 }
 

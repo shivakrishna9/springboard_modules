@@ -145,14 +145,19 @@ function fundraiser_quick_donate_admin_settings_autocomplete_callback($gateway_k
       ->condition('f.gateways', '%' . db_like($gateway_key) . '%', 'LIKE');
   }
   $types = array_keys(fundraiser_get_donation_types());
-  $result = $result->condition('n.type', $types, 'IN')
-    ->condition('n.title', db_like($string) . '%', 'LIKE')
-    ->range(0, 10)
+  $result = $result->condition('n.type', $types, 'IN');
+  if (is_numeric($string)) {
+    $result = $result->condition('n.nid', db_like($string) . '%', 'LIKE');
+  }
+  else {
+    $result = $result->condition('n.title', db_like($string) . '%', 'LIKE');
+  }
+  $result = $result->range(0, 10)
     ->execute()
     ->fetchAll();
   $matches = array();
   foreach ($result as $node) {
-    $matches[$node->title . " [$node->nid]"] = check_plain($node->title);
+    $matches[$node->title . " [$node->nid]"] = check_plain($node->title) . " [nid: $node->nid]";
   }
   drupal_json_output($matches);
 }
@@ -189,8 +194,10 @@ function fundraiser_quick_donate_admin_settings_submit($form, &$form_state) {
     );
     $form_state['values'][$key] = serialize($data);
   }
-  $form_state['values']['fundraiser_quick_donate_default_help_message_format'] = $form_state['values']['fundraiser_quick_donate_default_help_message']['format'];
-  $form_state['values']['fundraiser_quick_donate_default_help_message'] = $form_state['values']['fundraiser_quick_donate_default_help_message']['value'];
+  $form_state['values']['fundraiser_quick_donate_default_help_message_new_user_format'] = $form_state['values']['fundraiser_quick_donate_default_help_message_new_user']['format'];
+  $form_state['values']['fundraiser_quick_donate_default_help_message_new_user'] = $form_state['values']['fundraiser_quick_donate_default_help_message_new_user']['value'];
+  $form_state['values']['fundraiser_quick_donate_default_help_message_existing_user_format'] = $form_state['values']['fundraiser_quick_donate_default_help_message_existing_user']['format'];
+  $form_state['values']['fundraiser_quick_donate_default_help_message_existing_user'] = $form_state['values']['fundraiser_quick_donate_default_help_message_existing_user']['value'];
 }
 
 /**

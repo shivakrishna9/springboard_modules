@@ -19,6 +19,16 @@ function salesforce_quick_donate_uninstall() {
 }
 
 /**
+ * Implements hook_update_dependencies().
+ */
+function salesforce_quick_donate_update_dependencies() {
+  $dependencies['salesforce_quick_donate'][7000] = array(
+    'fundraiser_quick_donate' => 7002,
+  );
+  return $dependencies;
+}
+
+/**
  * Implements hook_update_N().
  *
  * Map the Quick Donate Opt-Out date profile field.
@@ -99,7 +109,7 @@ function salesforce_quick_donate_mapped_date_field($fieldmap_value, $sf_label, $
   return json_decode(' {
       "drupal_field" : {
         "fieldmap_type" : "property",
-        "fieldmap_value" : '.$fieldmap_value.'
+        "fieldmap_value" : "'.$fieldmap_value.'"
       },
       "salesforce_field" : {
         "autoNumber" : false,
@@ -124,9 +134,9 @@ function salesforce_quick_donate_mapped_date_field($fieldmap_value, $sf_label, $
         "htmlFormatted" : false,
         "idLookup" : false,
         "inlineHelpText" : null,
-        "label" : '.$sf_label.',
+        "label" : "'.$sf_label.'",
         "length" : 0,
-        "name" : '.$sf_name.',
+        "name" : "'.$sf_name.'",
         "nameField" : false,
         "namePointing" : false,
         "nillable" : true,
