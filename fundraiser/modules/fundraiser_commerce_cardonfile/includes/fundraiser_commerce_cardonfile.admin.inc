@@ -15,7 +15,7 @@ function fundraiser_commerce_cardonfile_admin_settings($form, $form_state) {
 
   $options = array(
     '!n' => '<strong>' . $number_unupdated_donations . '</strong>',
-    '@message' => 'You can either use the following buttons to process all donations, or use the following drush command:',
+    '@message' => 'You can either use the following button to process all donations, or use this drush command:',
     '!command' => '<code>drush fundraiser update</code>.<br/>',
   );
   if ($number_unupdated_donations >= FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
@@ -80,7 +80,7 @@ function _fundraiser_commerce_cardonfile_process_limited_donations($form, $form_
  *
  * @see fundraiser_commerce_cardonfile_admin_settings()
  */
-function _fundraiser_commerce_cardonfile_process_donations($form, $form_state, $limit = NULL) {
+function _fundraiser_commerce_cardonfile_process_donations($form, $form_state, $limit = FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
   $batch = array(
     'operations' => array(
       array(
@@ -101,15 +101,18 @@ function _fundraiser_commerce_cardonfile_process_donations($form, $form_state, $
 /**
  * Batch processor to process donations with null card ids.
  */
-function _fundraiser_commerce_cardonfile_update_donation_cardids($limit = FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD, $max_limit = NULL, &$context = array()) {
+function _fundraiser_commerce_cardonfile_update_donation_cardids($limit, $max_limit = NULL, &$context = array()) {
+  if (!is_numeric($limit)) {
+    drupal_set_message(t('The limit was not a valid number, in "_fundraiser_commerce_cardonfile_update_donation_cardids".'), 'warning');
+    return;
+  }
+
   if (!empty($max_limit) && $limit > $max_limit) {
     drupal_set_message(t('The max limit cannot exceed the limit, in "_fundraiser_commerce_cardonfile_update_donation_cardids".'), 'warning');
     return;
   }
 
   $sandbox = $context['sandbox'];
-
-  $cards = &drupal_static(__FUNCTION__);
 
   if (!isset($sandbox['progress'])) {
     // The count of donations visited so far.
@@ -119,26 +122,7 @@ function _fundraiser_commerce_cardonfile_update_donation_cardids($limit = FUNDRA
     // status because any donations that will be processed later should have
     // their card ids set via
     // `fundraiser_commerce_cardonfile_fundraiser_donation_post_update`.
-    $sandbox['max'] = db_select('fundraiser_donation', 'fd')
-      ->distinct()
-      ->fields('fd', array('did'))
-      ->condition('fd.status', 'payment_received', '=')
-      ->isNull('card_id');
-
-    if (module_exists('fundraiser_sustainers')) {
-      $master_sustainer_donation_ids = db_select('fundraiser_sustainers', 'fs')->fields('fs', array('master_did'))->groupBy('master_did');
-      $sustainer_donation_ids = db_select('fundraiser_sustainers', 'fs')->fields('fs', array('did'));
-      $or = db_or();
-      $or->condition('fd.did', $master_sustainer_donation_ids, 'IN');
-      $or->condition('fd.did', $sustainer_donation_ids, 'NOT IN');
-      $sandbox['max'] = $sandbox['max']->condition($or);
-    }
-
-    if (!empty($max_limit)) {
-      $sandbox['max'] = $sandbox['max']->range(0, $max_limit);
-    }
-
-    $sandbox['max'] = $sandbox['max']->execute()->rowCount();
+    $sandbox['max'] = _fundraiser_commerce_cardonfile_number_of_unupdated_donations();
     // A place to store messages during the run.
     $sandbox['messages'] = array();
     // Last donation read via the query.
@@ -172,6 +156,9 @@ function _fundraiser_commerce_cardonfile_update_donation_cardids($limit = FUNDRA
     ->fetchAll();
 
   foreach ($result as $row) {
+    $sandbox['progress']++;
+    $context['sandbox']['current_donation'] = $row->did;
+
     $card_id = NULL;
 
     if (empty($cards[$row->uid])) {
@@ -192,7 +179,9 @@ function _fundraiser_commerce_cardonfile_update_donation_cardids($limit = FUNDRA
       // Otherwise we'll need to grab the card_id from the order record.
       $order = commerce_order_load($row->did);
       $data = _fundraiser_commerce_order_data_retrieve($order->data['fundraiser_commerce']);
-      $card_id = $data['cardonfile'];
+      if (!emptY($data['cardonfile'])) {
+        $card_id = $data['cardonfile'];
+      }
     }
 
     if (empty($card_id)) {
@@ -207,10 +196,13 @@ function _fundraiser_commerce_cardonfile_update_donation_cardids($limit = FUNDRA
     }
 
     if (empty($card_id) || !is_numeric($card_id)) {
-      // Nothing found, we'll have to skip this donation.
-      watchdog('fundraiser', 'No card was found for donation @did while updating {fundraiser} for update 7011.', array(
+      $message = 'No card id was found for donation @did while updating donation information.';
+      $params = array(
         '@did' => $row->did,
-      ), WATCHDOG_NOTICE);
+      );
+      drupal_set_message(t($message, $params), 'warning');
+      // Nothing found, we'll have to skip this donation.
+      watchdog('fundraiser', $message, $params, WATCHDOG_NOTICE);
       continue;
     }
 
@@ -232,7 +224,7 @@ function _fundraiser_commerce_cardonfile_update_donation_cardids($limit = FUNDRA
 function _fundraiser_commerce_cardonfile_processed_donations($success, $results, $operations) {
   if ($success) {
     // Here we do something meaningful with the results.
-    $message = t('@count items successfully processed:', array('@count' => count($results)));
+    $message = t('@count items successfully processed.', array('@count' => count($results)));
     $message .= theme('item_list', array('items' => $results));
     drupal_set_message($message);
   }
