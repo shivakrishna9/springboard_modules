@@ -19,7 +19,7 @@ function secure_prepopulate_insert_components($node) {
     'nid' => $node->nid,
     'form_key' => 'secure_prepop_autofill',
     'pid' => 0,
-    'name' => t('User Edit Flag'),
+    'name' => t('Autofilled'),
     'type' => 'hidden',
     'value' => 0,
     'weight' => 13,
