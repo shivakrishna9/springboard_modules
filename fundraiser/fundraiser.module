@@ -4046,9 +4046,13 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($f
         $confirm_message = t('A new card has been added.');
       }
       else {
+        // Re-set the card type if the number changed.
+        $card->card_type = commerce_payment_validate_credit_card_type($values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+
         $card_save = $card;
         $confirm_message = t('The card has been updated.');
       }
+
       commerce_cardonfile_save($card_save);
       drupal_set_message($confirm_message);
       $form_state['values']['cardonfile']['old_card'] = clone $card;
