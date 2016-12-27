@@ -16,14 +16,14 @@ function fundraiser_ab_node_load($nodes, $types) {
     return;
   }
 
-  // Create an array of nids for the db query, and add an empty wrapper value
+  // Create an array of nids for the db query, and add an empty wrapper value.
   foreach ($nodes as $node) {
     if ($node->type == 'webform_ab') {
       $nids[] = $node->nid;
     }
   }
 
-  // Ensure we have nids to work with
+  // Ensure we have nids to work with.
   if (!isset($nids) || !count($nids)) {
     return;
   }
@@ -31,7 +31,7 @@ function fundraiser_ab_node_load($nodes, $types) {
   $result = db_query('SELECT * FROM {fundraiser_ab_stats} WHERE test_nid IN(:nids)', array(':nids' => $nids))->fetchAll(PDO::FETCH_ASSOC);
   if (!empty($result)) {
     foreach ($result as $record) {
-      // Add the stats to the node object
+      // Add the stats to the node object.
       if (isset($node->included_webforms[$record['webform_nid']])) {
         $node->included_webforms[$record['webform_nid']]['fundraiser'] = $record;
       }
@@ -48,12 +48,13 @@ function fundraiser_ab_webform_ab_get_webform_types() {
 
 /**
  * Implements hook_webform_ab_validate_conversion().
+ *
  * Only returns TRUE if the webform type is fundraiser and the donation payment
  * was successful. This way, failed credit card payments are not counted as
  * conversions
  */
 function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
-  // Only act on successful donations
+  // Only act on successful donations.
   if (($webform_types == 'fundraiser') && (empty($form_state['#donation']) || ($form_state['#donation']->status === 'failed'))) {
     return FALSE;
   }
@@ -64,6 +65,7 @@ function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node
 
 /**
  * Implements hook_webform_ab_valid_webforms().
+ *
  * Return an array of donation forms that may be included in an A/B Test.
  */
 function fundraiser_ab_webform_ab_valid_webforms($webform_types) {
@@ -92,7 +94,8 @@ function fundraiser_ab_webform_ab_valid_webforms($webform_types) {
 
 /**
  * Implements hook_webform_ab_valid_webforms_alter().
- * For non-Fundraiser Multivariate Testing tests, do NOT include donation forms
+ *
+ * For non-Fundraiser Multivariate Testing tests, do NOT include donation forms.
  */
 function fundraiser_ab_webform_ab_valid_webforms_alter(&$forms, $webform_type) {
   // Only remove if it's a non-Fundraiser A/B test
@@ -108,7 +111,8 @@ function fundraiser_ab_webform_ab_valid_webforms_alter(&$forms, $webform_type) {
 
 /**
  * Implements hook_ctools_plugin_directory().
- * Tell ctools where this module's plugins live
+ *
+ * Tell ctools where this module's plugins live.
  */
 function fundraiser_ab_ctools_plugin_directory($owner, $plugin_type) {
   if ($owner == 'webform_ab') {
@@ -117,7 +121,8 @@ function fundraiser_ab_ctools_plugin_directory($owner, $plugin_type) {
 }
 
 /**
- * Implementation of hook_webform_ab_conversion().
+ * Implements hook_webform_ab_conversion().
+ *
  * Save updated stats for this donation form/test node combo.
  */
 function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
@@ -142,32 +147,32 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
         $recurs = ($submission_fields['recurs_monthly'] == 'recurs') ? TRUE : FALSE;
       }
 
-      // Check if Other amount field was used
+      // Check if Other amount field was used.
       $donation_amount = $submission_fields['amount'];
       if ($donation_amount == "other") {
         $donation_amount = $submission_fields['other_amount'];
       }
 
-      // Check if the stat record already exists
+      // Check if the stat record already exists.
       $exist = db_query('SELECT test_nid FROM {fundraiser_ab_stats} WHERE test_nid = :test_nid AND webform_nid = :webform_nid', array(':test_nid' => $test_node->nid, ':webform_nid' => $webform_node->nid))->fetchfield();
 
       if ($exist) {
-        // Prep placeholders for query
+        // Prep placeholders for query.
         $placeholders = array();
         $placeholders[':donation_amount'] = $donation_amount;
 
-        // Start query
+        // Start query.
         $sql = 'UPDATE {fundraiser_ab_stats} SET donation_count = donation_count + 1, total_donations = total_donations + :donation_amount';
 
-        // If it's a sustainer, increase those values too
+        // If it's a sustainer, increase those values too.
         if ($recurs) {
           $sql .= ', sustainer_count = sustainer_count + 1, total_sustainer_donations = total_sustainer_donations + :donation_amount';
         }
 
-        // Make sure the right row is updated
+        // Make sure the right row is updated.
         $sql .= ' WHERE test_nid = :test_nid AND webform_nid = :webform_nid';
 
-        // And add the placeholder values used for the where clause
+        // And add the placeholder values used for the where clause.
         $placeholders[':test_nid'] = $test_node->nid;
         $placeholders[':webform_nid'] = $webform_node->nid;
 
@@ -175,7 +180,7 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
 
       }
       else {
-        // Create a new stat record
+        // Create a new stat record.
         $row = array(
           'test_nid' => $test_node->nid,
           'webform_nid' => $webform_node->nid,
@@ -193,6 +198,7 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
 
 /**
  * Implements hook_webform_ab_remove_form().
+ *
  * Removes donation counts when a donation form is removed from an A/B test.
  */
 function fundraiser_ab_webform_ab_remove_form($test_nid, $webform_nid) {
@@ -207,3 +213,130 @@ function fundraiser_ab_webform_ab_remove_form($test_nid, $webform_nid) {
     ->condition('test_nid', $test_nid)
     ->execute();
 }
+
+/**
+ * @param object $node
+ *   The test node obkect.
+ *
+ * @return int
+ *   The timestamp of the first hit in this test.
+ */
+function fundraiser_ab_get_first_hit_in_test($node) {
+  $first_hit_timestamp = &drupal_static(__FUNCTION__);
+  if (!isset($first_hit_timestamp)) {
+    $first_hit_timestamp = db_query('SELECT time from {webform_ab_hits} WHERE test_nid = :test_nid ORDER BY time ASC LIMIT 1', array(':test_nid' => $node->nid))->fetchField();
+    if (empty($first_hit_timestamp)) {
+      $first_hit_timestamp = 0;
+    }
+  }
+  return $first_hit_timestamp;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function fundraiser_ab_form_webform_ab_admin_settings_alter(&$form, &$form_state, $form_id) {
+  $form['webform_ab_omit_prior_fundraiser'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Omit fundraiser data from winning conditions when the data pre-dates a test.'),
+    '#default_value' => variable_get('webform_ab_omit_prior_fundraiser'),
+    '#description' => t('Checking this box will cause a test to exclude fundraiser data for participating forms if that data pre-dates the first hit on the test.'),
+  );
+}
+
+
+/**
+ * Retrieve the UIDs from excluded roles.
+ *
+ * Exempt users fundraiser submisisons from meeting the win criteria
+ * by checking for excluded roles and node update access.
+ *
+ * @return array
+ *   The user IDs to exclude.
+ */
+function fundraiser_ab_get_omitted_users($webform_nid) {
+
+  static $roles_to_exclude;
+  static $uids;
+  //static $current_webform_nid;
+
+  // Get the excluded roles from AB config.
+  if (!isset($roles_to_exclude)) {
+    $roles = variable_get('webform_ab_ignore_hits_from_roles', array());
+    $roles_to_exclude = array();
+    if ($roles != '') {
+      foreach ($roles as $role_id => $enabled) {
+        if ($enabled > 0) {
+          $roles_to_exclude[] = $role_id;
+        }
+      }
+    }
+  }
+
+  // Get the user IDs in the excluded roles.
+  if (!isset($uids)) {
+    $uids = array(1);
+    $result = db_query('select uid from {users_roles} WHERE rid IN (:exclude)', array(':exclude' => implode(',', $roles_to_exclude)))->fetchAllAssoc('uid');
+    if (!empty($result)) {
+      $uids = array_merge(array_values($uids), array_keys($result));
+    }
+  }
+
+  // Match the access check the webform_ab_view() uses to set the required
+  // session variable which makes AB redirects and submissions work, and get
+  // the uids which have update access on the webform being tested.
+//  if (!isset($current_webform_nid) || $webform_nid != $current_webform_nid) {
+//    $current_webform_nid = $webform_nid;
+//    $webform = node_load($webform_nid);
+//    $has_update_perms = fundraiser_ab_user_roles(array(
+//      'edit own donation form',
+//      'edit any donation form',
+//      'edit any ' . $webform->type . ' content',
+//      'edit own ' . $webform->type . ' content',
+//    ));
+//
+//    $users_with_update_perms = db_query('select uid from {users_roles} WHERE rid IN (:exclude)', array(':exclude' => implode(',', array_keys($has_update_perms))))->fetchAllAssoc('uid');
+//
+//    foreach (array_keys($users_with_update_perms) as $uid) {
+//      if (!in_array($uid, $uids)) {
+//        $account = user_load($uid);
+//        if (node_access('update', $webform, $account)) {
+//          $uids = array_merge(array_values($uids), array($uid));
+//        }
+//      }
+//    }
+//  }
+
+  $uids = array_unique($uids);
+  return $uids;
+}
+
+//function fundraiser_ab_user_roles($permissions = array()) {
+//  $query = db_select('role', 'r');
+//  $query->addTag('translatable');
+//  $query->fields('r', array('rid', 'name'));
+//  $query->orderBy('weight');
+//  $query->orderBy('name');
+//  if (!empty($permissions)) {
+//    $query->innerJoin('role_permission', 'p', 'r.rid = p.rid');
+//    $query->condition('p.permission', $permissions, 'IN');
+//  }
+//  $result = $query->execute();
+//
+//  $roles = array();
+//  foreach ($result as $role) {
+//    switch ($role->rid) {
+//      case DRUPAL_ANONYMOUS_RID:
+//        break;
+//
+//      case DRUPAL_AUTHENTICATED_RID:
+//        $roles[$role->rid] = $role->name;
+//        break;
+//
+//      default:
+//        $roles[$role->rid] = $role->name;
+//    }
+//  }
+//
+//  return $roles;
+//}

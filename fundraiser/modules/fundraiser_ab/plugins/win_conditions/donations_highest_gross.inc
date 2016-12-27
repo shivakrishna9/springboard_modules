@@ -25,16 +25,27 @@ function fundraiser_ab_donations_highest_gross_config_summary($config) {
 /**
  * Returns the current value of this win condition.
  *
- * @param $webform_nid
+ * @param int $webform_nid
  *   Note ID for the webform being tested.
- * @param $node
+ * @param object $node
  *   The Node Object of the multivariate test node.
+ *
+ * @return int
+ *   1 if this form is highest grossing, 0 if not.
  */
 function fundraiser_ab_donations_highest_gross_current_value($webform_nid, $webform_details, $node) {
+  $first_hit_timestamp = 0;
+  if (variable_get('webform_ab_omit_prior_fundraiser', FALSE)) {
+    $first_hit_timestamp = fundraiser_ab_get_first_hit_in_test($node);
+    if (!$first_hit_timestamp) {
+      return 0;
+    }
+  }
+
   // Get total, currency-agnostic donation amount for the current webform:
-  $target_sum_donation = _fundraiser_ab_donations_highest_gross_get_sum_donation($webform_nid);
+  $target_sum_donation = _fundraiser_ab_donations_highest_gross_get_sum_donation($webform_nid, $webform_details, $node, $first_hit_timestamp);
   foreach ($node->included_webforms as $nid => $details) {
-    $this_sum_donation = _fundraiser_ab_donations_highest_gross_get_sum_donation($nid);
+    $this_sum_donation = _fundraiser_ab_donations_highest_gross_get_sum_donation($nid, $webform_details, $node, $first_hit_timestamp);
     if ($this_sum_donation > $target_sum_donation || ($target_sum_donation === 0 && $this_sum_donation === 0)) {
       return 0;
     }
@@ -43,11 +54,12 @@ function fundraiser_ab_donations_highest_gross_current_value($webform_nid, $webf
 }
 
 /**
- * Get the average donation amount in US for a given webform:
+ * Get the average donation amount in US for a given webform.
  */
-function _fundraiser_ab_donations_highest_gross_get_sum_donation($webform_nid) {
-  $amount_query = db_query("SELECT amount, currency FROM {fundraiser_donation} WHERE nid = :nid",
-    array(':nid' => $webform_nid));
+function _fundraiser_ab_donations_highest_gross_get_sum_donation($webform_nid, $webform_details, $node, $first_hit_timestamp) {
+  $excluded = implode(',', fundraiser_ab_get_omitted_users($webform_nid));
+  $amount_query = db_query("SELECT amount, currency FROM {fundraiser_donation} WHERE nid = :nid AND created > :first_hit AND uid NOT IN (:excluded)",
+    array(':nid' => $webform_nid, ':first_hit' => $first_hit_timestamp, ':excluded' => $excluded));
   $sum = 0;
   foreach ($amount_query as $result) {
     $currency_amount = $result->amount;

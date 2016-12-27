@@ -17,7 +17,7 @@ $plugin = array(
 );
 
 /**
- * Return the config options form for this win condition
+ * Return the config options form for this win condition.
  *
  * @param $current_config
  *   Array containing current config options (if set). Default values for form
@@ -37,7 +37,7 @@ function fundraiser_ab_donations_count_config($current_config) {
 }
 
 /**
- * Validate the config for this plugin
+ * Validate the config for this plugin.
  */
 function fundraiser_ab_donations_count_config_validate($config, $field_name_prefix) {
   if (!ctype_digit($config['donations']) || !($config['donations'] > 0)) {
@@ -48,12 +48,25 @@ function fundraiser_ab_donations_count_config_validate($config, $field_name_pref
 /**
  * Returns the current value this win condition is measuring for a given test.
  *
- * @param $webform_nid
+ * @param int $webform_nid
  *   Node ID of the webform currently being test.
+ *
+ * @return int
+ *   The row count, number of donations.
  */
-function fundraiser_ab_donations_count_current_value($webform_nid) {
-  return db_query("SELECT nid FROM {fundraiser_donation} WHERE nid = :webform_nid",
-    array(':webform_nid' => $webform_nid))
+function fundraiser_ab_donations_count_current_value($webform_nid, $webform_details, $node) {
+  // Skip this test if there aren't hits yet and that option is enabled.
+  $first_hit_timestamp = 0;
+  if (variable_get('webform_ab_omit_prior_fundraiser', FALSE)) {
+    $first_hit_timestamp = fundraiser_ab_get_first_hit_in_test($node);
+    if (!$first_hit_timestamp) {
+      return 0;
+    }
+  }
+  $excluded = implode(',', fundraiser_ab_get_omitted_users($webform_nid));
+  // Grab the number of donations.
+  return db_query("SELECT nid FROM {fundraiser_donation} WHERE nid = :webform_nid ANd created > :first_hit AND uid NOT IN (:excluded)",
+    array(':webform_nid' => $webform_nid, ':first_hit' => $first_hit_timestamp, ':excluded' => $excluded))
     ->rowCount();
 }
 

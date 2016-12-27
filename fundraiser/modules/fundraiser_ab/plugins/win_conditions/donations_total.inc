@@ -55,20 +55,36 @@ function fundraiser_ab_donations_total_config_summary($config) {
   return money_format('$%.2n', $config['donation_sum']);
 }
 
+
 /**
- * Returns the current value this win condition is measuring for a given test.
+ * Returns the current value for this test.
  *
- * @param $webform_nid
- *   Node ID of the webform currently being test.
+ * @param int $webform_nid
+ *   The webform nid.
+ * @param array $webform_details
+ *   Webform details.
+ * @param object $node
+ *   The AB test node.
+ *
+ * @return int
+ *   The sum of donations for this form since the test started.
  */
-function fundraiser_ab_donations_total_current_value($webform_nid) {
-  $sum = db_query("SELECT SUM(amount) FROM {fundraiser_donation} WHERE nid = :webform_nid",
-    array(':webform_nid' => $webform_nid))
-    ->fetchField();
-  if (!$sum) {
-    return 0;
+function fundraiser_ab_donations_total_current_value($webform_nid, $webform_details, $node) {
+
+  $first_hit_timestamp = 0;
+  if (variable_get('webform_ab_omit_prior_fundraiser', FALSE)) {
+    $first_hit_timestamp = fundraiser_ab_get_first_hit_in_test($node);
+    if (!$first_hit_timestamp) {
+      return 0;
+    }
   }
-  return $sum;
+  $excluded = implode(',', fundraiser_ab_get_omitted_users($webform_nid));
+
+  $sum = db_query("SELECT SUM(amount) FROM {fundraiser_donation} WHERE nid = :webform_nid AND created > :first_hit AND uid NOT IN (:excluded)",
+    array(':webform_nid' => $webform_nid, ':first_hit' => $first_hit_timestamp, ':excluded' => $excluded))
+    ->fetchField();
+
+  return !empty($sum) ? $sum : 0;
 }
 
 /**

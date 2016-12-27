@@ -3,7 +3,7 @@
 /**
  * @file
  * Provide a Multivariate Testing win condition: Minimum percentage of donations
- * that are from sustainers
+ * that are from sustainers.
  */
 
 // Plugin details
@@ -88,18 +88,35 @@ function fundraiser_ab_sustainers_percentage_prep_save(&$config) {
 }
 
 /**
- * Returns the current value this win condition is measuring for a given test.
+ * Returns the current value for this test.
  *
- * @param $webform_nid
- *   Node ID of the webform currently being test.
+ * @param int $webform_nid
+ *   The webform nid.
+ * @param array $webform_details
+ *   Webform details.
+ * @param object $node
+ *   The AB test node.
+ *
+ * @return int
+ *   The sustainers percentage for this form since the test started.
  */
-function fundraiser_ab_sustainers_percentage_current_value($webform_nid) {
-  $overall_donation_count = db_query("SELECT nid FROM {fundraiser_donation} d WHERE d.nid = :webform_nid",
-    array(':webform_nid' => $webform_nid))
+function fundraiser_ab_sustainers_percentage_current_value($webform_nid, $webform_details, $node) {
+  $first_hit_timestamp = 0;
+  if (variable_get('webform_ab_omit_prior_fundraiser', FALSE)) {
+    $first_hit_timestamp = fundraiser_ab_get_first_hit_in_test($node);
+    if (!$first_hit_timestamp) {
+      return 0;
+    }
+  }
+
+  $excluded = implode(',', fundraiser_ab_get_omitted_users($webform_nid));
+
+  $overall_donation_count = db_query("SELECT nid FROM {fundraiser_donation} d WHERE d.nid = :webform_nid AND d.created > :first_hit AND uid NOT IN (:excluded)",
+    array(':webform_nid' => $webform_nid, ':first_hit' => $first_hit_timestamp, ':excluded' => $excluded))
     ->rowCount();
   $sustainer_donation_count = db_query("SELECT nid FROM {fundraiser_donation} d, {fundraiser_sustainers} s " .
-    "WHERE d.did = s.master_did AND d.nid = :webform_nid",
-    array(':webform_nid' => $webform_nid))
+    "WHERE d.did = s.master_did AND d.nid = :webform_nid and d.created > :first_hit AND uid NOT IN (:excluded)",
+    array(':webform_nid' => $webform_nid, ':first_hit' => $first_hit_timestamp, ':excluded' => $excluded))
     ->rowCount();
   if (!$overall_donation_count) {
     return 0;

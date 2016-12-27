@@ -231,6 +231,25 @@ function webform_ab_schema() {
   return $schema;
 }
 
+
+function webform_ab_install() {
+  $roles = array(
+    'Administrator',
+    'Springboard administrator',
+    'Springboard editor',
+  );
+  $rids = array();
+  foreach ($roles as $role) {
+    if ($rid = array_search($role, user_roles())) {
+      $rids[$rid] = $rid;
+    }
+    else {
+      $rids[$rid] = 0;
+    }
+  }
+  variable_set('webform_ab_ignore_hits_from_roles', $rids);
+}
+
 /**
  * Implements hook_update_last_removed().
  */

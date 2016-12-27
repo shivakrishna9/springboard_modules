@@ -32,10 +32,10 @@ function fundraiser_ab_donations_highest_avg_config_summary($config) {
  */
 function fundraiser_ab_donations_highest_avg_current_value($webform_nid, $webform_details, $node) {
   // Get average, currency-agnostic donation amount for the current webform:
-  $target_average_donation = _fundraiser_ab_donations_highest_avg_get_average_donation($webform_nid);
+  $target_average_donation = _fundraiser_ab_donations_highest_avg_get_average_donation($webform_nid, $webform_details, $node);
 
   foreach ($node->included_webforms as $nid => $details) {
-    $this_avg_donation = _fundraiser_ab_donations_highest_avg_get_average_donation($nid);
+    $this_avg_donation = _fundraiser_ab_donations_highest_avg_get_average_donation($nid, $webform_details, $node);
     if ($this_avg_donation > $target_average_donation || ($this_avg_donation === 0 && $target_average_donation === 0)) {
       return 0;
     }
@@ -44,12 +44,21 @@ function fundraiser_ab_donations_highest_avg_current_value($webform_nid, $webfor
 }
 
 /**
- * Get the average donation amount in US for a given webform:
+ * Get the average donation amount in US for a given webform.
  */
-function _fundraiser_ab_donations_highest_avg_get_average_donation($webform_nid) {
-  $amount_query = db_query("SELECT amount, currency FROM {fundraiser_donation} WHERE nid = :nid",
-    array(':nid' => $webform_nid));
-  $sum = 0; $count = 0;
+function _fundraiser_ab_donations_highest_avg_get_average_donation($webform_nid, $webform_details, $node) {
+  $first_hit_timestamp = 0;
+  if (variable_get('webform_ab_omit_prior_fundraiser', FALSE)) {
+    $first_hit_timestamp = fundraiser_ab_get_first_hit_in_test($node);
+    if (!$first_hit_timestamp) {
+      return 0;
+    }
+  }
+  $excluded = implode(',', fundraiser_ab_get_omitted_users($webform_nid));
+  $amount_query = db_query("SELECT amount, currency FROM {fundraiser_donation} WHERE nid = :nid and created > :first_hit AND uid NOT IN (:excluded)",
+    array(':nid' => $webform_nid, ':first_hit' => $first_hit_timestamp, ':excluded' => $excluded));
+  $sum = 0;
+  $count = 0;
   foreach ($amount_query as $result) {
     $currency_amount = $result->amount;
     $currency_code = $result->currency;
@@ -60,6 +69,7 @@ function _fundraiser_ab_donations_highest_avg_get_average_donation($webform_nid)
     $sum += $currency_amount;
     $count++;
   }
+
   if ($count == 0) {
     return 0;
   }
