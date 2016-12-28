@@ -4,8 +4,10 @@
  * Fundraiser Commerce Cardonfile admin functions.
  */
 
+define('FUNDRAISER_COMMERCE_CARDONFILE_DONATION_ENTRIES_THRESHOLD', 50);
 define('FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD', 50);
-define('FUNDRAISER_COMMERCE_CARDONFILE_CARDS_LEFT_STATIC_NAME', 'fundraiser_commerce_cardonfile_admin_settings');
+define('FUNDRAISER_COMMERCE_CARDONFILE_DONATIONS_LEFT_STATIC_NAME', 'fundraiser_commerce_cardonfile_donations_left');
+define('FUNDRAISER_COMMERCE_CARDONFILE_CARDS_LEFT_STATIC_NAME', 'fundraiser_commerce_cardonfile_cards_left');
 
 /**
  * Admin settings form.
@@ -13,34 +15,36 @@ define('FUNDRAISER_COMMERCE_CARDONFILE_CARDS_LEFT_STATIC_NAME', 'fundraiser_comm
 function fundraiser_commerce_cardonfile_admin_settings($form, $form_state) {
   $number_unupdated_donations = _fundraiser_commerce_cardonfile_number_of_unupdated_donations();
 
-  $options = array(
-    '!n' => '<strong>' . $number_unupdated_donations . '</strong>',
-    '@message' => 'You can either use the following button to process all donations, or use this drush command:',
-    '!command' => '<code>drush fundraiser update</code>.<br/>',
-  );
-  if ($number_unupdated_donations >= FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
-    $options['@message'] = 'Since the number of donations without associated card ids is greater than the recommmended threshold for processing all donations, it is recommmended you process a set of donations at a time. You can either use the following buttons to process a set number of donations, all donations, or use the following drush command:';
-  }
-  $message = 'There are currently !n donations without associated card ids. @message !command';
-  if ($number_unupdated_donations == 1) {
-    $message = 'There is currently !n donation without an associated card id. @message !command';
-  }
-  $form['stats'] = array(
-    '#type' => 'markup',
-    '#markup' => t($message, $options),
-  );
-  if ($number_unupdated_donations >= FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
-    $form['process_set'] = array(
+  if ($number_unupdated_donations > 0) {
+    $options = array(
+      '!n' => '<strong>' . $number_unupdated_donations . '</strong>',
+      '@message' => 'You can either use the following button to process all donations, or use this drush command:',
+      '!command' => '<code>drush fundraiser update</code>.<br/>',
+    );
+    if ($number_unupdated_donations >= FUNDRAISER_COMMERCE_CARDONFILE_DONATION_ENTRIES_THRESHOLD) {
+      $options['@message'] = 'Since the number of donations without associated card ids is greater than the recommmended threshold for processing all donations, it is recommmended you process a set of donations at a time. You can either use the following buttons to process a set number of donations, all donations, or use the following drush command:';
+    }
+    $message = 'There are currently !n donations without associated card ids. @message !command';
+    if ($number_unupdated_donations == 1) {
+      $message = 'There is currently !n donation without an associated card id. @message !command';
+    }
+    $form['unupdated_donation_stats'] = array(
+      '#type' => 'markup',
+      '#markup' => t($message, $options),
+    );
+    if ($number_unupdated_donations >= FUNDRAISER_COMMERCE_CARDONFILE_DONATION_ENTRIES_THRESHOLD) {
+      $form['process_donation_set'] = array(
+        '#type' => 'submit',
+        '#value' => t('Process @n donations', array('@n' => FUNDRAISER_COMMERCE_CARDONFILE_DONATION_ENTRIES_THRESHOLD)),
+        '#submit' => array('_fundraiser_commerce_cardonfile_process_limited_donations'),
+      );
+    }
+    $form['process_donation_all'] = array(
       '#type' => 'submit',
-      '#value' => t('Process @n donations', array('@n' => FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD)),
-      '#submit' => array('_fundraiser_commerce_cardonfile_process_limited_donations'),
+      '#value' => t('Process all donations'),
+      '#submit' => array('_fundraiser_commerce_cardonfile_process_donations'),
     );
   }
-  $form['process_all'] = array(
-    '#type' => 'submit',
-    '#value' => t('Process all donations'),
-    '#submit' => array('_fundraiser_commerce_cardonfile_process_donations'),
-  );
 
   $form['fundraiser_commerce_cardonfile_patch_cardonfile'] = array(
     '#type' => 'checkbox',
@@ -49,7 +53,40 @@ function fundraiser_commerce_cardonfile_admin_settings($form, $form_state) {
     '#default_value' => variable_get('fundraiser_commerce_cardonfile_patch_cardonfile', TRUE),
   );
 
-  // $form['#submit'][] = '_fundraiser_commerce_cardonfile_patch_cardonfile';
+  if (variable_get('fundraiser_commerce_cardonfile_patch_cardonfile', TRUE)) {
+    $number_unupdated_cards = _fundraiser_commerce_cardonfile_number_of_unupdated_cards();
+    if ($number_unupdated_cards > 0) {
+      $options = array(
+        '!n' => '<strong>' . $number_unupdated_cards . '</strong>',
+        '@message' => 'You can either use the following button to process all donations, or use this drush command:',
+        '!command' => '<code>drush fundraiser update</code>.<br/>',
+      );
+      if ($number_unupdated_cards >= FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
+        $options['@message'] = 'Since the number of cards without associated addresses is greater than the recommmended threshold for processing all cards, it is recommmended you process a set of cards at a time. You can either use the following buttons to process a set number of cards, all cards, or use the following drush command:';
+      }
+      $message = 'There are currently !n cards without associated addresses. @message !command';
+      if ($number_unupdated_cards == 1) {
+        $message = 'There is currently !n card without an associated address id. @message !command';
+      }
+      $form['unupdated_card_stats'] = array(
+        '#type' => 'markup',
+        '#markup' => t($message, $options),
+      );
+    }
+
+    if ($number_unupdated_cards >= FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
+      $form['process_card_set'] = array(
+        '#type' => 'submit',
+        '#value' => t('Process @n cards', array('@n' => FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD)),
+        '#submit' => array('_fundraiser_commerce_cardonfile_process_limited_cards'),
+      );
+    }
+    $form['process_card_all'] = array(
+      '#type' => 'submit',
+      '#value' => t('Process all cards'),
+      '#submit' => array('_fundraiser_commerce_cardonfile_process_cards'),
+    );
+  }
 
   return system_settings_form($form);
 }
@@ -245,7 +282,7 @@ function _fundraiser_commerce_cardonfile_processed_donations($success, $results,
  * Utilify function to retrieve the number of unprocessed donations.
  */
 function _fundraiser_commerce_cardonfile_number_of_unupdated_donations() {
-  $number_unupdated_donations = &drupal_static(FUNDRAISER_COMMERCE_CARDONFILE_CARDS_LEFT_STATIC_NAME);
+  $number_unupdated_donations = &drupal_static(FUNDRAISER_COMMERCE_CARDONFILE_DONATIONS_LEFT_STATIC_NAME);
   if (!$number_unupdated_donations) {
     if (module_exists('fundraiser_sustainers')) {
       $number_unupdated_donations = db_query("SELECT COUNT(DISTINCT did) FROM {fundraiser_donation} WHERE card_id IS NULL AND status = 'payment_received' AND (did IN (SELECT master_did FROM {fundraiser_sustainers} GROUP BY master_did) OR did NOT IN (SELECT did FROM {fundraiser_sustainers}))")->fetchField();
@@ -255,4 +292,15 @@ function _fundraiser_commerce_cardonfile_number_of_unupdated_donations() {
     }
   }
   return $number_unupdated_donations;
+}
+
+/**
+ * Helper function to retrieve the number of cards that don't have addresses.
+ */
+function _fundraiser_commerce_cardonfile_number_of_unupdated_cards() {
+  $number_unupdated_cards = &drupal_static(FUNDRAISER_COMMERCE_CARDONFILE_CARDS_LEFT_STATIC_NAME);
+  if (!$number_unupdated_cards) {
+    $number_unupdated_cards = db_query("SELECT COUNT(DISTINCT card_id) FROM {commerce_cardonfile} WHERE card_id NOT IN (SELECT entity_id FROM {field_data_commerce_cardonfile_profile})")->fetchField();
+  }
+  return $number_unupdated_cards;
 }
