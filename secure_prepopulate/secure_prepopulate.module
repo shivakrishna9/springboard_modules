@@ -326,10 +326,8 @@ function secure_prepopulate_form_webform_client_form_alter(&$form, $form_state) 
       }
     }
   }
-  $quicksign_field = &_secure_prepopulate_find_field($form, $component_hierarchy['secure_prepop_autofill']);
-  $quicksign_field['#value'] = "1";
-  $quicksign_field['#default_value'] = "1";
-
+  $autofill_field = &_secure_prepopulate_find_field($form, $component_hierarchy['secure_prepop_autofilled']);
+  $autofill_field['#value'] = "1";
 }
 
 /**

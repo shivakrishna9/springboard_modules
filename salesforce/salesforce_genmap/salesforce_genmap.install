@@ -217,7 +217,7 @@ function salesforce_genmap_update_7003(&$sandbox) {
     // Set the map key based on the module name.
     $map_key = ($record['module'] == 'salesforce_donation') ? 'salesforce_webform_map' : 'webform_map';
 
-    $map->field_map[$map_key]['secure_prepop_autofill'] = 'Autofill__c';
+    $map->field_map[$map_key]['secure_prepop_autofilled'] = 'Autofilled__c';
 
     salesforce_genmap_save_map($map, $record['map_handler']);
 

@@ -17,7 +17,7 @@ function secure_prepopulate_insert_components($node) {
 
   $fields[] = array(
     'nid' => $node->nid,
-    'form_key' => 'secure_prepop_autofill',
+    'form_key' => 'secure_prepop_autofilled',
     'pid' => 0,
     'name' => t('Autofilled'),
     'type' => 'hidden',
