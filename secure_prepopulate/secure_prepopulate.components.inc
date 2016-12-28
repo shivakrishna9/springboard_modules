@@ -15,7 +15,7 @@
 function secure_prepopulate_insert_components($node) {
   module_load_include('inc', 'webform', 'includes/webform.components');
 
-  $fields[] = array(
+  $field = array(
     'nid' => $node->nid,
     'form_key' => 'secure_prepop_autofilled',
     'pid' => 0,
@@ -31,13 +31,8 @@ function secure_prepopulate_insert_components($node) {
   );
 
   // Add the component to the Webform.
-  foreach ($fields as $field) {
-    // Don't insert fields if cloning.
-    if (!isset($node->map) || (isset($node->map) && !in_array($field['form_key'], $node->map))) {
-      webform_component_insert($field);
-    }
+  // Don't insert field if cloning.
+  if (!isset($node->map) || (isset($node->map) && !in_array($field['form_key'], $node->map))) {
+    webform_component_insert($field);
   }
 }
-
-
-
