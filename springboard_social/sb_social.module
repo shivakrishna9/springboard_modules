@@ -824,8 +824,8 @@ function sb_social_token_info() {
  */
 function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
 
+  $replacements = array();
   if ($type == 'sb_social') {
-    $replacements = array();
     $node = !empty($data['node']) ? $data['node'] : FALSE;
     drupal_alter('sb_social_tokens_data', $node);
     if (!$node && arg(0) == 'node' && is_numeric(arg(1))) {
@@ -895,9 +895,8 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       $buttons = implode("\n", $buttons);
       $replacements['[sb_social:share_links]'] = $enabled_plugins ? theme('sb_social_share', array('buttons' => $buttons)) : '';
     }
-    return $replacements;
   }
-  return FALSE;
+  return $replacements;
 }
 
 /**
