@@ -962,23 +962,29 @@ function market_source_preprocess_webform_components_form(&$vars) {
   }
 }
 
-function market_source_node_load($nodes, $types)
-{
-  // Check that a webform's Campaign ID component has a default value set.
-  if (preg_match('/node\/[0-9]*?/', $_GET['q'])) { // only on node specific pages
-    foreach ($nodes as $nid => $node) {
-      // Only do this for the node which is being viewed/edited, if it is a fundraiser node, and if the active user has access to edit the node.
-      if (preg_match('/node\/' . $node->nid . '?/', $_GET['q']) &&  fundraiser_is_donation_type($node->type) && node_access('update', $node)) {
-        foreach($node->webform['components'] as $cid => $component) {
-          if($component['form_key'] == 'cid' && $component['value'] == "") {
-            drupal_set_message(t('This donation form is not associated with any Salesforce campaigns. It may not sync to Salesforce without a campaign association. Please go to !link and choose a campaign association.', array('!link' => l('Form Components', '/node/' . $node->nid . '/form-components'))), 'warning', FALSE);
-          }
-          else if ($component['form_key'] == 'cid') {
-            $campaigns = market_source_get_campaigns();
-            drupal_set_message(t('This donation form is associated with the Salesforce campaign: @name, ID: @id', array('@name' => $campaigns[$component['value']]['name'], '@id' => $component['value'])), 'status', FALSE);
+function market_source_node_load($nodes, $types) {
+  // If Salesforce is connected, check that the Campaign ID value has been set.
+  if (module_exists('salesforce')) {
+    $sf = salesforce_get_api();
+    if ($sf->isAuthorized()) {
+
+      // Check that a webform's Campaign ID component has a default value set.
+      if (preg_match('/node\/[0-9]*?/', $_GET['q'])) { // only on node specific pages
+        foreach ($nodes as $nid => $node) {
+          // Only do this for the node which is being viewed/edited, if it is a fundraiser node, and if the active user has access to edit the node.
+          if (preg_match('/node\/' . $node->nid . '?/', $_GET['q']) && fundraiser_is_donation_type($node->type) && node_access('update', $node)) {
+            foreach ($node->webform['components'] as $cid => $component) {
+              // If the value is set, create a status message informing the admin of the Campaign name and ID.
+              if ($component['form_key'] == 'cid' && $component['value'] == "") {
+                drupal_set_message(t('This donation form is not associated with any Salesforce campaigns. It may not sync to Salesforce without a campaign association. Please go to !link and choose a campaign association.', array('!link' => l('Form Components', '/node/' . $node->nid . '/form-components'))), 'warning', FALSE);
+              // If the value is not set, create a warning message advising the admin to set the value.
+              } else if ($component['form_key'] == 'cid') {
+                $campaigns = market_source_get_campaigns();
+                drupal_set_message(t('This donation form is associated with the Salesforce campaign: @name, ID: @id', array('@name' => $campaigns[$component['value']]['name'], '@id' => $component['value'])), 'status', FALSE);
+              }
+            }
           }
         }
-
       }
     }
   }
