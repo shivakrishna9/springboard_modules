@@ -114,9 +114,13 @@ function secure_prepopulate_update_7002(&$sandbox) {
         'pid' => 0,
         'name' => t('Autofilled'),
         'type' => 'hidden',
-        'value' => '',
-        'weight' => 30,
+        'value' => 0,
+        'weight' => 13,
         'email' => 1,
+        '#extra' => array(
+          'description' => '',
+          'hidden_type' => 'hidden',
+        ),
       );
       webform_component_insert($field);
     }

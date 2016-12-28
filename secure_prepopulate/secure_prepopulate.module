@@ -326,6 +326,10 @@ function secure_prepopulate_form_webform_client_form_alter(&$form, $form_state) 
       }
     }
   }
+  $quicksign_field = &_secure_prepopulate_find_field($form, $component_hierarchy['secure_prepop_autofill']);
+  $quicksign_field['#value'] = "1";
+  $quicksign_field['#default_value'] = "1";
+
 }
 
 /**
@@ -613,11 +617,11 @@ function pkcs5_unpad($text) {
  *
  * Add the autofill flag to forms.
  */
-function secure_propulate_node_insert($node) {
+function secure_prepopulate_node_insert($node) {
   $webform_node_types = variable_get('webform_node_types', array('webform'));
   if (in_array($node->type, $webform_node_types)) {
     // Adds some custom fields to new webforms.
-    module_load_include('inc', 'secure_prepopulate', 'includes/secure_prepopulate.components');
+    module_load_include('inc', 'secure_prepopulate', 'secure_prepopulate.components');
     secure_prepopulate_insert_components($node);
   }
 }

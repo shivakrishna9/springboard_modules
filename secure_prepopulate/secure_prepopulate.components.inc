@@ -24,14 +24,17 @@ function secure_prepopulate_insert_components($node) {
     'value' => 0,
     'weight' => 13,
     'email' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
   );
-
 
   // Add the component to the Webform.
   foreach ($fields as $field) {
     // Don't insert fields if cloning.
     if (!isset($node->map) || (isset($node->map) && !in_array($field['form_key'], $node->map))) {
-      $cid = webform_component_insert($field);
+      webform_component_insert($field);
     }
   }
 }
