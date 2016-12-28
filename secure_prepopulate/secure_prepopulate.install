@@ -88,7 +88,7 @@ function secure_prepopulate_update_7002(&$sandbox) {
     $sandbox['current_node'] = -1;
   }
 
-  $limit = 10;
+  $limit = 25;
 
   $nodes = db_select('webform', 'n')
     ->fields('n', array('nid'))
@@ -127,9 +127,6 @@ function secure_prepopulate_update_7002(&$sandbox) {
   }
 
   $sandbox['#finished'] = ($sandbox['progress'] >= $sandbox['max']) ? TRUE : ($sandbox['progress'] / $sandbox['max']);
-  $sandbox_status = $sandbox;
-  // Don't want them in the output.
-  unset($sandbox_status['messages']);
 
   if ($sandbox['#finished']) {
     return t('Autofill field has been added to existing webforms.');
