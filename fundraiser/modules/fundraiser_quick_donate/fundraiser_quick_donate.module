@@ -506,7 +506,7 @@ function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
   // Check if the expiration date changed. If it has and this is a recurring
   // series, we need to add the submission handler from the
   // fundraiser_sustainers module to the submission handler array.
-  if (module_exists('fundraiser_sustainers')) {
+  if (module_exists('fundraiser_sustainers') && property_exists($form_state['donation'], 'recurring')) {
     $exp_month_match = $form['payment_fields']['credit']['expiration_date']['card_expiration_month']['#default_value'] == $form_state['input']['payment_fields']['credit']['expiration_date']['card_expiration_month'];
     $exp_year_match = $form['payment_fields']['credit']['expiration_date']['card_expiration_year']['#default_value'] == $form_state['input']['payment_fields']['credit']['expiration_date']['card_expiration_year'];
     if (!$exp_month_match || !$exp_year_match) {
