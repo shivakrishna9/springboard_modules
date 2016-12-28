@@ -826,7 +826,7 @@ function commerce_sage_payments_eft_vault_cardonfile_charge($payment_method, $ca
   $sage_payments_config = _commerce_sage_payments_get_sage_payments_config($payment_method);
 
   // Per support@Sage all fields must be present in vault virtual check request
-  $request_parameters['C_ORIGINATOR_ID'] = $payment_method['settings']['commerce_sage_payments_settings_originator_id'];
+  $request_parameters['C_ORIGINATOR_ID'] = !empty($payment_method['settings']['commerce_sage_payments_settings_originator_id']) ? $payment_method['settings']['commerce_sage_payments_settings_originator_id'] : '0000000000';
   $request_parameters['C_MIDDLE_INITIAL'] = '';
   $request_parameters['C_SUFFIX'] = '';
   $request_parameters['C_EMAIL'] = $order->mail;
