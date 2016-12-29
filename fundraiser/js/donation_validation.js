@@ -76,12 +76,12 @@
             }
           },
           onfocusout: function (element) {
+            // Callback for real-time onfocusout of form elements.
+            var isValid = $(element).valid();
+
             if (typeof validateKeyCallback == 'undefined') {
               return;
             }
-
-            // Callback for real-time onfocusout of form elements.
-            var isValid = $(element).valid();
             if (isValid == 0) {
               // Set status to 0.
               validateKeyCallback.status = 0;
