@@ -84,16 +84,28 @@ function springboard_dw_menu() {
 function springboard_dw_log_queue_item($data) {
   // Check if watchdog logging is enabled.
   if (variable_get('springboard_dw_watchdog_enabled')) {
-
     $watchdog_string = '<pre>' . print_r($data, TRUE) . '</pre>';
     watchdog("data_warehouse", $watchdog_string);
   }
 }
 
 /**
- * Success hook for advocacy actions and submissions.
+ * Log to watchdog if data warehouse watchdog logging setting is enabled.
  *
- * Implements advocacy_hook_success()
+ * @param array $watchdog_string
+ *   A string to log to watchdog.
+ */
+function springboard_dw_watchdog_log($watchdog_string) {
+  // Check if watchdog logging is enabled.
+  if (variable_get('springboard_dw_watchdog_enabled')) {
+    watchdog("data_warehouse", $watchdog_string);
+  }
+}
+
+/**
+ * Implements hook_advocacy_success().
+ *
+ * Success hook for advocacy actions and submissions.
  *
  * @param object $node
  *   The node object supplied by the advocacy success hook.
@@ -281,19 +293,27 @@ function springboard_dw_fundraiser_donation_success($donation) {
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
 
-  // Queue the donation object which should not be in the queue,
-  // so there's no need to check if this item is warehoused.
-  $donation_item = springboard_dw_map_donation_item($donation);
+  // Check if the item is warehoused already and run an update instead of
+  // creating a new record (mainly applies to sustainer charge advancements)
+  $is_donation_update = springboard_dw_item_is_warehoused('donation', $donation->did);
 
-  // Create the queue item.
+  // Map the donation object
+  if(!$is_donation_update) {
+    $donation_item = springboard_dw_map_donation_item($donation,
+      $is_donation_update);
+  }
+  else {
+    $donation_item = springboard_dw_map_donation_sustainer_item
+    ($donation);
+  }
+
+  // Queue the item or flag it for updating.
   $queue->createItem($donation_item);
 
   // Log the queue item.
   springboard_dw_log_queue_item($donation_item);
 
-  springboard_dw_track_item_warehouse_queued('donation', $donation->did);
-
-  // Check if the transaction id exists
+  // Check if the transaction id exists and track payment if so.
   if (isset($donation_item['transaction_id'])) {
     // Get the transaction date from the commerce payment transaction
     $transaction = springboard_dw_transaction_get_by_id
@@ -308,8 +328,15 @@ function springboard_dw_fundraiser_donation_success($donation) {
     // Log the queue item.
     springboard_dw_log_queue_item($payment_item);
 
+    // Track the payment.
     springboard_dw_track_item_warehouse_queued('payment', $transaction['transaction_id']);
   }
+
+  // If this is not an update, track the item.
+  if(!$is_donation_update) {
+    springboard_dw_track_item_warehouse_queued('donation', $donation->did);
+  }
+
 }
 
 /**
@@ -632,6 +659,9 @@ function springboard_dw_fundraiser_sustainers_future_order_insert($created_donat
 
   // Log the queue item.
   springboard_dw_log_queue_item($donation_item);
+
+  // Track the future payment.
+  springboard_dw_track_item_warehouse_queued('donation', $created_donation->did);
 }
 
 /**
@@ -662,6 +692,9 @@ function springboard_dw_webform_submission_insert($node, $submission) {
 
     // Log the queue item.
     springboard_dw_log_queue_item($submission_item);
+
+    // Mark the item as queued.
+    springboard_dw_track_item_warehouse_queued('submission', $submission->sid);
   }
 }
 
@@ -706,6 +739,9 @@ function springboard_dw_webform_user_submission_insert($node, $submission, $acco
 
     // Log the queue item.
     springboard_dw_log_queue_item($submission_item);
+
+    // Mark the item as queued.
+    springboard_dw_track_item_warehouse_queued('submission', $submission->sid);
   }
 }
 
@@ -735,7 +771,7 @@ function springboard_dw_entity_insert($entity, $type) {
       springboard_dw_log_queue_item($sb_vendor_mapping_item);
 
       // Mark item as tracked.
-      springboard_dw_track_item_warehouse_queued('salesforce_sync', $entity->rmid);
+      springboard_dw_track_item_warehouse_queued('salesforce sync', $entity->rmid);
     }
   }
 }
@@ -805,6 +841,14 @@ function springboard_dw_map_submission_item($submission, $submitted_data) {
   $submission_item['device_name'] = $submitted_data['device_name'];
   $submission_item['device_os'] = $submitted_data['device_os'];
   $submission_item['device_browser'] = $submitted_data['device_browser'];
+
+  // Set the submission item extra props to an empty array, so we can merge
+  // in from $dw_extra_props.
+  $submission_item['extra_props'] = array();
+
+  // Set the DW extra props to an empty array, for merging
+  // in module extra props.
+  $dw_extra_props = array();
 
   // Extract extra props to add to the record if applicable.
   if (is_array($submitted_data)) {
@@ -906,6 +950,7 @@ function springboard_dw_map_advocacy_action_item($message_action) {
   $advocacy_item['device_name'] = $message_action->webform['device_name']['value'][0];
   $advocacy_item['device_os'] = $message_action->webform['device_os']['value'][0];
   $advocacy_item['device_browser'] = $message_action->webform['device_browser']['value'][0];
+  $advocacy_item['submission_id'] = $message_action->sid;
 
   // Legislative and organizational issues get added
   // as CSV strings if they exist.
@@ -942,8 +987,8 @@ function springboard_dw_map_advocacy_action_item($message_action) {
   $advocacy_item['legislative_issues'] = $legislative_issues;
   $advocacy_item['organization_issues'] = $organizational_issues;
 
-  $advocacy_item['created_at'] = $message_action->node->created;
-  $advocacy_item['updated_at'] = $message_action->node->changed;
+  $advocacy_item['created_at'] = springboard_dw_get_submission_timestamp($message_action->sid);
+  $advocacy_item['updated_at'] = $advocacy_item['created_at'];
 
   return $advocacy_item;
 }
@@ -1034,7 +1079,6 @@ function springboard_dw_map_petition_item($petition) {
  */
 function springboard_dw_map_petition_submission_item($petition,
                                                      $petition_unique_id) {
-
   // Get the Advocacy petition object details and prep
   // for warehousing (sb_action).
   $message_item = array();
@@ -1047,8 +1091,11 @@ function springboard_dw_map_petition_submission_item($petition,
   $message_item['subject'] = $petition->node->title;
   $message_item['body'] = '';
   $message_item['user_edited'] = '';
-  $message_item['created_at'] = $petition->node->created;
-  $message_item['updated_at'] = $petition->node->changed;
+  $message_item['created_at'] = springboard_dw_get_submission_timestamp($petition->sid);
+  $message_item['updated_at'] = $message_item['created_at'];
+  $message_item['contact_id'] = $petition->contact->uid;
+  $message_item['contact_email'] = $petition->contact->mail;
+  $message_item['submission_id'] = $petition->sid;
 
   $dw_extra_props = array();
 
@@ -1136,9 +1183,9 @@ function springboard_dw_map_donation_item($donation, $update = FALSE) {
   // Get the donation object details and prep for warehousing (sb_donation).
   $donation_item = array();
 
-  // If user data is being passed to update, flag this queue item for an update.
-  if (!empty($user_data) && $update == TRUE) {
-    $contact_item['queue_item_update'] = TRUE;
+  // Flag this queue item for an update.
+  if ($update == TRUE) {
+    $donation_item['queue_item_update'] = TRUE;
   }
 
   $donation_item['queue_type'] = 'donation';
@@ -1231,6 +1278,29 @@ function springboard_dw_map_donation_item($donation, $update = FALSE) {
 
   // Add the extra props to the field mapping
   $donation_item['extra_props'] = $dw_extra_props;
+
+  return $donation_item;
+}
+
+/**
+ * Map a charge advance item to a donation update.
+ * @param $donation
+ * @return array
+ */
+function springboard_dw_map_donation_sustainer_item($donation) {
+  // Get the donation object details and prep for warehousing (sb_donation).
+  $donation_item = array();
+
+  // Flag this queue item for an update.
+  $donation_item['queue_item_update'] = TRUE;
+
+  // Define the update properties
+  $donation_item['queue_type'] = 'donation';
+  $donation_item['donation_id'] = $donation->did;
+  $donation_item['status'] = $donation->status;
+  $donation_item['transaction_id'] = $donation->txn_id;
+  $donation_item['updated_at'] = time();
+  $donation_item['transaction_date'] = time();
 
   return $donation_item;
 }
@@ -1634,6 +1704,7 @@ function springboard_dw_extract_form_extra_props($form, $form_item) {
  */
 function springboard_dw_map_social_action_item($message, $action, $node,
                                                $action_unique_id) {
+
   // Get the Advocacy message object id and prep for warehousing (sb_message)
   $message_item = array();
   $message_item['queue_type'] = 'advocacy social action message';
@@ -1660,8 +1731,9 @@ function springboard_dw_map_social_action_item($message, $action, $node,
   $message_item['target_district_name'] = $message['targets']->district_name;
   $message_item['target_role'] = $message['targets']->role;
   $message_item['target_person_id'] = $message['targets']->person_id;
-  $message_item['created_at'] = date('U');
-  $message_item['updated_at'] = date('U');
+  $message_item['created_at'] = springboard_dw_get_submission_timestamp($action->sid);
+  $message_item['updated_at'] = $message_item['created_at'];
+  $message_item['submission_id'] = $action->sid;
 
   // Add the extra props attributes.
   $dw_extra_props = array();
@@ -2065,3 +2137,4 @@ function springboard_dw_vendor($item) {
 function springboard_dw_generate_queue_item_response($status_code) {
   return $status_code == 200 ? TRUE : FALSE;
 }
+

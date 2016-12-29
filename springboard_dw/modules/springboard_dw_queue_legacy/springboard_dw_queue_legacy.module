@@ -37,14 +37,12 @@ function springboard_dw_queue_legacy_form_springboard_dw_settings_form_alter(&$f
     '#type' => 'textfield',
     '#title' => t('Advocacy server url: (I.E https://advocacy.gospringboard.io or https://advocacy-staging.gospringboard.io)'),
     '#default_value' => variable_get('springboard_dw_advocacy_api_endpoint', NULL),
-    '#required' => TRUE,
   );
 
   $form['springboard_dw_queue_legacy']['springboard_dw_advocacy_authentication_token'] = array(
     '#type' => 'textfield',
     '#title' => t('Advocacy server authentication token'),
     '#default_value' => variable_get('springboard_dw_advocacy_authentication_token', NULL),
-    '#required' => TRUE,
   );
 }
 
@@ -162,20 +160,35 @@ function springboard_dw_queue_legacy_dashboard() {
 }
 
 function springboard_dw_queue_legacy_get_dw_totals() {
+  // Return early if the API info has not been configured.
+  $endpoint = variable_get('springboard_dw_api_endpoint', NULL);
+  $token = variable_get('springboard_dw_authentication_token', NULL);
+  if (empty($endpoint) || empty($token)) {
+    return array();
+  }
   $token = variable_get('springboard_dw_authentication_token');
-  $data = json_decode(drupal_http_request('https://dw.gospringboard.io/report/submissions?authenticationToken=' . $token . '&jsonReturn=true')->data, TRUE);
+  $data = json_decode(drupal_http_request($endpoint . '/report/submissions?authenticationToken=' . $token . '&jsonReturn=true')->data, TRUE);
   ksort($data);
   return $data;
 }
 
 function springboard_dw_queue_legacy_get_advocacy_messages_count() {
+  // Return early if the API info has not been configured.
+  $endpoint = variable_get('springboard_dw_advocacy_api_endpoint', NULL);
+  $token = variable_get('springboard_dw_advocacy_authentication_token', NULL);
+  if (empty($endpoint) || empty($token)) {
+    return 0;
+  }
   $advocacy_action_records = db_query("SELECT nid FROM {node} WHERE type = 'sba_message_action' OR type = 'sba_social_action' ORDER BY created ASC", array(), array('target' => 'slave'))->fetchAll();
   $total = 0;
   foreach ($advocacy_action_records as $advocacy_action_record) {
     $node = node_load($advocacy_action_record->nid);
-    $node->advocacy_id;
-    $data = json_decode(drupal_http_request(variable_get('springboard_dw_advocacy_api_endpoint') . '/api/v1/messages/get/' . $node->advocacy_id . '?access_token=' . variable_get('springboard_dw_advocacy_authentication_token'))->data, TRUE);
-    $total += $data['total'];
+    if (isset($node->advocacy_id)) {
+      $data = json_decode(drupal_http_request($endpoint . '/api/v1/messages/get/' . $node->advocacy_id . '?access_token=' . $token)->data, TRUE);
+      if (isset($data['total'])) {
+        $total += $data['total'];
+      }
+    }
   }
   return $total;
 }
