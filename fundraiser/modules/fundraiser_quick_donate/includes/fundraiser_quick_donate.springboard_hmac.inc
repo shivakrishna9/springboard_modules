@@ -277,6 +277,11 @@ function fundraiser_quick_donate_springboard_hmac_verify_payload($payload) {
     return;
   }
 
+  // Require a non-logged-in user to match the Springboard cookie.
+  if ($failure = springboard_hmac_verify_user_cookie($payload)) {
+    return $failure;
+  }
+
   $payload = _fundraiser_quick_donate_hmac_mapping($payload);
   // If the card id isn't available or doesn't belong to the user we can't
   // continue.
