@@ -207,7 +207,7 @@ function fundraiser_quick_donate_form_has_gateway($nid, $gateway_id) {
   if ($gateways) {
     $gateways = unserialize($gateways);
     foreach ($gateways as $gateway) {
-      if ($gateway['id'] == $gateway_id) {
+      if (!empty($gateway['id']) && $gateway['id'] == $gateway_id) {
         return TRUE;
       }
     }
