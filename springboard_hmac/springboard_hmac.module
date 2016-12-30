@@ -139,6 +139,15 @@ function springboard_hmac_verify($payload, $hmac) {
   // unaltered and we can continue.
   if ($hmac != $verification_hmac) {
     $reason = t('Authentication failed. Tokens do not match.');
+    // Assume nefarious activies. Log the user out if they're logged in.
+    if (user_is_logged_in()) {
+      // Copy of `user_logout_current_user` which is only available for 7.50+.
+      global $user;
+      watchdog('user', 'Session closed for %name.', array('%name' => $user->name));
+      module_invoke_all('user_logout', $user);
+      // Destroy the current session, and reset $user to the anonymous user.
+      session_destroy();
+    }
     //springboard_hmac_save($hmac);
     return springboard_hmac_failure($reason, $parsed_payload);
   }
