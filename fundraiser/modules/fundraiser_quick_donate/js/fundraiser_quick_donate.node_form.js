@@ -86,9 +86,7 @@
       };
 
       $quickdonate.find('input[type=checkbox]').on('change', function() {
-        if ($(this).is(':checked')) {
-          wasChecked = true;
-        }
+        wasChecked = $(this).is(':checked');
       });
 
       $gateways['credit'].add('#edit-gateways-credit-status').add('#edit-gateways-credit-id').on('change', function() {
