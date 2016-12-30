@@ -64,7 +64,7 @@
         }
 
         if (!$gateways_enabled.credit || ($gateways_enabled.credit && !gateway_available.credit)) {
-          $quickdonate.find('input[type=checkbox]').attr('disabled', 'disabled');
+          $quickdonate.find('input[type=checkbox]').attr('checked', false).attr('disabled', 'disabled');
           $quickdonate.nextAll('.form-item, .form-wrapper').hide();
           $('#edit-quickdonate-message-container').hide();
           $note.show();
