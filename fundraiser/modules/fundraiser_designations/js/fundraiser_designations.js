@@ -389,7 +389,7 @@
       else {
         var MinAmt = parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount);
         if (amtFloat < MinAmt) {
-          message += ' Below the minumum amount.'
+          message += ' Below the minimum amount.'
         }
       }
     }
