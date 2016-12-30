@@ -394,44 +394,51 @@ function _fundraiser_quick_donate_check_qd_default($form, $form_state) {
     return;
   }
 
+  $cardonfile_fields = array(
+    'card_number' => substr($values['credit_card']['number'], -4),
+    'card_exp_month' => $values['credit_card']['exp_month'],
+    'card_exp_year' => $values['credit_card']['exp_year'],
+  ) + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
+
+  $new_card = _fundraiser_commerce_cardonfile_match($cardonfile_fields, TRUE);
+
+  if (empty($new_card)) {
+    return;
+  }
+
+  fundraiser_quick_donate_opt_out_card($donation->uid, $new_card->card_id);
+
   // If the card number has changed, we need to check if the card was QD enabled
   // and if so, set the new card to QD enabled and disable the old one.
   $qd = db_query('SELECT * FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND uid = :uid AND status = 1', array(
     ':card_id' => $card->card_id,
     ':uid' => $values['uid'],
   ))->fetch();
+
   if (empty($qd)) {
     return;
   }
 
-  $cardonfile_fields = array(
-    'card_number' => substr($values['credit_card']['number'], -4),
-    'card_exp_month' => $values['credit_card']['exp_month'],
-    'card_exp_year' => $values['credit_card']['exp_year'],
-  ) + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
-  $new_card = _fundraiser_commerce_cardonfile_match($cardonfile_fields, TRUE);
-  if (!empty($new_card)) {
-    db_update('fundraiser_quick_donate_cardonfile')
-      ->fields(array(
-        'status' => 0,
-      ))
-      ->condition('card_id', $card->card_id, '=')
-      ->execute();
-    db_merge('fundraiser_quick_donate_cardonfile')
-      ->key(array('card_id' => $new_card->card_id))
-      ->fields(array(
-        'status' => 1,
-        'uid' => $donation->uid,
-        'optin_date' => $qd->optin_date,
-        'did' => $qd->did,
-        'ms' => $qd->ms,
-        'cid' => $qd->cid,
-        'nid' => $qd->nid,
-        'gateway' => $donation->gateway['id'],
-      ))
-      ->condition('card_id', $new_card->card_id, '=')
-      ->execute();
-  }
+  db_update('fundraiser_quick_donate_cardonfile')
+    ->fields(array(
+      'status' => 0,
+    ))
+    ->condition('card_id', $card->card_id, '=')
+    ->execute();
+  db_merge('fundraiser_quick_donate_cardonfile')
+    ->key(array('card_id' => $new_card->card_id))
+    ->fields(array(
+      'status' => 1,
+      'uid' => $donation->uid,
+      'optin_date' => $qd->optin_date,
+      'did' => $qd->did,
+      'ms' => $qd->ms,
+      'cid' => $qd->cid,
+      'nid' => $qd->nid,
+      'gateway' => $donation->gateway['id'],
+    ))
+    ->condition('card_id', $new_card->card_id, '=')
+    ->execute();
 }
 
 /**
