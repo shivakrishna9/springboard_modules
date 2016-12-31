@@ -387,11 +387,12 @@ function fundraiser_quick_donate_fundraiser_update_billing_form_postprocess($for
  */
 function _fundraiser_quick_donate_check_qd_default($form, $form_state) {
   $donation = $form_state['donation'];
-  $card = $form_state['card'];
+  $old_card = $values['cardonfile']['old_card'];
+  $card = $values['cardonfile']['card'];
   $values = $form_state['values'];
 
   // If the card number is the same, don't do anything.
-  if ($card->card_number == $values['credit_card']['number'] || $card->card_number == substr($values['credit_card']['number'], -4)) {
+  if ($old_card->card_number == $card->card_number) {
     return;
   }
 
@@ -440,7 +441,7 @@ function _fundraiser_quick_donate_check_qd_default($form, $form_state) {
     ->execute();
 
   $user = user_load($donation->uid);
-  module_invoke_all('fundraiser_quick_donate_optin_update', $user, $donation, $card->card_id, $new_card->card_id);
+  module_invoke_all('fundraiser_quick_donate_optin_update', $user, $donation, $old_card->card_id, $new_card->card_id);
 }
 
 /**
@@ -512,9 +513,12 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
  * @see fundraiser_update_billing_form()
  */
 function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
+  $values = $form_state['values'];
+  $card = $form_state['card'];
+
   // If the card number is different, don't do anything, and let the other
   // submission handler handle this.
-  if ($card->card_number != $values['credit_card']['number'] || $card->card_number != substr($values['credit_card']['number'], -4)) {
+  if ($values['cardonfile']['old_card']->card_number != $values['cardonfile']['card']->card_number) {
     return;
   }
 
@@ -530,7 +534,6 @@ function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
     }
   }
 
-  $values = $form_state['values'];
   $payment_fields = $values['payment_fields'];
   $payment_method = $values['payment_method'];
 

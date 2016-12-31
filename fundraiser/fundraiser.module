@@ -4027,6 +4027,8 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($f
   }
   $card->instance_default = $form_state['values']['credit_card']['cardonfile_instance_default'];
 
+  $form_state['values']['cardonfile']['old_card'] = clone $card;
+
   // Invoke the payment method's card create/update callback.
   $payment_method = commerce_payment_method_instance_load($card->instance_id);
   $callback = $payment_method['cardonfile'][$op . ' callback'];
@@ -4055,7 +4057,6 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($f
 
       commerce_cardonfile_save($card_save);
       drupal_set_message($confirm_message);
-      $form_state['values']['cardonfile']['old_card'] = clone $card;
       $form_state['values']['cardonfile']['card'] = $card_save;
       $success = TRUE;
     }
