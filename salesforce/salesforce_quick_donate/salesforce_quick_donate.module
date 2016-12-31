@@ -40,20 +40,20 @@ function salesforce_quick_donate_fundraiser_quick_donate_optout($card_id, $uid) 
  * Implements hook_fundraiser_quick_donate_update_card().
  */
 function salesforce_quick_donate_fundraiser_quick_donate_update_card($account, $donation, $card_id) {
-  salesforce_quick_donate_optin($account, $donation, $card_id, 'UPDATE');
+  salesforce_quick_donate_queue_subscription_item($account, $donation, $card_id, 'UPDATE');
 }
 
 /**
  * Generates and queues a new quick donate subscription object.
  */
 function salesforce_quick_donate_optin($account, $donation, $card_id) {
-  salesforce_quick_donate_optin($account, $donation, $card_id);
+  salesforce_quick_donate_queue_subscription_item($account, $donation, $card_id);
 }
 
 /**
  * Generates and queues a new quick donate subscription object.
  */
-function salesforce_quick_donate_create_subscription_object($account, $donation, $card_id, $operation = 'CREATE') {
+function salesforce_quick_donate_queue_subscription_item($account, $donation, $card_id, $operation = 'CREATE') {
   $card_on_file = commerce_cardonfile_load($card_id);
 
   // Create a quick donate subscription object and queue it up.
