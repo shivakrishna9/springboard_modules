@@ -607,7 +607,7 @@ function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
 
   if (!empty($did)) {
     $donation = fundraiser_donation_get_donation($did);
-    module_invoke_all('fundraiser_quick_donate_optin_create', $user, $donation, $form_state['card']->card_id);
+    module_invoke_all('fundraiser_quick_donate_card_update', $user, $donation, $form_state['card']->card_id);
   }
 }
 

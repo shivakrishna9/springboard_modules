@@ -24,7 +24,7 @@ function salesforce_quick_donate_salesforce_genmap_map_fields_alter(&$fields, $c
   if ($context['module'] == 'salesforce_donation') {
     // Add the card on file id to the opportunity if it was a quick donate transaction.
     if (isset($context['object']->data['is_quick_donate'])) {
-      $fields['Quick_Donate_Token_Id__c'] = $context['object']->data['cardonfile'];  
+      $fields['Quick_Donate_Token_Id__c'] = $context['object']->data['cardonfile'];
     }
   }
 }
@@ -32,14 +32,28 @@ function salesforce_quick_donate_salesforce_genmap_map_fields_alter(&$fields, $c
 /**
  * Implements hook_fundraiser_quick_donate_optout().
  */
-function salesforce_fundraiser_quick_donate_optout($card_id, $uid) {
+function salesforce_quick_donate_fundraiser_quick_donate_optout($card_id, $uid) {
   salesforce_quick_donate_optout($card_id);
+}
+
+/**
+ * Implements hook_fundraiser_quick_donate_update_card().
+ */
+function salesforce_quick_donate_fundraiser_quick_donate_update_card($account, $donation, $card_id) {
+  salesforce_quick_donate_optin($account, $donation, $card_id, 'UPDATE');
 }
 
 /**
  * Generates and queues a new quick donate subscription object.
  */
 function salesforce_quick_donate_optin($account, $donation, $card_id) {
+  salesforce_quick_donate_optin($account, $donation, $card_id);
+}
+
+/**
+ * Generates and queues a new quick donate subscription object.
+ */
+function salesforce_quick_donate_create_subscription_object($account, $donation, $card_id, $operation = 'CREATE') {
   $card_on_file = commerce_cardonfile_load($card_id);
 
   // Create a quick donate subscription object and queue it up.
@@ -68,7 +82,7 @@ function salesforce_quick_donate_optin($account, $donation, $card_id) {
     'module' => 'salesforce_quick_donate',
     'delta' => 'commerce_cardonfile',
     'object_type' => 'Quick_Donate_Subscription__c',
-    'operation' => 'CREATE',
+    'operation' => $operation,
     'sobject' => $sobject,
   );
 
@@ -104,7 +118,7 @@ function salesforce_quick_donate_optout($card_id) {
   // Only queue these up if they've actually been exported.
   if (salesforce_sync_load_map($item)) {
     _salesforce_genmap_alter_operation($item);
-    $result = $queue->createItem($item);  
+    $result = $queue->createItem($item);
   }
   else {
     // If the initial opt-in never exported. Delete it from the
