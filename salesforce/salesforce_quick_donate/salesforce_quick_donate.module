@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Module file for salesforce_quick_donate.
+ */
 
 /**
  * Implements hook_fundraiser_quick_donate_optin_create().
@@ -13,8 +17,8 @@ function salesforce_quick_donate_fundraiser_quick_donate_optin_create($account, 
 function salesforce_quick_donate_fundraiser_quick_donate_optin_update($account, $donation, $old_card_id, $new_card_id) {
   // When an optin is updated, e.g., the current card is replaced.
   // Add a new quick donate subscription object and opt out of the old one.
-  salesforce_quick_donate_optin($account, $donation, $new_card_id);
   salesforce_quick_donate_optout($old_card_id);
+  salesforce_quick_donate_optin($account, $donation, $new_card_id);
 }
 
 /**
@@ -22,7 +26,8 @@ function salesforce_quick_donate_fundraiser_quick_donate_optin_update($account, 
  */
 function salesforce_quick_donate_salesforce_genmap_map_fields_alter(&$fields, $context) {
   if ($context['module'] == 'salesforce_donation') {
-    // Add the card on file id to the opportunity if it was a quick donate transaction.
+    // Add the card on file id to the opportunity if it was a quick donate
+    // transaction.
     if (isset($context['object']->data['is_quick_donate'])) {
       $fields['Quick_Donate_Token_Id__c'] = $context['object']->data['cardonfile'];
     }
@@ -91,10 +96,9 @@ function salesforce_quick_donate_queue_subscription_item($account, $donation, $c
 }
 
 /**
- * Sends an update to an existing quick donate subscription
- * setting the opt-out date.
+ * Sends an update to an existing QD subscription setting opt-out date.
  *
- * @param $card_id
+ * @param int $card_id
  *   The id of the card being opted out of.
  */
 function salesforce_quick_donate_optout($card_id) {
@@ -123,6 +127,6 @@ function salesforce_quick_donate_optout($card_id) {
   else {
     // If the initial opt-in never exported. Delete it from the
     // queue because there is nothing to update.
-    $queue->deleteItem((object)$item);
+    $queue->deleteItem((object) $item);
   }
 }

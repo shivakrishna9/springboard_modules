@@ -512,6 +512,12 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
  * @see fundraiser_update_billing_form()
  */
 function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
+  // If the card number is different, don't do anything, and let the other
+  // submission handler handle this.
+  if ($card->card_number != $values['credit_card']['number'] || $card->card_number != substr($values['credit_card']['number'], -4)) {
+    return;
+  }
+
   // Check if the expiration date changed. If it has and this is a recurring
   // series, we need to add the submission handler from the
   // fundraiser_sustainers module to the submission handler array.
