@@ -386,10 +386,10 @@ function fundraiser_quick_donate_fundraiser_update_billing_form_postprocess($for
  * Submit handler to check if the quick donate card needs to be updated.
  */
 function _fundraiser_quick_donate_check_qd_default($form, $form_state) {
+  $values = $form_state['values'];
   $donation = $form_state['donation'];
   $old_card = $values['cardonfile']['old_card'];
   $card = $values['cardonfile']['card'];
-  $values = $form_state['values'];
 
   // If the card number is the same, don't do anything.
   if ($old_card->card_number == $card->card_number) {
