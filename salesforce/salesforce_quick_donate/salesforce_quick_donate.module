@@ -100,8 +100,8 @@ function salesforce_quick_donate_queue_subscription_item($account, $donation, $c
 
   $queue = salesforce_queue_load();
   if ($optout) {
-    $sobject->fields['Deactivation_Date__c'] = time();
-    $sobject->fields['Default_Payment_Method__c'] = FALSE;
+    $sobject->fields['Deactivation_Date__c'] = "" . time();
+    $sobject->fields['Default_Payment_Method__c'] = "0";
     $sobject = new stdClass();
 
     $existing_item = $item;
