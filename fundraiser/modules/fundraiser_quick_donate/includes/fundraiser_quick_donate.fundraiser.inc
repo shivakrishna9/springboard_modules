@@ -409,10 +409,10 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
     }
   }
 
-  // Does the user already have a default quick donate card
+  // Does the user already have a default quick donate card?
   $is_card_replacement = FALSE;
   $existing_quick_donate_card_id = fundraiser_quick_donate_get_default_card($account->uid);
-  if ($card_id != $existing_quick_donate_card_id) {
+  if (!empty($existing_quick_donate_card_id) && $card_id != $existing_quick_donate_card_id) {
     $is_card_replacement = TRUE;
   }
 
@@ -431,9 +431,9 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
     ))
     ->execute();
 
-  $existing_card = commerce_cardonfile_load($existing_quick_donate_card_id);
   $card = commerce_cardonfile_load($card_id);
-  if ($is_card_replacement) {
+  if (!empty($existing_quick_donate_card_id) && $is_card_replacement) {
+    $existing_card = commerce_cardonfile_load($existing_quick_donate_card_id);
     module_invoke_all('fundraiser_quick_donate_optin_update', $account, $donation, $existing_card, $card);
   }
   else {
