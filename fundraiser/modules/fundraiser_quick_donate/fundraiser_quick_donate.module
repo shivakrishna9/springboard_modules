@@ -441,7 +441,7 @@ function _fundraiser_quick_donate_check_qd_default($form, $form_state) {
     ->execute();
 
   $user = user_load($donation->uid);
-  module_invoke_all('fundraiser_quick_donate_optin_update', $user, $donation, $old_card->card_id, $new_card->card_id);
+  module_invoke_all('fundraiser_quick_donate_optin_update', $user, $donation, $old_card, $new_card);
 }
 
 /**
@@ -616,7 +616,7 @@ function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
 
   if (!empty($did)) {
     $donation = fundraiser_donation_get_donation($did);
-    module_invoke_all('fundraiser_quick_donate_update_card', $user, $donation, $form_state['card']->card_id);
+    module_invoke_all('fundraiser_quick_donate_update_card', $user, $donation, $card);
   }
 }
 
@@ -661,8 +661,9 @@ function fundraiser_quick_donate_opt_out_card($uid, $card_id) {
       ),
     );
     user_save($account);
+    $card = commerce_cardonfile_load($card_id);
     // Invoke quick donate opt-out hook.
-    module_invoke_all('fundraiser_quick_donate_optout', $account, $card_id);
+    module_invoke_all('fundraiser_quick_donate_optout', $account, $card);
   }
 }
 
@@ -695,7 +696,8 @@ function fundraiser_quick_donate_entity_delete($entity, $type) {
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * Remove the Quick Donate Opt In and Opt Out fields from appearing on the user edit form.
+ * Remove the Quick Donate Opt In and Opt Out fields from appearing on the user
+ * edit form.
  */
 function fundraiser_quick_donate_form_user_profile_form_alter(&$form, $form_state) {
   unset($form['field_quick_donate_opt_in']);
