@@ -102,14 +102,11 @@ function salesforce_quick_donate_queue_subscription_item($account, $donation, $c
   if ($optout) {
     $sobject->fields['Deactivation_Date__c'] = "" . time();
     $sobject->fields['Default_Payment_Method__c'] = "0";
-    $sobject = new stdClass();
-
-    $existing_item = $item;
-    $item['delta'] = 'commerce_cardonfile_optout';
 
     // Only queue these up if they've actually been exported.
-    if (salesforce_sync_load_map($existing_item)) {
+    if (salesforce_sync_load_map($item)) {
       _salesforce_genmap_alter_operation($item);
+      $item['delta'] = 'commerce_cardonfile_optout';
       $result = $queue->createItem($item);
     }
     else {
