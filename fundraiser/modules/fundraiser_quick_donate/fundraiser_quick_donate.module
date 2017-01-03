@@ -662,7 +662,7 @@ function fundraiser_quick_donate_opt_out_card($uid, $card_id) {
     );
     user_save($account);
     // Invoke quick donate opt-out hook.
-    module_invoke_all('fundraiser_quick_donate_optout', $card_id, $uid);
+    module_invoke_all('fundraiser_quick_donate_optout', $account, $card_id);
   }
 }
 

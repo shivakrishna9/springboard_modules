@@ -37,9 +37,8 @@ function salesforce_quick_donate_salesforce_genmap_map_fields_alter(&$fields, $c
 /**
  * Implements hook_fundraiser_quick_donate_optout().
  */
-function salesforce_quick_donate_fundraiser_quick_donate_optout($card_id, $uid) {
-  $user = user_load($uid);
-  salesforce_quick_donate_optout($user, $card_id);
+function salesforce_quick_donate_fundraiser_quick_donate_optout($account, $card_id) {
+  salesforce_quick_donate_queue_subscription_item($account, $donation, $card_id, 'UPDATE', TRUE);
 }
 
 /**
@@ -59,7 +58,14 @@ function salesforce_quick_donate_optin($account, $donation, $card_id) {
 /**
  * Generates and queues a new quick donate subscription object.
  */
-function salesforce_quick_donate_queue_subscription_item($account, $donation, $card_id, $operation = 'CREATE') {
+function salesforce_quick_donate_optout($account, $donation, $card_id) {
+  salesforce_quick_donate_queue_subscription_item($account, $donation, $card_id, 'UPDATE', TRUE);
+}
+
+/**
+ * Generates and queues a new quick donate subscription object.
+ */
+function salesforce_quick_donate_queue_subscription_item($account, $donation, $card_id, $operation = 'CREATE', $optout = FALSE) {
   $card_on_file = commerce_cardonfile_load($card_id);
 
   // Create a quick donate subscription object and queue it up.
@@ -83,6 +89,11 @@ function salesforce_quick_donate_queue_subscription_item($account, $donation, $c
     'Donation_Form_Name__c' => $donation->node->title,
   );
 
+  if ($optout) {
+    $sobject->fields['Deactivation_Date__c'] = time();
+    $sobject->fields['Default_Payment_Method__c'] => FALSE;
+  }
+
   $item = array(
     'drupal_id' => $card_id,
     'module' => 'salesforce_quick_donate',
@@ -94,46 +105,4 @@ function salesforce_quick_donate_queue_subscription_item($account, $donation, $c
 
   $queue = salesforce_queue_load();
   $result = $queue->createItem($item);
-}
-
-/**
- * Sends an update to an existing QD subscription setting opt-out date.
- *
- * @param object $account
- *   The account owning the card.
- * @param int $card_id
- *   The id of the card being opted out of.
- */
-function salesforce_quick_donate_optout($account, $card_id) {
-  $sobject = new stdClass();
-  $sobject->type = 'Quick_Donate_Subscription__c';
-  $sobject->fields = array(
-    'Deactivation_Date__c' => time(),
-    'Default_Payment_Method__c' => FALSE,
-    'Contact__c' => sprintf('[Contact:user:%d]', $account->uid),
-  );
-
-  $item = array(
-    'drupal_id' => $card_id,
-    'module' => 'salesforce_quick_donate',
-    'delta' => 'commerce_cardonfile_optout',
-    'object_type' => 'Quick_Donate_Subscription__c',
-    'operation' => 'CREATE',
-    'sobject' => $sobject,
-  );
-
-  $existing_item = $item;
-  $existing_item['delta'] = 'commerce_cardonfile';
-
-  $queue = salesforce_queue_load();
-  // Only queue these up if they've actually been exported.
-  if (salesforce_sync_load_map($existing_item)) {
-    _salesforce_genmap_alter_operation($item);
-    $result = $queue->createItem($item);
-  }
-  else {
-    // If the initial opt-in never exported. Delete it from the
-    // queue because there is nothing to update.
-    $queue->deleteItem((object) $item);
-  }
 }
