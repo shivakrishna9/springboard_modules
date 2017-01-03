@@ -896,7 +896,7 @@ function salesforce_donation_form_commerce_order_ui_order_form_alter(&$form, $fo
     '#weight' => isset($form['commerce_line_items']['#weight']) ? $form['commerce_line_items']['#weight'] : -100,
   );
 
-  array_unshift($form['actions']['submit']['#submit'], '_salesforce_donation_form_commerce_order_ui_order_form_alter_submit');
+  $form['actions']['submit']['#submit'][] = '_salesforce_donation_form_commerce_order_ui_order_form_alter_submit';
 }
 
 /**
