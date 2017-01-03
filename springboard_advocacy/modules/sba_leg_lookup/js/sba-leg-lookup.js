@@ -11,6 +11,7 @@
    */
   Drupal.behaviors.SbaLegLookup = {
     attach: function (context, settings) {
+      $('#sba-legislators').once('toggle-processed', function() {
       $('.leg-lookup-show').each(function () {
         console.log(this);
         $(this).click(function () {
@@ -26,6 +27,7 @@
           }
           return false;
         });
+      });
       });
     }
   };

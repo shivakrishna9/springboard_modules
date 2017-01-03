@@ -16,6 +16,7 @@ function sba_leg_lookup_block_info() {
 
 /**
  * Implements hook_block_configure().
+ *
  */
 function sba_leg_lookup_block_configure($delta, $edit = array()) {
   $form = array();
