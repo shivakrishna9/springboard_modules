@@ -15,60 +15,159 @@ function sba_leg_lookup_legislator_lookup($delta, $mb_delta) {
 /**
  * Theme function to render list of legislators.
  */
-function theme_sba_leg_lookup_legislators($variables) {
+function sba_leg_lookup_preprocess_sba_leg_lookup_legislators(&$vars) {
   $legislator_roles = sba_leg_lookup_legislator_roles();
-  $output = '<div id="sba-legislators">';
-  foreach ($variables['legislators'] as $role => $legislators) {
+  $vars['legislators_proecessed'] = array();
+  $vars['phone_only'] = variable_get('sba_legislator_lookup_phone_' . $vars['delta'], 0);
+  foreach ($vars['legislators'] as $role => $legislators) {
     $label = $legislator_roles[$role];
-    if (in_array($role, array(
-      'Federal Representative',
-      "Federal Senator",
-      'State Representative',
-      'State Senator',
-    ))) {
+    if (in_array($role, array('FR', "FS", 'SR', 'SS'))) {
       $num = count($legislators);
       $label = format_plural($num, $legislator_roles[$role], $legislator_roles[$role] . 's');
     }
-    $output .= '<div class="sba-legislator-role"><strong>' . $label . '</strong>';
+    $vars['legislators_processed'][$role]['label'] = $label;
     foreach ($legislators as $legislator) {
-      $output .= sba_leg_lookup_legislator_markup($legislator);
+      $vars['legislators_processed'][$role]['legislators'][] = sba_leg_lookup_legislator_process($legislator, $vars['delta']);
     }
-    $output .= '</div>';
   }
-
-  return $output;
 }
 
 /**
  * Creates the HTML markup to render a single legislator.
  */
-function sba_leg_lookup_legislator_markup($legislator) {
-  $markup = '<div class="sba-legislator" itemscope itemtype="http://schema.org/Person">';
-  $markup .= '<span itemprop="jobTitle">' . $legislator->salutation . '</span> <span itemprop="name">' . $legislator->first_name . ' ' . $legislator->last_name .' (' . $legislator->party . ')</span>';
-  $markup .= '<div itemprop="address" itemscope itemtype="http://schema.org/PostalAddress">';
-  $markup .= '<span class="sba-legislator-address" itemprop="streetAddress">';
+function sba_leg_lookup_legislator_process($legislator, $delta) {
 
-  if (!empty($legislator->addresses[0]->building)) {
-    $markup .= $legislator->addresses[0]->building . '<br/>';
+  $leg_arr = array();
+
+  // Set name variable.
+  $leg_arr['name'] = $legislator->salutation . ' ' . $legislator->first_name . ' ' . $legislator->last_name . ' (' . $legislator->party . ')';
+
+  // Set district name variable.
+  if (!in_array($legislator->role, array('PRES01', 'PRES03', 'GOVNR'))) {
+    if ($legislator->role == 'FS') {
+      $district_name = str_replace('US Senate', '', $legislator->district_name);
+    }
+    else {
+      $district_name = $legislator->district_name;
+    }
+    $leg_arr['role'] = $legislator->title . ', ' . $district_name;
+  }
+  else {
+    $leg_arr['role'] = $legislator->title;
   }
 
-  $markup .= $legislator->addresses[0]->street . '<br/>';
-  $markup .= $legislator->addresses[0]->city . ', ' . $legislator->addresses[0]->state . ' ' . $legislator->addresses[0]->zip_code . '</span></div>';
-  if (!empty($legislator->addresses[0]->phone)) {
-    $markup .= '<span class="sba-legislator-phone" itemprop="telephone">' . $legislator->addresses[0]->area_code . '-' . $legislator->addresses[0]->phone . '</span><br />';
+  // Process addresses.
+  $leg_arr['addresses'] = array();
+  if (!empty($legislator->addresses)) {
+
+    $leg_arr['office_label'] = t('Office');
+    $leg_arr['main_phone'] = '';
+    $leg_arr['main_fax'] = '';
+
+    foreach ($legislator->addresses as $address) {
+      switch ($address->type) {
+        case 'Fed Capitol':
+          $type = t('Capitol');
+          break;
+
+        case 'Fed District':
+          $type = t('District');
+          if (!empty($address->phone)) {
+            $leg_arr['main_phone'] = $address->area_code . '-' . $address->phone;
+          }
+          if (!empty($address->fax)) {
+            $leg_arr['main_fax'] = $address->fax_area_code . '-' . $address->fax;
+          }
+
+          break;
+
+        case 'State District':
+          $type = t('District');
+          break;
+
+        case 'State Capitol':
+          $type = t('Capitol');
+          if (!empty($address->phone)) {
+            $leg_arr['main_phone'] = $address->area_code . '-' . $address->phone;
+          }
+          if (!empty($address->fax)) {
+            $leg_arr['main_fax'] = $address->fax_area_code . '-' . $address->fax;
+          }
+          break;
+
+        case 'State Exec Office':
+          $type = t('Capitol');
+          if (!empty($address->phone)) {
+            $leg_arr['main_phone'] = $address->area_code . '-' . $address->phone;
+          }
+          if (!empty($address->fax)) {
+            $leg_arr['main_fax'] = $address->fax_area_code . '-' . $address->fax;
+          }
+          break;
+
+        case 'Fed Exec Office':
+          $type = t('Capitol');
+          if (!empty($address->phone)) {
+            $leg_arr['main_phone'] = $address->area_code . '-' . $address->phone;
+          }
+          if (!empty($address->fax)) {
+            $leg_arr['main_fax'] = $address->fax_area_code . '-' . $address->fax;
+          }
+          break;
+
+        default:
+          $type = FALSE;
+          break;
+      }
+
+      if (!empty($type)) {
+        $leg_arr['addresses'][$type]['office_type'] = $type;
+        $street = '';
+        if (!empty($address->building)) {
+          $street = $address->building . '<br/>';
+        }
+        $street .= $address->street . '<br/>';
+        $street .= $address->city . ', ' . $address->state . ' ' . $address->zip_code . '<br/>';
+        $leg_arr['addresses'][$type]['street'] = $street;
+
+        if (!empty($address->phone)) {
+          $leg_arr['addresses'][$type]['phone'] = $address->area_code . '-' . $address->phone;
+        }
+        if (!empty($address->fax)) {
+          $leg_arr['addresses'][$type]['fax'] = $address->fax_area_code . '-' . $address->fax;
+        }
+      }
+    }
   }
+
+  if (!empty($leg_arr['addresses'])) {
+    ksort($leg_arr['addresses']);
+  }
+
   if (!empty($legislator->email)) {
-    $markup .= '<a class="sba-legislator-email" href="mailto:' . $legislator->email . '" itemprop="email">' . $legislator->email . '</a><br />';
+    $leg_arr['email'] = $legislator->email;
   }
+  if (!empty($legislator->contact_form)) {
+    $leg_arr['contact_form'] = $legislator->contact_form;
+  }
+  else {
+    if (!empty($legislator->website)) {
+      $leg_arr['website'] = $legislator->website;
+    }
+  }
+
   if (!empty($legislator->facebook)) {
-    $markup .= '<a class="sba-legislator-facebook" href="' . $legislator->facebook . '">Facebook</a><br />';
+    $leg_arr['facebook'] = $legislator->facebook;
   }
 
   if (!empty($legislator->twitter)) {
-    $markup .= '<a class="sba-legislator-twitter" href="' . $legislator->twitter . '">Twitter</a><br />';
+    $leg_arr['twitter'] = $legislator->twitter;
   }
-  $markup .= '</div>';
-  return $markup;
+  if (!empty($legislator->youtube)) {
+    $leg_arr['youtube'] = $legislator->youtube;
+  }
+
+  return $leg_arr;
 }
 
 /**
@@ -83,8 +182,12 @@ function sba_leg_lookup_legislator_lookup_form($form, &$form_state, $mb_delta) {
 
   // If form has been submitted and we have some legislators, show them.
   if (!empty($form_state['legislators'])) {
+    $form['#attached']['js'][] = drupal_get_path('module', 'sba_leg_lookup') . '/js/sba-leg-lookup.js';
     $form['submission'] = array(
-      '#markup' => theme('sba_leg_lookup_legislators', array('legislators' => $form_state['legislators'])),
+      '#markup' => theme('sba_leg_lookup_legislators', array(
+        'legislators' => $form_state['legislators'],
+        'delta' => $mb_delta,
+      )),
     );
   }
   else {
@@ -178,23 +281,61 @@ function sba_leg_lookup_legislator_lookup_form_submit($form, &$form_state) {
  * Breaks legislators down by role.
  *
  * Prunes out roles according to the
- * block settings.
+ * block settings, and sorts according to fed/state levels.
  */
 function sba_leg_lookup_sort_legislators($legislators, $mb_delta) {
   $sorted_legislators = array();
   $sba_legislator_lookup_types = variable_get('sba_legislator_lookup_types_' . $mb_delta,
-    array('FS', 'FR', 'SS', 'SR', 'GOVNR', 'PRES01', 'PRES02', 'PRES03')
+    array('FS', 'FR', 'SS', 'SR', 'GOVNR', 'PRES01', 'PRES03')
   );
 
   foreach ($legislators as $legislator) {
-    // Prune out types based on the block configuration.
     if (in_array($legislator->role, $sba_legislator_lookup_types)) {
-      $sorted_legislators[$legislator->role][] = $legislator;
+      switch ($legislator->role) {
+
+        case 'FS':
+          $sorted_legislators[0][$legislator->role][] = $legislator;
+          break;
+
+        case 'FR':
+          $sorted_legislators[1][$legislator->role][] = $legislator;
+          break;
+
+        case 'PRES01':
+          $sorted_legislators[2][$legislator->role][] = $legislator;
+          break;
+
+        case 'PRES03':
+          $sorted_legislators[3][$legislator->role][] = $legislator;
+          break;
+
+        case 'GOVNR':
+          $sorted_legislators[4][$legislator->role][] = $legislator;
+          break;
+
+        case 'SS':
+          $sorted_legislators[5][$legislator->role][] = $legislator;
+          break;
+
+        case 'SR':
+          $sorted_legislators[6][$legislator->role][] = $legislator;
+          break;
+      }
     }
   }
 
-  return $sorted_legislators;
+  // Order the result by numeric array key.
+  ksort($sorted_legislators);
+
+  // Remove the numeric array keys and replace with legislative role.
+  $final_sort = array();
+  foreach ($sorted_legislators as $index => $members) {
+    $final_sort = array_merge($final_sort, $members);
+  }
+
+  return $final_sort;
 }
+
 
 /**
  * Returns the legislator roles.
@@ -207,7 +348,6 @@ function sba_leg_lookup_legislator_roles() {
     'SR' => t('State Representative'),
     'GOVNR' => t('Governor'),
     'PRES01' => t('President'),
-    'PRES02' => t('First Lady'),
     'PRES03' => t('Vice President'),
   );
 }

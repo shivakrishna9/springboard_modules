@@ -47,6 +47,12 @@ function sba_leg_lookup_block_configure($delta, $edit = array()) {
         )),
       );
 
+      $form['sba_legislator_lookup_phone_' . $mb_delta] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Only show telephone numbers in the contact info.'),
+        '#default_value' => variable_get('sba_legislator_lookup_phone_' . $mb_delta, 0),
+      );
+
       $form['sba_legislator_lookup_submit_text'] = array(
         '#type' => 'textfield',
         '#title' => t('Submit button text'),
@@ -83,6 +89,7 @@ function sba_leg_lookup_block_save($delta = '', $edit = array()) {
       }
 
       variable_set('sba_legislator_lookup_types_' . $mb_delta, $enabled_types);
+      variable_set('sba_legislator_lookup_phone_' . $mb_delta, $edit['sba_legislator_lookup_phone_' . $mb_delta]);
       variable_set('sba_legislator_lookup_submit_text_' . $mb_delta, $edit['sba_legislator_lookup_submit_text']);
 
       break;
