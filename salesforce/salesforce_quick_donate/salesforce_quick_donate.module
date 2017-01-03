@@ -89,11 +89,6 @@ function salesforce_quick_donate_queue_subscription_item($account, $donation, $c
     'Donation_Form_Name__c' => $donation->node->title,
   );
 
-  if ($optout) {
-    $sobject->fields['Deactivation_Date__c'] = time();
-    $sobject->fields['Default_Payment_Method__c'] = FALSE;
-  }
-
   $item = array(
     'drupal_id' => $card_id,
     'module' => 'salesforce_quick_donate',
@@ -104,5 +99,26 @@ function salesforce_quick_donate_queue_subscription_item($account, $donation, $c
   );
 
   $queue = salesforce_queue_load();
-  $result = $queue->createItem($item);
+  if ($optout) {
+    $sobject->fields['Deactivation_Date__c'] = time();
+    $sobject->fields['Default_Payment_Method__c'] = FALSE;
+    $sobject = new stdClass();
+
+    $existing_item = $item;
+    $item['delta'] = 'commerce_cardonfile_optout';
+
+    // Only queue these up if they've actually been exported.
+    if (salesforce_sync_load_map($existing_item)) {
+      _salesforce_genmap_alter_operation($item);
+      $result = $queue->createItem($item);
+    }
+    else {
+      // If the initial opt-in never exported. Delete it from the
+      // queue because there is nothing to update.
+      $queue->deleteItem((object) $item);
+    }
+  }
+  else {
+    $result = $queue->createItem($item);
+  }
 }
