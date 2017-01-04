@@ -318,7 +318,7 @@
         }
       });
       $('#views-exposed-form-sbv-donations-page').submit(function () {
-        if (subIDXFilter.val() == subID5Blurb) {
+        if (subIDXFilter.val() == subIDXBlurb) {
           subIDXFilter.val('');
         }
       });
