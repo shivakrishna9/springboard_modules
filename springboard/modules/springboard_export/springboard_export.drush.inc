@@ -208,10 +208,7 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   }
 
   // Upload each file to S3 and return the pre-signed S3 URL.
-  $s3_pre_signed_urls = array();
-  if (class_exists('Aws\S3\S3Client')) {
-    $s3_pre_signed_urls = _springboard_views_drush_export_aws_files_upload($file_paths);
-  }
+  $s3_pre_signed_urls = _springboard_views_drush_export_aws_files_upload($file_paths);
 
   $duration = (time() - $start) . 's';
   $export_summary = array(
@@ -225,6 +222,8 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
     'export_file_count' => count($s3_pre_signed_urls),
     'export_file_paths' => $s3_pre_signed_urls,
   );
+
+  watchdog('springboard_export', 'CSV export result: ' . print_r($export_summary, 1));
 
   if ($debug) {
     $export_summary['file_gen_disabled'] = 1;
