@@ -1153,6 +1153,17 @@ function springboard_admin_springboard_admin_alias_patterns() {
         'replacement' => 'springboard/reports/donations$1',
       ),
     ),
+    // Data warehouse donations report. 
+    'admin/reports/data-warehouse/donations' => array(
+      'path' => array(
+        'regex' => '|^/admin/reports/data-warehouse/donations(/.*)?$|',
+        'replacement' => 'admin/reports/data-warehouse/donations$1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/reports/dw/donations(/.*)?$|',
+        'replacement' => 'springboard/reports/dw/donations$1',
+      ),
+    ),
     // Webform AB content page.
     'admin/config/content/webform_ab' => array(
       'path' => array(
