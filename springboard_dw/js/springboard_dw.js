@@ -6,21 +6,21 @@
 Drupal.behaviors.springboardDataWarehouseViews = {
   attach: function(context) { (function($) {
     // Place filters within the advanced or basic filter fieldsets:
-    var filterGroups = $('#edit-filter-groups');
+    var filterGroups = $('.dw-filters-fieldsets');
     $('#views-exposed-form-springboard-dw-donations-report-page').prepend(filterGroups);
     $('.views-exposed-widget').each(function () {
       if ($(this).hasClass('views-widget-filter-donation_id') || $(this).hasClass('views-widget-filter-email')
         || $(this).hasClass('views-widget-filter-transaction_date') || $(this).hasClass('views-submit-button') 
         || $(this).hasClass('views-reset-button')) {
-        filterGroups.find('#edit-basic-filters .fieldset-wrapper').append($(this));
+        filterGroups.find('.dw-basic-filters .fieldset-wrapper').append($(this));
       }
       else {
-        filterGroups.find('#edit-advanced-filters .fieldset-wrapper').append($(this));
+        filterGroups.find('.dw-advanced-filters .fieldset-wrapper').append($(this));
       }
     });
 
     // Expand the advanced filters field set if any of its values are populated:
-    $('#edit-advanced-filters .views-exposed-widget input.form-text').each(function () {
+    $('.dw-advanced-filters .views-exposed-widget input.form-text').each(function () {
       if ($(this).val() != '') {
         $('#edit-advanced-filters').removeClass('collapsed');
         $('#edit-advanced-filters .fieldset-wrapper').show();
