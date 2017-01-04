@@ -125,10 +125,10 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
     foreach ($drush_options as $option_name => $option_value) {
       switch ($option_name) {
         case 'sort':
-          $sort = $option_value;
+          $view->drush_sort = $option_value;
           break;
         case 'order':
-          $order = $option_value;
+          $view->drush_order = $option_value;
           break;
         case 'recurs':
           if ($option_value == 'yes') {
@@ -290,17 +290,4 @@ function _springboard_export_render_csv_page($view) {
     $output .= '"' . implode('", "', $row_data) . "\n";
   }
   return $output;
-}
-
-/**
- * Helper function which returns an array that maps data warehouse field keys 
- * to the export donation view's fields used for filtering and sorting:
- */
-function _springboard_export_drush_donations_export_dw_key_map() {
-  return array(
-    'status' => 'status',
-    'internal_name' => 'field_fundraiser_internal_name_value',
-    'transaction_date' => 'date_filter',
-    'next_charge_date' => 'next_charge',
-  );
 }

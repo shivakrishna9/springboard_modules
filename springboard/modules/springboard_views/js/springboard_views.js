@@ -131,7 +131,7 @@
 
       // Display internal name info as inline field value; hide if the field is used or the form is submitted:
       var internalFilter = $('#views-exposed-form-sbv-donations-page .form-item-field-fundraiser-internal-name-value input');
-      var internalFilterBlurb = 'Internal Name Form';
+      var internalFilterBlurb = 'Internal Form Name';
       if (internalFilter.val() == '') {
         internalFilter.val(internalFilterBlurb);
       } 
@@ -416,6 +416,21 @@
         downloadButton.click(function (e) {
           $('#sbv-export-download-msg').text('Working...');
           // Gather data:
+          if ($('.form-item-date-filter-min-date input').val() == 'mm/dd/yy') {
+            $('.form-item-date-filter-min-date input').val('');
+          }
+          if ($('.form-item-date-filter-max-date input').val() == 'mm/dd/yy') {
+            $('.form-item-date-filter-max-date input').val('');
+          }
+          if ($('.form-item-next-charge-min-date input').val() == 'mm/dd/yy') {
+            $('.form-item-next-charge-min-date input').val('');
+          }
+          if ($('.form-item-next-charge-max-date input').val() == 'mm/dd/yy') {
+            $('.form-item-next-charge-max-date input').val('');
+          }
+          if ($('#edit-field-fundraiser-internal-name-value').val() == 'Internal Form Name') {
+            $('#edit-field-fundraiser-internal-name-value').val('');
+          }
           var viewParams = {};
           viewParams['status'] = $('#views-exposed-form-sbv-donations-page #edit-status').val();
           downloadButton.hide();
@@ -428,18 +443,25 @@
           } else {
             isRecurringValue = ''; 
           }
-
+          var statusFilterValue = $('.view-sbv-donations #edit-status').val();
+          if (statusFilterValue == 'All') {
+            statusFilterValue = '';
+          }
+          
           $.ajax({
             type: 'POST',
             url: '/springboard-export-queue-ajax',
             dataType: 'json',
             data: {
-              'export_params' : Drupal.settings.sbExposedFilters,
+              'status' : statusFilterValue,
+              'internal_name' : $('#edit-field-fundraiser-internal-name-value').val(),
               'date_range_min' : $('.form-item-date-filter-min-date input').val(),
               'date_range_max' : $('.form-item-date-filter-max-date input').val(),
+              'recurs' : isRecurringValue,
               'next_charge_min' : $('.form-item-next-charge-min-date input').val(),
               'next_charge_max' : $('.form-item-next-charge-max-date input').val(),
-              'is_recurring' : isRecurringValue,
+              'order' : Drupal.settings.sbViewDataOrder,
+              'sort' : Drupal.settings.sbViewDataSort,
             },
             context: document.body,
             success: function(data) {

@@ -5,8 +5,7 @@
  */
 function springboard_export_views_query_alter(&$view, &$query) {
   // dpm($view->exposed_input);
-  // dpm($query->where);
-
+  //dpm($query->orderby);
   // Only proceed if the drush command has flagged this as a data export:
   if (!isset($view->is_sb_export) || !$view->is_sb_export) {
     return;
@@ -21,15 +20,15 @@ function springboard_export_views_query_alter(&$view, &$query) {
   if (isset($view->drush_order) && isset($drush_field_map[$view->drush_order])) {
     $sort = isset($view->drush_sort) ? $view->drush_sort : 'asc';
     $order_by = $drush_field_map[$view->drush_order]['table'] . '.' . $drush_field_map[$view->drush_order]['field']; 
-    $order_info = array(
+    /* $view->query->orderby = array(array(
       'field' => $order_by,
-      'direction' => $sort,
-    );
+      'direction' => strtoupper($sort),
+    )); */
     // If the drush command specifies an order then apply the view's default order secondarily:
     //array_unshift($view->query->orderby, $order_info);
   }
 
-  // echo "\n\n" . print_r($query->where, 1) . "\n\n";
+   //echo "\n\n" . print_r($query->orderby, 1) . "\n\n";
 }
 
 /**
@@ -83,7 +82,8 @@ function _springboard_export_donation_drush_to_drupal_field_map() {
   $map = array(
     'address'          => array('table' => $prefix . '_sbp_address', 'field' => 'sbp_address_value', 'op' => 'LIKE'),
     'address_line_2'   => array('table' => $prefix . '_sbp_address_line_2', 'field' => 'sbp_address_line_2_value', 'op' => 'LIKE'),
-    'amount'           => array('table' => 'fundraiser_donation', 'field' => 'amount', 'op' => '='),
+    'commerce_order_total' => array('table' => 'commerce_order_fundraiser_donation__field_data_commerce_order_total', 'field' => 'commerce_order_total_amount', 'op' => '='),
+//    'amount'           => array('table' => 'fundraiser_donation', 'field' => 'amount', 'op' => '='),
     'city'             => array('table' => $prefix . '_sbp_city', 'field' => 'sbp_city_value', 'op' => 'LIKE'),
     'contact_id'       => array('table' => $prefix . '_sbp_salesforce_contact_id', 'field' => 'sbp_salesforce_contact_id_value', 'op' => 'LIKE'),
     'country'          => array('table' => $prefix . '_sbp_country', 'field' => 'sbp_country_value', 'op' => '='),
@@ -259,89 +259,26 @@ function springboard_export_form_views_exposed_form_alter(&$form, &$form_state) 
     );
   } // End actions export
   elseif ($form['#id'] == 'views-exposed-form-sbv-donations-page' || $form['#id'] == 'views-exposed-form-sbv-donations-page-2') {
+    // Alter data filter formats:
+    $form['next_charge']['min']['#date_format'] = 'm/d/Y';
+    $form['next_charge']['max']['#date_format'] = 'm/d/Y';
+    $form['date_filter']['min']['#date_format'] = 'm/d/Y';
+    $form['date_filter']['max']['#date_format'] = 'm/d/Y';
+
     // Pass filtering and sorting data to jQuery:
-    if (isset($form_state['input']) && !empty($form_state['input'])) {
-      module_load_include('inc', 'springboard_views', 'springboard_views.drush');
-      $vals = $form_state['input'];
-      $dw_drupal_key_map = _springboard_views_drush_export_donations_dw_key_map();
-      $dw_drupal_key_map = array_flip($dw_drupal_key_map);
-      $view_data = array();
-
-      // Alter data filter formats:
-      $form['next_charge']['min']['#date_format'] = 'm/d/Y';
-      $form['next_charge']['max']['#date_format'] = 'm/d/Y';
-
-      foreach ($vals as $drupal_field_key => $value) {
-        if (empty($value)) {
-          continue;
-        }
-
-        // Date filtering is captured via JS:
-        if ($drupal_field_key == 'date_filter') {
-          continue;
-        }
-
-        // Handling sorting:
-        if ($drupal_field_key == 'order') {
-          switch ($value) {
-            case 'order_id_1':
-              $view_data['order'] = 'order_id';
-              break;
-            case 'created':
-              $view_data['order'] = 'created_at';
-              break;
-            case 'commerce_order_total':
-              $view_data['order'] = 'amount';
-              break;
-            case 'status':
-              $view_data['order'] = 'status';
-              break;
-            case 'gateway':
-              $view_data['order'] = 'gateway';
-              break;
-            case 'sbp_first_name_1':
-              $view_data['order'] = 'sbp_first_name_1';
-              break;
-            case 'sbp_last_name_1':
-              $view_data['order'] = 'last_name';
-              break;
-            case 'mail':
-              $view_data['order'] = 'email';
-              break;
-            case 'title':
-              $view_data['order'] = 'internal_name';
-              break;
-            case 'remote_addr':
-              $view_data['order'] = 'ip_address';
-              break;
-          }
-          continue;
-        }
-
-        if ($drupal_field_key == 'sort') {
-          $view_data['sort'] = $value;
-        }
-
-        // Account for status option select behavior:
-        if ($drupal_field_key == 'status' && $value == 'All') {
-          $value = '';
-        }
-        if (array_key_exists($drupal_field_key, $dw_drupal_key_map)) {
-          $view_data[$dw_drupal_key_map[$drupal_field_key]] = $value;
-        }
-      }
-      // Exclude empty values:
-      foreach ($view_data as $key => $value) {
-        if ($value == '') {
-          unset($view_data[$key]);
-        }
-      }
-
-      $form['#attached']['js'][] = array(
-        'type' => 'setting',
-        'data' => array('sbExposedFilters' => $view_data),
-      );
+    $order = ''; $sort = '';
+    if (isset($_GET['order'])) {
+      $sort = isset($_GET['sort']) ? $_GET['sort'] : 'asc';
+      $order = $_GET['order'];
     }
+    $form['#attached']['js'][] = array(
+      'type' => 'setting',
+      'data' => array(
+        'sbViewDataOrder' => $order,
+        'sbViewDataSort' => $sort,
+      ),
+    );
+    
     $form['#attached']['css'][] = drupal_get_path('module', 'springboard_views') . '/css/springboard_views.css';
     $form['#attached']['js'][] = drupal_get_path('module', 'springboard_views') . '/js/springboard_views.js';
   } // End donations export
@@ -360,7 +297,7 @@ function springboard_export_menu() {
     'title' => 'AJAX callback',
     'page callback' => '_springboard_export_queue_data_export',
     'access callback' => 'user_access',
-    'access argument' => 'access content',
+    'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
   return $items;
@@ -376,34 +313,53 @@ function _springboard_export_queue_data_export() {
     drupal_json_output(array('status' => 'fail'));
     return;
   }
-  $data = $_POST['export_params'];
-
-  // Exclude empty values:
-  foreach ($data as $key => $value) {
-    if (empty($value)) {
-      unset($data[$key]);
+  $data = array();
+  if (isset($_POST['export_params'])) {
+    $data = $_POST['export_params'];
+    // Exclude empty values:
+    foreach ($data as $key => $value) {
+      if (empty($value)) {
+        unset($data[$key]);
+      }
     }
   }
-
   if (isset($data['source_view'])) {
     unset($data['source_view']);
   }
-  if (isset($_POST['date_range_min']) && $_POST['date_range_min'] != 'mm/dd/yyyy') {
+  if (isset($_POST['status']) && !empty($_POST['status'])) {
+    $data['status'] = $_POST['status'];
+  }
+  if (isset($_POST['internal_name']) && !empty($_POST['internal_name'])) {
+    $data['internal_name'] = $_POST['internal_name'];
+  }
+  if (isset($_POST['recurs']) && !empty($_POST['recurs'])) {
+    $data['recurs'] = $_POST['recurs'];
+  }
+  if (isset($_POST['date_range_min']) && !empty($_POST['date_range_min'])) {
     $data['transaction_date']['min'] = $_POST['date_range_min'];
   }
-  if (isset($_POST['date_range_max']) && $_POST['date_range_min'] != 'mm/dd/yyyy') {
+  if (isset($_POST['date_range_max']) && !empty($_POST['date_range_max'])) {
     $data['transaction_date']['max'] = $_POST['date_range_max'];
   }
-  if (isset($_POST['next_charge_min'])) {
+  if (isset($_POST['next_charge_min']) && !empty($_POST['next_charge_min'])) {
     $data['next_charge_date']['min'] = $_POST['next_charge_min'];
   }
-  if (isset($_POST['next_charge_max'])) {
+  if (isset($_POST['next_charge_max']) && !empty($_POST['next_charge_max'])) {
     $data['next_charge_date']['max'] = $_POST['next_charge_max'];
   }
-
+  if (isset($_POST['order']) && !empty($_POST['order'])) {
+    $data['order'] = $_POST['order'];
+  }
+  if (isset($_POST['sort']) && !empty($_POST['sort'])) {
+    $data['sort'] = $_POST['sort'];
+  }
   watchdog('springboard_export', 'CSV export request: ' . json_encode($data));
 
+  global $user;
   $recipients = variable_get('springboard_export_recipients', array());
+  if (isset($user->mail) && !empty($user->mail)) {
+    $recipients[] = $user->mail;
+  }
 
   // Queue the data export job:
   $success = TRUE;
@@ -411,4 +367,18 @@ function _springboard_export_queue_data_export() {
 
   // Return status to jQuery:
   drupal_json_output(array('status' => $success ? 'success' : 'fail'));
+}
+
+/**
+ * Helper function which returns an array that maps data warehouse field keys 
+ * to the export donation view's fields used for filtering and sorting:
+ */
+function _springboard_export_drush_donations_export_dw_key_map() {
+  return array(
+    'status' => 'status',
+    'internal_name' => 'field_fundraiser_internal_name_value',
+    'transaction_date' => 'date_filter',
+    'next_charge_date' => 'next_charge',
+    'recurs' => 'recurs',
+  );
 }
