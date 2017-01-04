@@ -1516,6 +1516,7 @@ function _fundraiser_commerce_update_donation_result_data($donation, $success) {
   }
   $donation->data = $data;
   $donation->txn_id = $remote_id; // TODO Not called anywhere locally, this may not even need to be stored.
+  drupal_alter('fundraiser_commerce_update_donation_result_data', $donation);
   // Encrypt it for storage.
   $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
   // Save the order again to update its line item reference field and user.
@@ -1750,16 +1751,14 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
       if (!empty($card_data)) {
         // Ensure the expiration values are copied correctly.
         $card_data = $update_callback($donation, $card_data);
-        if (!empty($card_data)) {
-          $donation->data['cardonfile'] = $card_data->card_id;
-        }
+        drupal_alter('fundraiser_commerce_donation_update_card_update', $donation, $card_data);
       }
     }
     // Sustainer update, update remaining donations with the first record's cardonfile id
     // This avoids calling the APIs for each donation
     elseif (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_did)) {
       $master = fundraiser_donation_get_donation($donation->sustainer_update_did);
-      $donation->data['cardonfile'] = isset($master->data['cardonfile']) ? $master->data['cardonfile'] : FALSE;
+      drupal_alter('fundraiser_commerce_sustainer_series_donation_update', $master, $donation);
     }
 
     // Allow the gateways to scrub the data before saving
@@ -2551,10 +2550,9 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
  *   Fundraiser donation object.
  * @param string $form_key
  *   The form key under pane values where the cardonfile_store key exists.
- *
- * @return void
  */
 function _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation, $form_key = 'credit_card') {
+
   // If this charge resulted in a new card on file save that to the donation
   if ($success && module_exists('commerce_cardonfile') && !empty($pane_values[$form_key]['cardonfile_store'])) {
     // Load up the cardonfile record for this donation and save it
