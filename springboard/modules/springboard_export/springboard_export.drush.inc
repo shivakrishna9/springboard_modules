@@ -98,14 +98,11 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   $max_page = 100; // To prevent an infinite loop.
   $debug = FALSE; // Set this to true to prevent CSV export file generation.
 
-  $output_path = 'temporary://';
-
-
   // Apply filters, sorting; run the data export view:
   $drush_options = (array) json_decode(drush_get_option('json'));
+  $dw_drupal_key_map = _springboard_export_drush_donations_export_dw_key_map();
   while ($current_page < $max_page) {
     $view = null;
-
     // Prepare the data export view for execution:
     $view = views_get_view($view_id);
     if (!isset($view) || $view == FALSE || !is_object($view)) {
@@ -122,7 +119,7 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
     $view->drush_field_map = $drush_field_map;
 
     // Apply filtering and sorting:
-    $view->drush_filters = array();
+    //$view->drush_filters = array();
     $sort = 'asc';
     unset($order);
     foreach ($drush_options as $option_name => $option_value) {
@@ -133,20 +130,28 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
         case 'order':
           $order = $option_value;
           break;
+        case 'recurs':
+          if ($option_value == 'yes') {
+            $view->exposed_input['master_did_op'] = 'not empty';
+          }
+          elseif ($option_value == 'no') {
+            $view->exposed_input['master_did_op'] = 'empty';
+          }
+          break;
         case 'transaction_date':
           if (isset($option_value->min)) {
-            $view->drush_filters['date_filter_min'] = $option_value->min; 
+            $view->exposed_input['date_filter']['min']['date'] = date('Y-m-d', strtotime($option_value->min));
           }
           if (isset($option_value->max)) {
-            $view->drush_filters['date_filter_max'] = $option_value->max;
+            $view->exposed_input['date_filter']['max']['date'] = date('Y-m-d', strtotime($option_value->max));
           }
           break;
         case 'next_charge_date':
           if (isset($option_value->min)) {
-            $view->drush_filters['next_charge_min'] = $option_value->min;
+            $view->exposed_input['next_charge']['min']['date'] = date('Y-m-d', strtotime($option_value->min));
           }
           if (isset($option_value->max)) {
-            $view->drush_filters['next_charge_max'] = $option_value->max;
+            $view->exposed_input['next_charge']['max']['date'] = date('Y-m-d', strtotime($option_value->max));
           }
           break;
         case 'debug':
@@ -156,11 +161,13 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
           break;
         default:
           if (!empty($option_value)) {
-            if (isset($drush_field_map[$option_name])) {
-              $view->drush_filters[$option_name] = $option_value;
+            if (isset($dw_drupal_key_map[$option_name])) {
+              //echo '"' . $option_value . '"';
+              $filter_key = $dw_drupal_key_map[$option_name];
+              $view->exposed_input[$filter_key] = $option_value;
             }
             else {
-              echo json_encode(array('error' => 'Views Data Export failed due to unsupported filter: \'' . $option_name . '\'; aborting.'));
+              echo json_encode(array('error' => 'Bad filter \'' . $option_name . '\'; aborting'));
               return;
             }
           }
@@ -192,10 +199,6 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
           return;
         }
       } 
-      else {
-        // Simulate rendering the output if in debug mode:
-        //$view->render();
-      }
     }
     else {
       break;
@@ -206,7 +209,9 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
 
   // Upload each file to S3 and return the pre-signed S3 URL.
   $s3_pre_signed_urls = array();
-  // $s3_pre_signed_urls = _springboard_views_drush_export_aws_files_upload(array($filename));
+  if (class_exists('Aws\S3\S3Client')) {
+    $s3_pre_signed_urls = _springboard_views_drush_export_aws_files_upload($file_paths);
+  }
 
   $duration = (time() - $start) . 's';
   $export_summary = array(
@@ -285,4 +290,17 @@ function _springboard_export_render_csv_page($view) {
     $output .= '"' . implode('", "', $row_data) . "\n";
   }
   return $output;
+}
+
+/**
+ * Helper function which returns an array that maps data warehouse field keys 
+ * to the export donation view's fields used for filtering and sorting:
+ */
+function _springboard_export_drush_donations_export_dw_key_map() {
+  return array(
+    'status' => 'status',
+    'internal_name' => 'field_fundraiser_internal_name_value',
+    'transaction_date' => 'date_filter',
+    'next_charge_date' => 'next_charge',
+  );
 }
