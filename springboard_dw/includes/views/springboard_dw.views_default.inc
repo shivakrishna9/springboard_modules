@@ -243,35 +243,36 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['pager']['options']['expose']['items_per_page_options'] = '20, 50, 100';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
-    'transaction_id' => 'transaction_id',
+    'donation_id' => 'donation_id',
     'transaction_date' => 'transaction_date',
     'amount' => 'amount',
     'status' => 'status',
-    'payment_method' => 'payment_method',
+    'gateway' => 'gateway',
     'first_name' => 'first_name',
     'last_name' => 'last_name',
     'email' => 'email',
-    'recurs_monthly' => 'recurs_monthly',
     'form_name' => 'form_name',
+    'recurs_monthly' => 'recurs_monthly',
+    'payment_link' => 'payment_link',
   );
-  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['default'] = 'transaction_date';
   $handler->display->display_options['style_options']['info'] = array(
-    'transaction_id' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'transaction_date' => array(
+    'donation_id' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
     ),
-    'amount' => array(
+    'transaction_date' => array(
       'sortable' => 1,
+      'default_sort_order' => 'desc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'amount' => array(
+      'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
@@ -284,7 +285,7 @@ function springboard_dw_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'payment_method' => array(
+    'gateway' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -312,6 +313,13 @@ function springboard_dw_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'form_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'recurs_monthly' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
@@ -319,9 +327,7 @@ function springboard_dw_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'form_name' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
+    'payment_link' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -346,7 +352,7 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['fields']['donation_id']['field'] = 'donation_id';
   $handler->display->display_options['fields']['donation_id']['label'] = 'Order ID';
   $handler->display->display_options['fields']['donation_id']['alter']['make_link'] = TRUE;
-  $handler->display->display_options['fields']['donation_id']['alter']['path'] = '/admin/reports/springboard-dw/donations/[donation_id]';
+  $handler->display->display_options['fields']['donation_id']['alter']['path'] = 'admin/reports/data-warehouse/donations/[donation_id]';
   /* Field: Springboard DW Donations: Transaction Date */
   $handler->display->display_options['fields']['transaction_date']['id'] = 'transaction_date';
   $handler->display->display_options['fields']['transaction_date']['table'] = 'sp_dw_donations_psudo';
@@ -559,13 +565,12 @@ function springboard_dw_views_default_views() {
   /* Display: Donations List */
   $handler = $view->new_display('page', 'Donations List', 'page');
   $handler->display->display_options['defaults']['sorts'] = FALSE;
-  /* Sort criterion: Springboard DW Donations: Transaction ID */
-  $handler->display->display_options['sorts']['transaction_id']['id'] = 'transaction_id';
-  $handler->display->display_options['sorts']['transaction_id']['table'] = 'sp_dw_donations_psudo';
-  $handler->display->display_options['sorts']['transaction_id']['field'] = 'transaction_id';
-  $handler->display->display_options['sorts']['transaction_id']['order'] = 'DESC';
-  $handler->display->display_options['sorts']['transaction_id']['expose']['label'] = 'Transaction ID';
-  $handler->display->display_options['path'] = 'admin/reports/springboard-dw/donations';
+  /* Sort criterion: Springboard DW Donations: Transaction Date */
+  $handler->display->display_options['sorts']['transaction_date']['id'] = 'transaction_date';
+  $handler->display->display_options['sorts']['transaction_date']['table'] = 'sp_dw_donations_psudo';
+  $handler->display->display_options['sorts']['transaction_date']['field'] = 'transaction_date';
+  $handler->display->display_options['sorts']['transaction_date']['order'] = 'DESC';
+  $handler->display->display_options['path'] = 'admin/reports/data-warehouse/donations';
 
   /* Display: Donation Details */
   $handler = $view->new_display('page', 'Donation Details', 'page_1');
@@ -704,7 +709,7 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['arguments']['donation_id']['summary_options']['items_per_page'] = '25';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
-  $handler->display->display_options['path'] = 'admin/reports/springboard-dw/donations/%';
+  $handler->display->display_options['path'] = 'admin/reports/data-warehouse/donations/%';
   $views[$view->name] = $view;
   // End springboard_dw_donations_report view.
 
