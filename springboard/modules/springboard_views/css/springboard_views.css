@@ -4,9 +4,6 @@
    zoom: 0.75;
   -moz-transform: scale(0.75);
 }
-#ui-datepicker-div {
-  margin-top: 54px;
-}
 #views-exposed-form-sbv-donations-page #sb-db-donations-report-help,
 #views-exposed-form-sbv-donations-page-2 #sb-db-donations-report-help {
   cursor: pointer;
