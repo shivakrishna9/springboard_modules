@@ -76,7 +76,10 @@ function braintree_transaction_find($transaction_id) {
  * @param array $context
  *   An array which holds additional information.
  *
- * @return array|bool
+ * @return array
+ *   A result array where the first element is a boolean of whether or not  the
+ *   transaction was succsesful and the second element being a string of any
+ *   messages that Braintree returned.
  */
 function braintree_transaction_sale(&$sale_data, &$context) {
   // Allow other modules to alter the sale before sending it to Braintree.
@@ -87,22 +90,26 @@ function braintree_transaction_sale(&$sale_data, &$context) {
   }
 
   try {
-    $order = $context['order'];
-    $payment_method = explode('|', $order->data['fundraiser_commerce']);
-    $payment_method = reset($payment_method);
-
     // Execute the API sale method to create a sale object.
     $result = Braintree_Transaction::sale($sale_data);
     $context['result'] = $result;
   }
-  catch (Exception $e) {
+  catch (Braintree_Exception_Unexpected $e) {
     $error_message = braintree_report_error($e);
-    return array(FALSE, $error_message);
+    $context['result']->message = $error_message;
+    return array(FALSE, $context['result']);
+  }
+  if ($result instanceof Braintree_Result_Error) {
+    $error_message = braintree_report_error($result->errors->deepAll());
+    $context['result']->message = $error_message;
+    return array(FALSE, $context['result']);
   }
 
   list($approved, $message) = braintree_check_fraud($context);
   if (!$approved) {
-    return array(FALSE, $message);
+    $context['result']->status = FALSE;
+    $context['result']->message = $message;
+    return array(FALSE, $context['result']);
   }
 
   if ($context['result']->success) {

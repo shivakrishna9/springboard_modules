@@ -772,7 +772,9 @@ function commerce_braintree_web_process_transaction($order, $payment_method, $ch
   }
 
   if ($transaction->status == COMMERCE_PAYMENT_STATUS_FAILURE) {
-    $transaction->message = commerce_braintree_error_message($response->errors->deepAll()) . "\n";
+    if (!empty($response->message)) {
+      $transaction->message = $response->message . "\n";
+    }
   }
   else {
     $transaction->message = !empty($response->message) ? $response->message : NULL;

@@ -127,11 +127,20 @@ function braintree_initialize($settings) {
  * @see https://api.drupal.org/api/drupal/includes%21bootstrap.inc/function/watchdog/7.x
  */
 function braintree_report_error($exception) {
-  if (empty($exception) || !is_object($exception) || !property_exists($exception, 'getMessage')) {
+  if (!is_array($exception) && $exception instanceof Braintree_Error_Validation) {
+    $exception = array($exception);
+  }
+  elseif (!is_array($exception)) {
     return;
   }
 
-  $message = $exception->getMessage();
+  $message = array();
+  foreach ($exception as $e) {
+    if ($e instanceof Braintree_Error_Validation) {
+      $message[] = $e->code . ': ' . $e->message;
+    }
+  }
+  $message = implode("\n", $message);
 
   $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
   $caller = _drupal_get_last_caller($backtrace);
@@ -143,7 +152,7 @@ function braintree_report_error($exception) {
     '%line' => $caller['line'],
     '%data' => $backtrace[1]['function'],
   );
-  $admin_message = 'API exception: @message in %function (line %line of %file). Exception: @data';
+  $admin_message = 'API exception: "@message" in %function (line %line of %file). Exception: @data';
 
   watchdog('Braintree', $admin_message, $variables, WATCHDOG_ERROR);
 
