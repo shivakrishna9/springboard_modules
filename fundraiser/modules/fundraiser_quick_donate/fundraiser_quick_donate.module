@@ -671,7 +671,7 @@ function fundraiser_quick_donate_opt_out_card($uid, $donation, $card_id) {
     user_save($account);
     $card = commerce_cardonfile_load($card_id);
     // Invoke quick donate opt-out hook.
-    module_invoke_all('fundraiser_quick_donate_optout', $account, $card);
+    module_invoke_all('fundraiser_quick_donate_optout', $account, $donation, $card);
   }
 }
 
