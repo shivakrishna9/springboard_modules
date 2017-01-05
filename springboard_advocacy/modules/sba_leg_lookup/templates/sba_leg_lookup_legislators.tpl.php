@@ -25,6 +25,9 @@
  *              'phone' => phone
  *              'fax' => fax
  *         )
+ *        'committees[] => array(
+ *              'committee_name' => the name
+ *         )
  *      )
  *   )
  */
@@ -78,24 +81,41 @@
       <!-- Office addresses Loop -->
       <?php if (empty($phone_only)): ?>
         <div class="sba-leg-lookup-expand"><a class="leg-lookup-show" href="#">Show more</a></div>
-        <div class="leg-lookup-addresses">
-        <h4><?php print $legislator['office_label'];?></h4>
-        <?php foreach ($legislator['addresses'] as $address): ?>
-          <div class="leg-lookup-address">
-            <div class="leg-lookup-address-<?php print $address['office_type'];?>">
-              <strong><?php print $address['office_type'];?></strong><br/>
-              <div class="leg-lookup-address-street"><?php print $address['street'];?></div>
-              <div class="sba-legislator-phone">Phone: <?php print $address['phone'];?></div>
-              <div class="sba-legislator-phone">Fax: <?php print $address['fax'];?></div>
-            </div>
-         </div>
-        <?php endforeach; ?>
+        <div class="leg-lookup-hidden">
+          <div class="leg-lookup-addresses">
+            <h4><?php print $legislator['office_label'];?></h4>
+            <?php foreach ($legislator['addresses'] as $address): ?>
+              <div class="leg-lookup-address">
+                <div class="leg-lookup-address-<?php print $address['office_type'];?>">
+                  <strong><?php print $address['office_type'];?></strong><br/>
+                  <div class="leg-lookup-address-street"><?php print $address['street'];?></div>
+                  <div class="sba-legislator-phone">Phone: <?php print $address['phone'];?></div>
+                  <div class="sba-legislator-phone">Fax: <?php print $address['fax'];?></div>
+                </div>
+             </div>
+            <?php endforeach; ?>
+          </div>
+          <?php if (!empty($legislator['committees'])): ?>
+          <div class="leg-lookup-committees">
+            <h4>Committees</h4>
+            <?php foreach ($legislator['committees'] as $committee): ?>
+              <div class="leg-lookup-committee">
+                <div class="leg-lookup-committee-name"><?php print $committee['name'];?></div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+          <?php
+              // If committee.
+            endif;
+          ?>
+          <?php
+            // If not phone only.
+          endif;
+          ?>
+          <!-- End addresses loop -->
       </div>
-      <?php
-        // If not phone only.
-      endif;
-      ?>
-      <!-- End addresses loop -->
+      <!-- End hidden div -->
+
 
     </div>
     <?php endforeach; ?>

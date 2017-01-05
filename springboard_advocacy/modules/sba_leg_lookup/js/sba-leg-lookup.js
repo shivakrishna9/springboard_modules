@@ -16,12 +16,12 @@
         console.log(this);
         $(this).click(function () {
           if (!$(this).hasClass('lookup-processed')) {
-            $(this).closest('.sba-leg-lookup-expand').siblings('.leg-lookup-addresses').show('slow');
+            $(this).closest('.sba-leg-lookup-expand').siblings('.leg-lookup-hidden').show('slow');
             $(this).text('Show less');
             $(this).addClass('lookup-processed');
           }
           else {
-            $(this).closest('.sba-leg-lookup-expand').siblings('.leg-lookup-addresses').hide('slow');
+            $(this).closest('.sba-leg-lookup-expand').siblings('.leg-lookup-hidden').hide('slow');
             $(this).text('Show more');
             $(this).removeClass('lookup-processed');
           }

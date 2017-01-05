@@ -167,6 +167,12 @@ function sba_leg_lookup_legislator_process($legislator, $delta) {
     $leg_arr['youtube'] = $legislator->youtube;
   }
 
+  if (!empty($legislator->committee_memberships)) {
+    foreach ($legislator->committee_memberships as $com) {
+      $leg_arr['committees'][] = array('name' => $com->committee_name);
+    }
+  }
+
   return $leg_arr;
 }
 

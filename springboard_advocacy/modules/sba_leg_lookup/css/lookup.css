@@ -19,14 +19,14 @@
   margin: 0 1em 1em;
 }
 
-.leg-lookup-online-details {
-  margin: 0 1em 1em;
+.leg-lookup-committee-name {
+  margin: 0 1em;
 }
 
 .sba-leg-lookup-expand {
   margin-top: 0.5em;
 }
 
-.leg-lookup-addresses {
+.leg-lookup-hidden {
   display: none;
 }
