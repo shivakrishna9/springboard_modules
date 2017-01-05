@@ -128,7 +128,7 @@
         endif;
         ?>
 
-    </div><!-- End legislator details loop -->
+    </div><!-- End legislator details -->
     <?php endforeach; ?>
 
   </div><!-- End legislator type loop -->
