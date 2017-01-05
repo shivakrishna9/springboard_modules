@@ -37,6 +37,13 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'default';
   $handler->display->display_options['style_options']['row_class_special'] = FALSE;
   $handler->display->display_options['row_plugin'] = 'fields';
+  /* No results behavior: Global: Text area */
+  $handler->display->display_options['empty']['area']['id'] = 'area';
+  $handler->display->display_options['empty']['area']['table'] = 'views';
+  $handler->display->display_options['empty']['area']['field'] = 'area';
+  $handler->display->display_options['empty']['area']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area']['content'] = 'Performance statistics are unavailable at this time.';
+  $handler->display->display_options['empty']['area']['format'] = 'raw_html';
   /* Field: Springboard DW Donation Stats: First Donation ID */
   $handler->display->display_options['fields']['first_donation_id']['id'] = 'first_donation_id';
   $handler->display->display_options['fields']['first_donation_id']['table'] = 'sp_dw_donation_stats_psudo';
@@ -125,6 +132,7 @@ function springboard_dw_views_default_views() {
   $handler = $view->new_display('block', 'Block', 'block_1');
   $views[$view->name] = $view;
   // end springboard_dw_donation_stats_report
+
 
   // springboard_dw_action_stats_report
   $view = new view();
