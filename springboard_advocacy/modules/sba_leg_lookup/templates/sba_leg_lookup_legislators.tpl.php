@@ -35,7 +35,7 @@
 <div id="sba-legislators">
   <!-- Legislator type loop -->
   <?php foreach ($legislators_processed as $role => $legislators): ?>
-  <div class="sba-legislator-role">
+  <div class="sba-legislator-type">
     <h2><?php print $legislators['label']; ?></h2>
     <!-- Legislator details loop -->
     <?php foreach ($legislators['legislators'] as $legislator): ?>
@@ -43,7 +43,7 @@
       <!-- Name -->
       <h3 class="sba-leg-name"><?php print $legislator['name']; ?></h3>
       <!-- Title and District name -->
-      <div class="sba-legislator-role"><?php print $legislator['role']; ?></div>
+      <div class="sba-legislator-type"><?php print $legislator['role']; ?></div>
       <!-- Phone  -->
       <div class="sba-legislator-main-phone">Phone: <?php print $legislator['main_phone']; ?></div>
 
@@ -78,10 +78,15 @@
         endif;
       ?>
 
-      <!-- Office addresses Loop -->
+
       <?php if (empty($phone_only)): ?>
         <div class="sba-leg-lookup-expand"><a class="leg-lookup-show" href="#">Show more</a></div>
+
+        <!-- Hidden items -->
         <div class="leg-lookup-hidden">
+
+          <!-- Office addresses Loop -->
+          <?php if (!empty($legislator['addresses'])): ?>
           <div class="leg-lookup-addresses">
             <h4><?php print $legislator['office_label'];?></h4>
             <?php foreach ($legislator['addresses'] as $address): ?>
@@ -94,7 +99,13 @@
                 </div>
              </div>
             <?php endforeach; ?>
-          </div>
+          </div><!-- End addresses div -->
+          <?php
+            // End if addresses.
+          endif;
+          ?>
+
+          <!-- Committees Loop -->
           <?php if (!empty($legislator['committees'])): ?>
           <div class="leg-lookup-committees">
             <h4>Committees</h4>
@@ -103,25 +114,23 @@
                 <div class="leg-lookup-committee-name"><?php print $committee['name'];?></div>
               </div>
             <?php endforeach; ?>
-          </div>
-          <?php
-              // If committee.
+          </div><!-- End commmittees div -->
+
+            <?php
+              // End If committee.
             endif;
           ?>
-          <?php
-            // If not phone only.
-          endif;
-          ?>
-          <!-- End addresses loop -->
-      </div>
-      <!-- End hidden div -->
 
+        </div><!-- End hidden div -->
 
-    </div>
+        <?php
+          // If not phone only.
+        endif;
+        ?>
+
+    </div><!-- End legislator details loop -->
     <?php endforeach; ?>
-    <!-- End legislator details loop -->
 
-  </div>
+  </div><!-- End legislator type loop -->
   <?php endforeach; ?>
-  <!-- End legislator type loop -->
 </div>
