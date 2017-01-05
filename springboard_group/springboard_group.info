@@ -1,5 +1,5 @@
 name = Springboard Groups
-description = Integrate Springboard with Orgnanic Groups
+description = Integrate Springboard with Organic Groups.
 core = 7.x
 package = Springboard
 dependencies[] = og

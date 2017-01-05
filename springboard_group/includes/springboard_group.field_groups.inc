@@ -89,12 +89,11 @@ function springboard_group_field_group_info() {
       1 => 'group_sb_group_logo',
       2 => 'group_sb_group_contact',
     ),
-    'format_type' => 'fieldset',
+    'format_type' => 'htabs',
     'format_settings' => array(
-      'formatter' => 'collapsible',
       'instance_settings' => array(
         'description' => '',
-        'classes' => 'group-sb-group-details field-group-fieldset',
+        'classes' => 'group-sb-group-details',
         'required_fields' => 1,
       ),
     ),
