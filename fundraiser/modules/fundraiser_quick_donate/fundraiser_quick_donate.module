@@ -389,7 +389,10 @@ function _fundraiser_quick_donate_check_qd_default($form, $form_state) {
   $values = $form_state['values'];
   $donation = $form_state['donation'];
   $old_card = $values['cardonfile']['old_card'];
-  $card = $values['cardonfile']['card'];
+  $card = $form_state['card'];
+  if (!empty($values['cardonfile']['card'])) {
+    $card = $values['cardonfile']['card'];
+  }
 
   // If the card number is the same, don't do anything.
   if ($old_card->card_number == $card->card_number) {
@@ -515,21 +518,25 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
 function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
   $values = $form_state['values'];
   $card = $form_state['card'];
+  if (!empty($values['cardonfile']['card'])) {
+    $card = $values['cardonfile']['card'];
+  }
+  $donation = $form_state['donation'];
 
   // If the card number is different, don't do anything, and let the other
   // submission handler handle this.
-  if ($values['cardonfile']['old_card']->card_number != $values['cardonfile']['card']->card_number) {
+  if ($values['cardonfile']['old_card']->card_number != $card->card_number) {
     return;
   }
 
   // Check if the expiration date changed. If it has and this is a recurring
   // series, we need to add the submission handler from the
   // fundraiser_sustainers module to the submission handler array.
-  if (module_exists('fundraiser_sustainers') && property_exists($form_state['donation'], 'recurring')) {
+  if (module_exists('fundraiser_sustainers') && property_exists($donation, 'recurring')) {
     $exp_month_match = $form['payment_fields']['credit']['expiration_date']['card_expiration_month']['#default_value'] == $form_state['input']['payment_fields']['credit']['expiration_date']['card_expiration_month'];
     $exp_year_match = $form['payment_fields']['credit']['expiration_date']['card_expiration_year']['#default_value'] == $form_state['input']['payment_fields']['credit']['expiration_date']['card_expiration_year'];
     if (!$exp_month_match || !$exp_year_match) {
-      $form_state['values']['master_did'] = $form_state['donation']->recurring->master_did;
+      $form_state['values']['master_did'] = $donation->recurring->master_did;
       fundraiser_sustainers_update_billing_form_submit($form, $form_state);
     }
   }
@@ -539,7 +546,7 @@ function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
 
   // If quickdonate is not true the user may be opting this card out.
   if (!$payment_fields['credit']['quickdonate']) {
-    fundraiser_quick_donate_opt_out_card($values['uid'], $form_state['card']->card_id);
+    fundraiser_quick_donate_opt_out_card($values['uid'], $donation, $form_state['card']->card_id);
   }
 
   // First reset all existing cards' status to 0.
@@ -644,7 +651,7 @@ function fundraiser_quick_donate_get_default_card($uid) {
  *
  * @throws \Exception
  */
-function fundraiser_quick_donate_opt_out_card($uid, $card_id) {
+function fundraiser_quick_donate_opt_out_card($uid, $donation, $card_id) {
   // See if the user currently has a default card.
   $default_card = fundraiser_quick_donate_get_default_card($uid);
   if ($default_card && $default_card == $card_id) {
@@ -660,6 +667,7 @@ function fundraiser_quick_donate_opt_out_card($uid, $card_id) {
         ),
       ),
     );
+
     user_save($account);
     $card = commerce_cardonfile_load($card_id);
     // Invoke quick donate opt-out hook.
@@ -689,7 +697,8 @@ function fundraiser_quick_donate_entity_presave($entity, $type) {
  */
 function fundraiser_quick_donate_entity_delete($entity, $type) {
   if ($type == 'commerce_cardonfile') {
-    fundraiser_quick_donate_opt_out_card($entity->uid, $entity->card_id);
+    $donation = fundraiser_donation_get_donations_by_uid($entity->uid, 1, 'DESC', NULL, $entity->card_id);
+    fundraiser_quick_donate_opt_out_card($entity->uid, $donation, $entity->card_id);
   }
 }
 

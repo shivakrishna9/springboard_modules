@@ -37,7 +37,7 @@ function salesforce_quick_donate_salesforce_genmap_map_fields_alter(&$fields, $c
 /**
  * Implements hook_fundraiser_quick_donate_optout().
  */
-function salesforce_quick_donate_fundraiser_quick_donate_optout($account, $card) {
+function salesforce_quick_donate_fundraiser_quick_donate_optout($account, $donation, $card) {
   salesforce_quick_donate_queue_subscription_item($account, $donation, $card, 'UPDATE', TRUE);
 }
 
