@@ -913,7 +913,7 @@ function _salesforce_donation_form_commerce_order_ui_order_form_alter_submit($fo
 
   // Remove the associated salesforce_sync_map record so orders previously deleted from Salesforce can be re-queued
   // with a new Salesforce ID rather than the old ID which no longer exists in Salesforce:
-  $rmid = db_query("SELECT rmid FROM {salesforce_sync_map} WHERE drupal_id = :order_id", array(':order_id' => $order_id))
+  $rmid = db_query("SELECT rmid FROM {salesforce_sync_map} WHERE drupal_id = :order_id AND delta = 'donation'", array(':order_id' => $order_id))
     ->fetchField();
   if ($rmid) {
     entity_delete('salesforce_sync_map', $rmid);
