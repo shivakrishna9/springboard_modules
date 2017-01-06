@@ -707,11 +707,9 @@ function _sba_message_action_form_sba_message_action_submit(&$form, &$form_state
 
   if (isset($form_state['values']['show_participants']) && $form_state['values']['show_participants'] != 0) {
     $form_state['node']->show_my_name = 1;
-    $visibility = 1;
   } 
   else {
     unset($form_state['node']->show_my_name);
-    $visibility = 0;
   }
 }
 
