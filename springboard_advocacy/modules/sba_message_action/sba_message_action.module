@@ -683,7 +683,7 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
     '#collapsed' => FALSE,
   );
   $visibility = isset($form['#node']->show_my_name) ? $form['#node']->show_my_name : 0;
-  $form['springboard_display']['recent_participants']['show_participants'] = array(
+  $form['springboard_display']['recent_participants']['show_my_name'] = array(
     '#type' => 'checkbox',
     '#title' => t('Allow users to opt-in and show recent participants list'),
     '#default_value' => $visibility,
@@ -691,26 +691,6 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
   );
 
   $form['#validate'][] = 'sba_message_action_form_sba_message_action_node_form_validate';
-  $form['#submit'][] = '_sba_message_action_form_sba_message_action_submit';
-}
-
-/**
- * Track whether recent participants opt-in is enabled:
- *
- * @param $form
- * @param $form_state
- */
-function _sba_message_action_form_sba_message_action_submit(&$form, &$form_state) {
-  if (!isset($form_state['node']->nid)) {
-    return;
-  }
-
-  if (isset($form_state['values']['show_participants']) && $form_state['values']['show_participants'] != 0) {
-    $form_state['node']->show_my_name = 1;
-  } 
-  else {
-    unset($form_state['node']->show_my_name);
-  }
 }
 
 /**
