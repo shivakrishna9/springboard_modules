@@ -298,13 +298,8 @@ function _springboard_export_render_csv_page($view) {
  * Send files to AWS.
  */
 function _springboard_export_drush_export_aws_files_upload($file_paths) {
-  // Composer Vendor autoload.
-  if (function_exists('drush_autoload')) {
-    drush_autoload("sites/all/libraries/springboard_composer/vendor/autoload.php");
-  }
-  else {
-    include_once "sites/all/libraries/springboard_composer/vendor/autoload.php";
-  }
+  // Load up the Composer dependencies.
+  require_once "sites/all/libraries/springboard_composer/vendor/autoload.php";
 
   // Enable Garbage Collection.
   gc_enable();
