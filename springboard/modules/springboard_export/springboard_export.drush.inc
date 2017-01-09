@@ -348,7 +348,7 @@ function _springboard_export_drush_export_aws_files_upload($file_paths) {
       $result = $uploader->upload();
 
       // Debug the completed upload.
-      _springboard_views_drush_export_guard_debug_output($debug, "Upload complete: {$result['ObjectURL']}\n");
+      _springboard_export_drush_export_guard_debug_output($debug, "Upload complete: {$result['ObjectURL']}\n");
 
       // Track the upload success.
       $s3_uploaded_files[] = $path;
@@ -394,4 +394,15 @@ function _springboard_export_drush_export_aws_files_upload($file_paths) {
   }
 
   return $s3_pre_signed_urls;
+}
+
+/**
+ * Only output debug information if the debug flag is set for the CSV processing.
+ *
+ * @param $output
+ */
+function _springboard_export_drush_export_guard_debug_output($debug_flag, $output) {
+  if ($debug_flag) {
+    drush_print_r($output);
+  }
 }
