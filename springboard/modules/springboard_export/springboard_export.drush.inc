@@ -90,7 +90,7 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   $user = user_load(1);
 
   // Gather data needed to run the view:
-  $output_path = variable_get('springboard_dw_reports_export_path', 'temporary://'); // Default output path if it is not overwritten.
+  $output_path = variable_get('springboard_dw_reports_export_path', '/tmp'); // Default output path if it is not overwritten.
   $current_page = 0;
   $total_results = 0;
   $file_paths = array();
