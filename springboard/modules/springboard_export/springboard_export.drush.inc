@@ -208,7 +208,7 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   }
 
   // Upload each file to S3 and return the pre-signed S3 URL.
-  $s3_pre_signed_urls = _springboard_views_drush_export_aws_files_upload($file_paths);
+  $s3_pre_signed_urls = _springboard_export_drush_export_aws_files_upload($file_paths);
 
   $duration = (time() - $start) . 's';
   $export_summary = array(
@@ -289,4 +289,109 @@ function _springboard_export_render_csv_page($view) {
     $output .= '"' . implode('", "', $row_data) . "\n";
   }
   return $output;
+}
+
+
+/**
+ * Send files to AWS.
+ */
+function _springboard_export_drush_export_aws_files_upload($file_paths) {
+  // Composer Vendor autoload.
+  if (function_exists('drush_autoload')) {
+    drush_autoload("sites/all/libraries/springboard_composer/vendor/autoload.php");
+  }
+  else {
+    include_once "sites/all/libraries/springboard_composer/vendor/autoload.php";
+  }
+
+  // Enable Garbage Collection.
+  gc_enable();
+
+  // Setup the S3 config.
+  $s3_config = array(
+    'region'      => variable_get
+    ('springboard_dw_reports_export_S3_region', NULL),
+    'version'     => '2006-03-01',
+    'credentials' => array(
+      'key'    => variable_get
+      ('springboard_dw_reports_export_S3_key', NULL),
+      'secret' => variable_get
+      ('springboard_dw_reports_export_S3_secret', NULL),
+    )
+  );
+
+  // Create an S3 client instance.
+  $s3_client = new \Aws\S3\S3Client($s3_config);
+
+  // Register the stream wrapper.
+  $s3_client->registerStreamWrapper();
+
+  // Create new array shells to track the S3 uploads.
+  $s3_uploaded_files = array();
+  $s3_failed_files = array();
+  $s3_pre_signed_urls = array();
+
+  // Upload each file to S3 and return the pre-signed S3 URL.
+  foreach ($file_paths as $key => $path) {
+    $local_file_to_upload = $path;
+    $new_s3_file_key = end(explode('/', $path));
+
+    // Try the S3 upload, if it fails track the failure.
+    try {
+      // Instantiate a multi-part uploader.
+      $uploader = new \Aws\S3\MultipartUploader($s3_client, $local_file_to_upload, [
+        'bucket' => variable_get('springboard_dw_reports_export_S3_bucket', NULL),
+        'key'    => $new_s3_file_key,
+      ]);
+
+      // Do the S3 upload.
+      $result = $uploader->upload();
+
+      // Debug the completed upload.
+      _springboard_views_drush_export_guard_debug_output($debug, "Upload complete: {$result['ObjectURL']}\n");
+
+      // Track the upload success.
+      $s3_uploaded_files[] = $path;
+
+      // Add the GetObject client method so we can retrieve a pre-signed request.
+      $cmd = $s3_client->getCommand('GetObject', [
+        'Bucket' => variable_get
+        ('springboard_dw_reports_export_S3_bucket', NULL),
+        'Key'    => $new_s3_file_key,
+      ]);
+
+      // Create the pre-signed request and get the url.
+      $request = $s3_client->createPresignedRequest($cmd, '+180 minutes');
+      $presignedUrl = (string) $request->getUri();
+
+      // Add the pre-signed url to the array to add back to the export summary.
+      $s3_pre_signed_urls[] = $presignedUrl;
+
+    } catch (Aws\Exception\MultipartUploadException $e) {
+      // Track the upload failure.
+      $s3_failed_files[] = $path;
+
+      // Build out the error details to log to watchdog.
+      $error_details = array(
+        'exception' => $e->getMessage(),
+        'file'      => $local_file_to_upload,
+      );
+
+      // Construct the watchdog string.
+      $watchdog_string = "<pre>Springboard reports S3 upload error: \n" . print_r($error_details, TRUE) . "</pre>";
+
+      watchdog_exception('Drupal reports export', $watchdog_string);
+    }
+  }
+
+  // Merge the arrays of uploaded and failed because we will want to remove
+  // the local CSV export for both since it will change the next attempt.
+  $all_files = array_merge($s3_uploaded_files, $s3_failed_files);
+
+  // Remove the local file.
+  foreach ($all_files as $local_file) {
+    unset($local_file);
+  }
+
+  return $s3_pre_signed_urls;
 }
