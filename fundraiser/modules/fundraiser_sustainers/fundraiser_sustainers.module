@@ -1353,14 +1353,21 @@ function fundraiser_sustainers_user_overview($user, $did = NULL) {
         if ($remaining) {
           $this_next_donation = fundraiser_donation_get_donation($remaining[0]->did);
         }
-        $edit_link = l($this_next_donation->donation['amount_formatted'],
-          'user/' . $this_next_donation->user->uid . '/recurring_overview/' . $master_donation->master_did);
+        $info = _fundraiser_get_donation_gateway($this_donation->did);
+        $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info, $this_donation->donation['payment_method']);
+        if (!$offsite_recurring) {
+          $edit_link = l($this_next_donation->donation['amount_formatted'],
+            'user/' . $this_next_donation->user->uid . '/recurring_overview/' . $master_donation->master_did);
+        }
+        else {
+          $edit_link = $this_next_donation->donation['amount_formatted'];
+        }
         $donations_rows[] = array(
           'data' => array(
             'amount' => $edit_link,
             'start_date' => date('m/d/y', $master_donation->start_date),
             'next_charge' => !empty($master_donation->next_charge) ? date('m/d/y', $master_donation->next_charge) : '--/--/--',
-            'expire_date' => date('m/d/y', $master_donation->expire_date),
+            'expire_date' => !empty($master_donation->expire_date) ? date('m/d/y', $master_donation->expire_date) : '--/--/--',
             'status' => $master_donation->status,
           ),
           'class' => array('recurring-order'),
@@ -3877,6 +3884,18 @@ function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
     else {
       $donation_sets[$index]->next_charge = '';
       $donation_sets[$index]->status = t('No next charge');
+      $info = _fundraiser_get_donation_gateway($donation_sets[$index]->master_did);
+      $donation = fundraiser_donation_get_donation($donation_sets[$index]->master_did);
+      $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info, $donation->donation['payment_method']);
+      // Don't show offsite recurring donations to the donor.
+      if (!empty($offsite_recurring)) {
+        // @todo if showing this item becomes a configuration option we'd need
+        // to do something like in the following commented lines:
+        // $status = t('This recurring donation uses a third-party processor. Please contact us to modify this charge.');
+        // $donation_sets[$index]->expire_date = '';
+        // $donation_sets[$index]->status = $status;
+        unset($donation_sets[$index]);
+      }
     }
   }
   return $donation_sets;
