@@ -370,7 +370,7 @@
     }
     var amtSel = typeof(amt) !== 'undefined';
 
-    var message = 'ok';
+    var message = '';
     if (!fundSel &&!amtSel) {
       message = 'Please choose a fund and select an amount.';
     }
@@ -389,9 +389,13 @@
       else {
         var MinAmt = parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount);
         if (amtFloat < MinAmt) {
-          message += ' Below the minumum amount.'
+          message += ' Below the minimum amount.'
         }
       }
+    }
+
+    if (message == '') {
+      message = 'ok';
     }
 
     var errorContain = $("#designation-group-" + fundGroupId + " .designation-group-title");
