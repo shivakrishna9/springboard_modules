@@ -147,8 +147,9 @@ function fundraiser_webform_update_7002() {
 
 /**
  * Update webforms countries field to use full list of countries.
+ * @todo  Consider removing this if no one wants it.
  */
-function fundraiser_webform_update_7003() {
+/*function fundraiser_webform_update_7003() {
   if (!module_exists('countries')) {
     $enable_modules = array('countries');
     module_enable($enable_modules);
@@ -179,4 +180,4 @@ function fundraiser_webform_update_7003() {
     ))
     ->condition('form_key', 'country')
     ->execute();
-}
+}*/
