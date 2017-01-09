@@ -25,7 +25,6 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
     $fields['rC_Connect__Giving_Paid__c'] = TRUE;
     $fields['rC_Connect__Address_Type__c'] = variable_get('salesforce_ngoc_default_address_type', SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE);
     $fields['rC_Connect__Giving_Payment_Frequency__c'] = variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY);
-    $fields['rC_Connect__Payment_Method_Payment_Type__c'] = variable_get('salesforce_ngoc_default_payment_method_type', SALESFORCE_NGOC_DEFAULT_PAYMENT_METHOD_TYPE);
     // Prevents NGOC from trying to process the payment.
     $fields['rC_Connect__Disable_Merchant_Messages__c'] = TRUE;
     // Depends on one-time or recurring gift.
@@ -36,6 +35,22 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
     // actions these should be set to FALSE.)" which appears to be the default
     // so not explicitly setting FALSE for those.
     $fields['rC_Connect__Address_Preferred_Shipping__c'] = TRUE;
+
+    // Set fields that change depending on payment method type.
+    switch ($fields['rC_Connect__Payment_Method_Payment_Type__c']) {
+      case 'credit':
+        $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'Charge Card';
+        break;
+
+      case 'bank account':
+        $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'EFT';
+        break;
+
+      case 'paypal':
+        $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'Paypal';
+        break;
+    }
+
   }
 }
 

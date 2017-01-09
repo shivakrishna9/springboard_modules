@@ -57,13 +57,6 @@ function salesforce_ngoc_admin_form() {
     '#options' => salesforce_picklist_values($batch_upload_info, 'rC_Connect__Giving_Payment_Frequency__c'),
     '#default_value' => variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY),
   );
-  $form['salesforce_ngoc']['salesforce_ngoc_default_payment_method_type'] = array(
-    '#title' => t('Payment Method: Payment Type'),
-    '#type' => 'select',
-    '#multiple' => FALSE,
-    '#options' => salesforce_picklist_values($batch_upload_info, 'rC_Connect__Payment_Method_Payment_Type__c'),
-    '#default_value' => variable_get('salesforce_ngoc_default_payment_method_type', SALESFORCE_NGOC_DEFAULT_PAYMENT_METHOD_TYPE),
-  );
   $form['salesforce_ngoc']['salesforce_ngoc_default_record_type'] = array(
     '#title' => t('Giving: Record Type'),
     '#type' => 'textfield',
