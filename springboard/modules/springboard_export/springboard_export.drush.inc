@@ -208,7 +208,9 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   }
 
   // Upload each file to S3 and return the pre-signed S3 URL.
-  $s3_pre_signed_urls = _springboard_export_drush_export_aws_files_upload($file_paths);
+  if (!$debug) {
+    $s3_pre_signed_urls = _springboard_export_drush_export_aws_files_upload($file_paths);
+  }
 
   $duration = (time() - $start) . 's';
   $export_summary = array(
