@@ -598,6 +598,8 @@ function salesforce_donation_history_format_field($fieldvalue, $object, $fieldna
  *    --OwnerId: ''
  */
 function salesforce_donation_history_get_query_fields($records) {
+  dpm('salesforce_donation_history_get_query_fields');
+  dpm($records);
   // Create an SObject to work with.
   // We only care about the headers, so we should only need to deal with the
   // first ([0]) record.

@@ -218,7 +218,7 @@ function salesforce_ngoc_views_default_views() {
   $handler->display->display_options['filters']['date_filter']['group'] = 1;
   $handler->display->display_options['filters']['date_filter']['exposed'] = TRUE;
   $handler->display->display_options['filters']['date_filter']['expose']['operator_id'] = 'date_filter_op';
-  $handler->display->display_options['filters']['date_filter']['expose']['label'] = 'Created';
+  $handler->display->display_options['filters']['date_filter']['expose']['label'] = 'Created Date';
   $handler->display->display_options['filters']['date_filter']['expose']['use_operator'] = TRUE;
   $handler->display->display_options['filters']['date_filter']['expose']['operator'] = 'date_filter_op';
   $handler->display->display_options['filters']['date_filter']['expose']['identifier'] = 'date_filter';
