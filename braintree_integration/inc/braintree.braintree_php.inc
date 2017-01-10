@@ -7,65 +7,79 @@
 /**
  * Void a Braintree transaction.
  *
- * @param $transaction_id
- * @param string $error_message
- * @return bool|object
+ * @param int $transaction_id
+ *   The transaction ID.
+ *
+ * @return array
+ *   An array where the first element is a boolean indicating whether the void
+ *   was successful, and the second element being an array of related
+ *   information like the result object and any error messages.
  */
-function braintree_transaction_void($transaction_id, &$error_message = '') {
+function braintree_transaction_void($transaction_id, &$context = array()) {
   try {
-    $result = Braintree_Transaction::void($transaction_id);
+    $context['result'] = Braintree_Transaction::void($transaction_id);
   }
   catch (Exception $e) {
-    braintree_report_error($e);
-    return FALSE;
+    $context['error'] = braintree_report_error($e);
+    return array(FALSE, $context);
   }
 
-  if ($result->success) {
-    return $result;
+  if ($context['result']->success) {
+    return array(TRUE, $context);;
   }
 
-  braintree_report_result($result);
-  return FALSE;
+  $context['message'] = braintree_report_result($result);
+  return array(FALSE, $context);
 }
 
 /**
  * Return a list of authorized transactions of a customer.
  *
- * @param $customer
- * @return mixed
+ * @param Braintree_Customer $customer
+ *   The customer object.
+ *
+ * @return array
+ *   An array where the first element is a boolean value indicating if the
+ *   request succeeded and the second element being an array of related
+ *   information.
  */
-function braintree_authorized_transactions($customer) {
+function braintree_authorized_transactions($customer, &$context = array()) {
   try {
-    $collection = Braintree_Transaction::search(array(
+    $context['collection'] = Braintree_Transaction::search(array(
       Braintree_TransactionSearch::customerId()->is($customer->id),
       Braintree_TransactionSearch::status()->in(array(Braintree_Transaction::AUTHORIZED)),
     ));
   }
   catch (Exception $e) {
-    braintree_report_error($e);
-    return FALSE;
+    $context['error'] = braintree_report_error($e);
+    return array(FALSE, $context);
   }
 
-  return $collection;
+  return array(TRUE, $collection);
 }
 
 /**
- * Load Braitnree transaction by ID.
+ * Load Braintree transaction by ID.
  *
- * @param $transaction_id
- * @return bool
+ * @param int $transaction_id
+ *   The transaction ID.
+ *
+ * @return array
+ *   An array where the first element is a boolean indicating whether the
+ *   transaction was found, and the second element being an array containing the
+ *   result and any error messages that might have occurred.
  */
-function braintree_transaction_find($transaction_id) {
+function braintree_transaction_find($transaction_id, &$context = array()) {
   try {
     // Execute the API sale method to create a sale object.
-    $transaction = Braintree_Transaction::find($transaction_id);
+    $context['transaction'] = Braintree_Transaction::find($transaction_id);
   }
   catch (Exception $e) {
-    braintree_report_error($e);
-    return FALSE;
+    $context['error'] = braintree_report_error($e);
+    return array(FALSE, $context);
   }
 
-  return $transaction;
+  return array(TRUE, $context);
 }
 
 /**
@@ -77,51 +91,52 @@ function braintree_transaction_find($transaction_id) {
  *   An array which holds additional information.
  *
  * @return array
- *   A result array where the first element is a boolean of whether or not  the
- *   transaction was succsesful and the second element being a string of any
- *   messages that Braintree returned.
+ *   A result array where the first element is a boolean of whether or not the
+ *   transaction was succsesful and the second element being an array of related
+ *   information like the result and any error messages that might have
+ *   occurred.
  */
-function braintree_transaction_sale(&$sale_data, &$context) {
+function braintree_transaction_sale(&$sale_data, &$context = array()) {
   // Allow other modules to alter the sale before sending it to Braintree.
   drupal_alter('braintree_transaction_sale_data', $sale_data, $context);
 
+  dpm($sale_data);
+
   if (empty($context['order'])) {
-    return array(FALSE, FALSE);
+    return array(FALSE, $context);
   }
 
   try {
     // Execute the API sale method to create a sale object.
-    $result = Braintree_Transaction::sale($sale_data);
-    $context['result'] = $result;
+    $context['result'] = Braintree_Transaction::sale($sale_data);
   }
   catch (Braintree_Exception_Unexpected $e) {
-    $error_message = braintree_report_error($e);
-    $context['result']->message = $error_message;
-    return array(FALSE, $context['result']);
+    $context['error'] = braintree_report_error($e);
+    return array(FALSE, $context);
   }
-  if ($result instanceof Braintree_Result_Error) {
-    $error_message = braintree_report_error($result->errors->deepAll());
-    $context['result']->message = $error_message;
-    return array(FALSE, $context['result']);
+
+  if ($context['result'] instanceof Braintree_Result_Error) {
+    $context['error'] = braintree_report_error($context['result']->errors->deepAll());
+    return array(FALSE, $context);
   }
 
   list($approved, $message) = braintree_check_fraud($context);
   if (!$approved) {
     $context['result']->status = FALSE;
-    $context['result']->message = $message;
-    return array(FALSE, $context['result']);
+    $context['error'] = $message;
+    return array(FALSE, $context);
   }
 
   if ($context['result']->success) {
     // Invoke post hook when sale is completed successfully.
     foreach (module_implements('braintree_transaction_sale_complete') as $module) {
       $function = $module . '_braintree_transaction_sale_complete';
-      $function($result, $context);
+      $function($context);
     }
-    return array(TRUE, $context['result']);
+    return array(TRUE, $context);
   }
 
-  return array(FALSE, $context['result']);
+  return array(FALSE, $context);
 }
 
 /**
@@ -131,43 +146,60 @@ function braintree_transaction_sale(&$sale_data, &$context) {
  *   The card ID.
  * @param array $params
  *   An array of parameters to pass to the update method.
+ * @param array $settings
+ *   An optional array of sttings to initialize Braintree with.
+ * @param array $context
+ *   An optional array that will be returned with new information.
  *
  * @return array
  *   An array where the first element is the success condition (TRUE or FALSE),
- *   and the second element is either an error message (if the success condition
- *   was FALSE) or the \Braintree\Result object (if the success condition was
- *   TRUE).
+ *   and the second element is an array of additional information like the
+ *   result and any related error messages.
  */
-function braintree_update_card($card_id, $params) {
+function braintree_update_card($card_id, $params, $settings = array(), &$context = array()) {
   if (!is_int($card_id)) {
-    return array(FALSE, t('Invalid card ID provided.'));
+    $context['error'] = t('Invalid card ID provided.');
+    return array(FALSE, $context);
   }
 
   try {
-    $result = Braintree_PaymentMethod::update($card, $params);
+    $context['result'] = Braintree_PaymentMethod::update($card_id, $params);
   }
   catch (Exception $e) {
-    $error_message = braintree_report_error($e);
-    return array(FALSE, $e);
+    $context['error'] = braintree_report_error($e);
+    return array(FALSE, $context);
   }
 
-  return array(TRUE, $result);
+  return array(TRUE, $context);
 }
 
 /**
  * Deletes a customer's stored Braintree information.
+ *
+ * @param int $card_id
+ *   The user's remote card ID.
+ * @param array $context
+ *   An optional array to pass that will be returned with related information
+ *   about the request.
+ *
+ * @return array
+ *   An array where the first element is a boolean indicating the result of the
+ *   deletion and the second element being an array of related information like
+ *   the result and any error messages.
  */
-function braintree_delete_card($card_id) {
+function braintree_delete_card($card_id, &$context = array()) {
   try {
-    $result = Braintree_PaymentMethod::delete($card_id);
+    $context['result'] = Braintree_PaymentMethod::delete($card_id);
   }
   catch (Exception $e) {
-    $error_message = braintree_exception_error_message($e);
+    $context['error'] = braintree_exception_error_message($e);
     watchdog('commerce_braintree_web', 'Error deleting cardonfile id: %card_id (Braintree payment_method id: %remote_id) with Braintree error message: %error_message', array(
       '%card_id' => $card_data->card_id,
       '%remote_id' => $card_data->remote_id,
-      '%error_message' => $error_message,
+      '%error_message' => $context['error'],
     ), WATCHDOG_ERROR);
-    return FALSE;
+    return array(FALSE, $context);
   }
+
+  return array(TRUE, $context);
 }

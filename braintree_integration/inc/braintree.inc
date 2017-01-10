@@ -140,7 +140,7 @@ function braintree_report_error($exception) {
       $message[] = $e->code . ': ' . $e->message;
     }
   }
-  $message = implode("\n", $message);
+  $message = implode("<br/>\n", $message);
 
   $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
   $caller = _drupal_get_last_caller($backtrace);
