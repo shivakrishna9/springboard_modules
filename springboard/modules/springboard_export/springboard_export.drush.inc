@@ -250,6 +250,9 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
 function _springboard_export_render_csv_page($view) {
   $output = '"unique_id","form_id","group_id","form_type","name","internal_name","url","created_at","updated_at","extra_props"' . "\n";
   foreach ($view->result as $result) {
+    if (!isset($result->_field_data['node_fundraiser_donation_nid']['entity'])) {
+      continue;
+    }
     $node = $result->_field_data['node_fundraiser_donation_nid']['entity'];
 
     // Fetch the extra props:
@@ -272,7 +275,7 @@ function _springboard_export_render_csv_page($view) {
     $name = isset($result->node_fundraiser_donation_title) ? $result->node_fundraiser_donation_title : '';
     $internal_name = isset($result->field_field_fundraiser_internal_name[0]['raw']['value']) ?
       $result->field_field_fundraiser_internal_name[0]['raw']['value'] : '';
-
+    $path_alias = drupal_get_path_alias('node/' . $nid);
     $row_data = array(
       $created_at . '-' . $nid . '-' . $did, // unique_id
       $nid, // form_id
@@ -280,7 +283,7 @@ function _springboard_export_render_csv_page($view) {
       $form_type, // form_type
       $name, // name
       $internal_name, // internal_name
-      drupal_get_path_alias('node/' . $node->nid), // url
+      $path_alias, // url
       $created_at > 0 ? date('n/j/Y H:i:s', $created_at) : '', // created_at
       $updated_at > 0 ? date('n/j/Y H:i:s', $updated_at) : '', // updated_at
       json_encode($extra_props),  // extra_props
