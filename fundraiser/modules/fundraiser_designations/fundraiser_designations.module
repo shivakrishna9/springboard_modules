@@ -405,6 +405,17 @@ function fundraiser_designations_commerce_line_item_type_info() {
  * Returns TRUE if line items have been generated. Otherwise, returns FALSE.
  */
 function fundraiser_designations_fundraiser_commerce_generate_line_items($donation, $order) {
+
+  $designation_types = array_keys(fundraiser_designations_get_designation_types());
+  if (empty($donation->node->type) || !in_array($donation->node->type, $designation_types)) {
+    return FALSE;
+  }
+
+  if (isset($donation->recurring->master_did) && variable_get('fundraiser_sustainers_create_series_cron', 0)) {
+    fundraiser_designations_save_cloned_line_items($order, $donation);
+    return TRUE;
+  }
+
   if (!empty($donation->donation['fd_cart'][0]) && $cart = unserialize($donation->donation['fd_cart'][0])) {
     // Get the cart values from the hidden field containing the json string.
     $fund_object = json_decode(str_replace('&quot;', '"', $cart['cart_body']['fund_catcher']));
