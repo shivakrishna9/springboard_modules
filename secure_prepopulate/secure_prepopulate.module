@@ -328,7 +328,9 @@ function secure_prepopulate_form_webform_client_form_alter(&$form, $form_state) 
   }
 
   $autofill_field = &_secure_prepopulate_find_field($form, $component_hierarchy['secure_prepop_autofilled']);
-  $autofill_field['#value'] = "1";
+  if ($autofill_field) {
+    $autofill_field['#value'] = "1";
+  }
 }
 
 /**
