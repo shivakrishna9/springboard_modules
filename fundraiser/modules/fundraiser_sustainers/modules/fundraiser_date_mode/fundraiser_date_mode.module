@@ -36,20 +36,35 @@ function fundraiser_date_mode_fundraiser_sustainers_process_recurring_alter(&$pr
   if (variable_get('fundraiser_date_mode_set_date_mode', FALSE)) {
     $process_recurring = FALSE;
     $queue = DrupalQueue::get('sustainerQueue');
+
+    // Get items that are already in queue.
+    $item_dids = array();
+    $items = array();
+    while ($item = $queue->claimItem()) {
+      $item_dids[$item->data->did] = $item->data->did;
+      $items[] = $item;
+    }
+
     $queue->createQueue();
+
     // Select records (up to configured maximum).
     $record_count = variable_get('fundraiser_date_mode_batch_record_count', 1000);
-    $donations = _fundraiser_sustainers_cron_get_recurring($record_count);
+    $donations = _fundraiser_sustainers_cron_get_recurring($record_count, FALSE);
     $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
-    // Loop over the found orders.
+
+    // Loop over the found orders. Add to queue if not already there.
     foreach ($donations as $recurring) {
-      if ($sustainer_key == $recurring->sustainer_key) {
+      if ($sustainer_key == $recurring->sustainer_key && !in_array($recurring->did, $item_dids)) {
         $queue->createItem($recurring);
       }
-      else {
+      elseif (!in_array($recurring->did, $item_dids)) {
         // Skip record & unlock.
         _fundraiser_sustainers_update_recurring(array('did' => $recurring->did, 'lock_id' => 0));
       }
+    }
+    // Release the lock on looked up items.
+    foreach ($items as $item) {
+      $queue->releaseItem($item);
     }
   }
 }
@@ -157,6 +172,44 @@ function fundraiser_date_mode_fundraiser_donation_delete($donation) {
     ->condition('master_did', $donation->master_did)
     ->condition('did', $donation->did)
     ->execute();
+}
+
+
+/**
+ * Implements hook_fundraiser_donation_update().
+ */
+function fundraiser_date_mode_fundraiser_donation_post_update($donation) {
+  fundraiser_date_mode_update_sustainer_queue($donation, 'update');
+}
+
+/**
+ * Implements hook_fundraiser_donation_update().
+ */
+function fundraiser_date_mode_fundraiser_donation_cancel($donation) {
+  fundraiser_date_mode_update_sustainer_queue($donation, 'cancel');
+}
+
+function fundraiser_date_mode_update_sustainer_queue($donation, $op) {
+
+  $queue = DrupalQueue::get('sustainerQueue');
+  $items = array();
+  while ($item = $queue->claimItem()) {
+    $items[] = $item;
+  }
+
+  foreach ($items as $item) {
+    if ($item->data->did == $donation->did) {
+      $queue->deleteItem($item);
+      if ($op == 'update') {
+        $updated_donation = db_query('SELECT * FROM {fundraiser_sustainers} r LEFT JOIN {fundraiser_donation} d on r.did = d.did WHERE r.did = :id', array(':id' => $donation->did))->fetch();
+        $queue->createItem($updated_donation);
+      }
+      $queue->releaseItem($item);
+    }
+    else {
+      $queue->releaseItem($item);
+    }
+  }
 }
 
 /**
@@ -601,16 +654,23 @@ function fundraiser_date_mode_process_queue_item($item) {
   $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
   $recurring = $item;
   if ($sustainer_key == $recurring->sustainer_key) {
-    $log = array(
-      'successes' => 0,
-      'fails' => 0,
-    );
+    $canceled = array('canceled', 'auto_canceled');
+    // Run another check to prevent canceled donations from being charged.
+    if (!in_array($recurring->gateway_resp, $canceled)) {
+      $log = array(
+        'successes' => 0,
+        'fails' => 0,
+      );
 
-    try {
-      fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
+      try {
+        fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
+      }
+      catch (Exception $e) {
+        fundraiser_sustainers_processing_exception($e, $recurring);
+      }
     }
-    catch (Exception $e) {
-      fundraiser_sustainers_processing_exception($e, $recurring);
+    else {
+      watchdog('fundraiser_sustainers_date_mode', 'Sustainer order id !did was previously canceled, and has been skipped.', array('!did' => $recurring->did), WATCHDOG_NOTICE);
     }
 
     // If we get to here the transaction has been completed.

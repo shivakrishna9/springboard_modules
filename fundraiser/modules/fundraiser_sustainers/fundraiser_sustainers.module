@@ -4030,7 +4030,7 @@ function fundraiser_sustainers_count_donations_in_series($master_did) {
  * DB function, get unlocked donations ready to be processed.
  * Lock them.
  */
-function _fundraiser_sustainers_cron_get_recurring($limit = 200) {
+function _fundraiser_sustainers_cron_get_recurring($limit = 200, $lock = TRUE) {
   $now = strtotime('now');
   $uni_batch_id = uniqid();
   $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
@@ -4046,7 +4046,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200) {
   )->fetchAllKeyed(0, 1);
 
   // Lock the donations and log the action.
-  if (!empty($donations)) {
+  if (!empty($donations) && $lock) {
     db_query('UPDATE {fundraiser_sustainers} r1 ' .
       'SET r1.lock_id = :uni_batch_id, ' .
       'r1.gateway_resp = :locked ' .
@@ -4056,14 +4056,26 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200) {
 
     $log = fundraiser_sustainers_log();
     $log->logLockedDonations($donations, $uni_batch_id);
+
+    // Grab the locked donations for this batch.
+    $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
+      'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
+      'WHERE r.lock_id = :uni_batch_id ' . // Locked to this unique ID.
+      'ORDER BY r.next_charge ASC',
+      array(':uni_batch_id' => $uni_batch_id))->fetchAll();
+
+  }
+  elseif (!empty($donations)) {
+    $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
+      'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
+      'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = :status) ' .
+      'AND r.next_charge < :now ' .
+      'AND (r.attempts < :max_attempts OR r.attempts IS NULL) ' . // If already been tried X times, Stop Trying.
+      'AND r.lock_id = 0 ' . // And not locked.
+      'LIMIT 0, ' . $limit,
+      array(':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':now' => $now, ':max_attempts' => $max_processing_attempts))->fetchAll();
   }
 
-  // Grab the locked donations for this batch.
-  $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
-    'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
-    'WHERE r.lock_id = :uni_batch_id ' . // Locked to this unique ID.
-    'ORDER BY r.next_charge ASC',
-    array(':uni_batch_id' => $uni_batch_id))->fetchAll();
   // Return them.
   return $donations;
 }
