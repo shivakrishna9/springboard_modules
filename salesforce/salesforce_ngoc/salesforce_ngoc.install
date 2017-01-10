@@ -6,7 +6,7 @@
  */
 
 /**
- * Implements hook_uninstall().
+ * Implements hook_install().
  */
 function salesforce_ngoc_install() {
   // Remove default Drupal user to Contact mapping provided by Springboard.
@@ -23,14 +23,7 @@ function salesforce_ngoc_install() {
     entity_delete('salesforce_mapping', $sustainers_series_mapping->salesforce_mapping_id);
   }
 
-  // Remove default donation mapping provided by Springboard.
-  salesforce_genmap_delete_map(-1, 'salesforce_donation');
-
-  // Create default NGOC Donation mapping.
-  $donation_mapping_result = salesforce_ngoc_create_donation_mapping();
-  if ($donation_mapping_result !== FALSE) {
-    drupal_set_message(t('Donations have been mapped to NGOC Batch Upload object.'));
-  }
+  salesforce_ngoc_create_salesforce_donation_mappings();
 
   // Create default Drupal user mapping.
   $user_mapping_result = salesforce_ngoc_create_user_mapping();
@@ -243,6 +236,34 @@ function salesforce_ngoc_uninstall(){
   }
   // Remove default donation mapping provided by salesforce_ngoc.
   salesforce_genmap_delete_map(-1, 'salesforce_donation');
+}
+
+/**
+ * [salesforce_ngoc_create_salesforce_donation_mappings description]
+ */
+function salesforce_ngoc_create_salesforce_donation_mappings() {
+
+  // Remove default donation mapping provided by Springboard.
+  salesforce_genmap_delete_map(-1, 'salesforce_donation');
+  // Create default NGOC Donation mapping.
+  $donation_mapping_result = salesforce_ngoc_create_donation_mapping(-1);
+  if ($donation_mapping_result !== FALSE) {
+    drupal_set_message(t('The default Donation to NGOC Batch Upload object record has been created.'));
+  }
+
+  $maps = db_query("SELECT nid from {salesforce_genmap_map} WHERE map_handler = 'salesforce_donation' AND salesforce_object_type = 'Opportunity'");
+  foreach ($maps as $map){
+    // Remove existing donation mapping provided by Springboard.
+    salesforce_genmap_delete_map($map->nid, 'salesforce_donation');
+    // Create replacement NGOC Donation mapping.
+    $donation_mapping_result = salesforce_ngoc_create_donation_mapping($map->nid);
+    if ($donation_mapping_result !== FALSE) {
+      drupal_set_message(t('Donations have been mapped to NGOC Batch Upload object on node @nid.', array('@nid' => $map->nid)));
+    }
+    else {
+      drupal_set_message(t('There was a problem mapping the donation on node @nid.', array('@nid' => $map->nid)));
+    }
+  }
 }
 
 /**
@@ -2677,10 +2698,10 @@ function salesforce_ngoc_create_user_mapping() {
  * Creates a mapping between donations and the Batch Upload object in Salesforce
  * NGOC.
  */
-function salesforce_ngoc_create_donation_mapping() {
+function salesforce_ngoc_create_donation_mapping($nid = -1) {
   $map = array();
   $map = entity_create('salesforce_genmap_map', $map);
-  $map->nid = -1;
+  $map->nid = $nid;
   $map->map_handler = 'salesforce_donation';
   $map->salesforce_object_type = 'rC_Connect__Batch_Upload__c';
   // @TODO Unclear what this was doing in salesforce_luminate_install().
