@@ -172,6 +172,9 @@ function fundraiser_date_mode_fundraiser_donation_delete($donation) {
     ->condition('master_did', $donation->master_did)
     ->condition('did', $donation->did)
     ->execute();
+
+  fundraiser_date_mode_update_sustainer_queue($donation, 'cancel');
+
 }
 
 
