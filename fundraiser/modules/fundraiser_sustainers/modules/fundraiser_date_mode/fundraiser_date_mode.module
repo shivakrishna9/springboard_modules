@@ -192,14 +192,27 @@ function fundraiser_date_mode_fundraiser_donation_cancel($donation) {
   fundraiser_date_mode_update_sustainer_queue($donation, 'cancel');
 }
 
+/**
+ * Loop through the queue and update or remove a donation.
+ *
+ * @param object $donation
+ *   The donation object.
+ * @param string $op
+ *   Cancel or update.
+ */
 function fundraiser_date_mode_update_sustainer_queue($donation, $op) {
 
   $queue = DrupalQueue::get('sustainerQueue');
   $items = array();
+  // You have to build a separate array of items. Attempting to update
+  // items during the while loop causes a timeout.  DrupalQueue API does not
+  // have retrieval or update methods for individual items, so you have to
+  // aggregate them all.
   while ($item = $queue->claimItem()) {
     $items[] = $item;
   }
 
+  // Delete the queue item, replace it if necessary.
   foreach ($items as $item) {
     if ($item->data->did == $donation->did) {
       $queue->deleteItem($item);
