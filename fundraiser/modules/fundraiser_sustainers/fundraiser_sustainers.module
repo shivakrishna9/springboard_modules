@@ -3990,8 +3990,6 @@ function _fundraiser_sustainers_get_donations_recurr_remaining($master_did) {
     'AND (r.gateway_resp IS NULL OR ((r.gateway_resp = :status && r.attempts != :max_attempts) OR (r.gateway_resp = :queued_status))) ' .
     'ORDER BY r.next_charge ASC', array(':master_did' => $master_did, ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':queued_status' => FUNDRAISER_SUSTAINERS_QUEUED_STATUS, ':max_attempts' => $max_processing_attempts))->fetchAll();
 
-  dpm($donations);
-
   return $donations;
 }
 

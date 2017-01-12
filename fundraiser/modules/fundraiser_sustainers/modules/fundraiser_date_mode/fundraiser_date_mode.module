@@ -158,7 +158,7 @@ function fundraiser_date_mode_fundraiser_donation_delete($donation) {
     ->condition('did', $donation->did)
     ->execute();
 
-  fundraiser_date_mode_update_sustainer_queue($donation, 'cancel');
+  _fundraiser_date_mode_update_sustainer_queue('cancel', $donation);
 
 }
 
@@ -166,25 +166,25 @@ function fundraiser_date_mode_fundraiser_donation_delete($donation) {
  * Implements hook_fundraiser_donation_update().
  */
 function fundraiser_date_mode_fundraiser_donation_post_update($donation) {
-  fundraiser_date_mode_update_sustainer_queue($donation, 'update');
+  _fundraiser_date_mode_update_sustainer_queue('update', $donation);
 }
 
 /**
  * Implements hook_fundraiser_donation_update().
  */
 function fundraiser_date_mode_fundraiser_donation_cancel($donation) {
-  fundraiser_date_mode_update_sustainer_queue($donation, 'cancel');
+  _fundraiser_date_mode_update_sustainer_queue('cancel', $donation);
 }
 
 /**
  * Loop through the queue and update or remove a donation.
  *
+ * @param string $op
+ *   Clear, Cancel or update.
  * @param object $donation
  *   The donation object.
- * @param string $op
- *   Cancel or update.
  */
-function fundraiser_date_mode_update_sustainer_queue($donation, $op) {
+function _fundraiser_date_mode_update_sustainer_queue($op, $donation = NULL) {
 
   $queue = DrupalQueue::get('sustainerQueue');
   $items = array();
@@ -198,15 +198,31 @@ function fundraiser_date_mode_update_sustainer_queue($donation, $op) {
 
   // Delete the queue item, replace it if necessary.
   foreach ($items as $item) {
-    if ($item->data->did == $donation->did) {
+
+    // Date mode is being disabled, clear the queue and unlock the donation.
+    if ($op == 'clear' && empty($donation)) {
+      $recurring = array(
+        'did' => $item->data->did,
+        'gateway_resp' => NULL,
+        'lock_id' => 0,
+      );
+      _fundraiser_sustainers_update_recurring($recurring);
       $queue->deleteItem($item);
+    }
+    // We been summoned by a fundraiser hook about a change to a donation.
+    elseif (is_object($donation) && $item->data->did == $donation->did) {
+      // First, delete the queue item.
+      $queue->deleteItem($item);
+      // If it's an update hook, recreate the queue item.
       if ($op == 'update') {
         $updated_donation = db_query('SELECT * FROM {fundraiser_sustainers} r LEFT JOIN {fundraiser_donation} d on r.did = d.did WHERE r.did = :id', array(':id' => $donation->did))->fetch();
         $queue->createItem($updated_donation);
       }
+      // Release the queue item.
       $queue->releaseItem($item);
     }
     else {
+      // This queue item does not match the donation, release it and try next.
       $queue->releaseItem($item);
     }
   }
@@ -575,6 +591,7 @@ function fundraiser_date_mode_update_date_mode_operation($op, $date, $time, $mas
     case 'date_mode_disabled':
       // Revert to original dates.
       _fundraiser_date_mode_revert_sustainer_dates($master_order, $series_orders);
+      _fundraiser_date_mode_update_sustainer_queue('clear');
       break;
 
     case 'date_mode_date_changed':
