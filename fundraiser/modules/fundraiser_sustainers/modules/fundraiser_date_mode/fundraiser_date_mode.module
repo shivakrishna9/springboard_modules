@@ -571,7 +571,7 @@ function fundraiser_date_mode_update_sustainer_date($time_delta, $master_did, $d
 /**
  * Operation callback, updates next_charge for orders in a sustainer series.
  */
-function fundraiser_date_mode_update_date_mode_operation($op, $date, $time, $master_did, $max, $data) {
+function fundraiser_date_mode_update_date_mode_operation($op, $date, $time, $master_did, $max, $data, &$context) {
   // Initialize some sandbox values.
   if (!isset($context['sandbox']['progress'])) {
     // Use the $context['sandbox'] at your convenience to store the
@@ -582,6 +582,10 @@ function fundraiser_date_mode_update_date_mode_operation($op, $date, $time, $mas
     // Count the number of sustainers to process.
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['data'] = $data;
+  }
+
+  if (empty($context['results'])) {
+    $context['results'] = array('op' => $op);
   }
   $master_order = $data['master_order'];
   $series_orders = $data['series'];
@@ -599,7 +603,6 @@ function fundraiser_date_mode_update_date_mode_operation($op, $date, $time, $mas
     case 'date_mode_disabled':
       // Revert to original dates.
       _fundraiser_date_mode_revert_sustainer_dates($master_order, $series_orders);
-      _fundraiser_date_mode_update_sustainer_queue('clear');
       break;
 
     case 'date_mode_date_changed':
@@ -624,7 +627,10 @@ function fundraiser_date_mode_update_date_mode_operation($op, $date, $time, $mas
 /**
  * Batch process finish message.
  */
-function fundraiser_date_mode_update_date_mode_finished() {
+function fundraiser_date_mode_update_date_mode_finished($success, $results, $operations) {
+  if ($success && $results['op'] == 'date_mode_disabled') {
+    _fundraiser_date_mode_update_sustainer_queue('clear');
+  }
   return t('all done');
 }
 
