@@ -99,7 +99,7 @@ function sb_social_admin() {
       }
       // Special handling for campaign ID.
       if ($key == 'cid') {
-        $campaigns = market_source_get_campaigns(FALSE);
+        $campaigns = module_exists('salesforce_genmap') ? salesforce_genmap_get_campaigns(FALSE) : array();
         $select_options = array();
         foreach ($campaigns as $campaign_id => $campaign) {
           $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
@@ -565,7 +565,7 @@ function _sb_social_settings_market_source(&$form, $settings) {
       continue;
     }
     if ($key == 'cid') {
-      $campaigns = market_source_get_campaigns(FALSE);
+      $campaigns = module_exists('salesforce_genmap') ? salesforce_genmap_get_campaigns(FALSE) : array();
       $select_options = array();
       foreach ($campaigns as $campaign_id => $campaign) {
         $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';

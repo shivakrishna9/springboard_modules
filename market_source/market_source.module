@@ -584,7 +584,7 @@ function _market_source_validate_cid($val) {
     if (preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) {
       if (drupal_strlen($val) <= MARKET_SOURCE_VALUE_MAXLENGTH) {
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
-          $campaigns = market_source_get_campaigns();
+          $campaigns = module_exists('salesforce_genmap') ? salesforce_genmap_get_campaigns() : array();
           if (!empty($campaigns)) {
             $campaigns = array_keys($campaigns);
             if (strlen($val) == 18) {
@@ -854,61 +854,6 @@ function _market_source_update_component($nid, $field_key, $field, $pid = 0, $we
 }
 
 /**
- * Helper function, retrieve a set of available campaigns.
- *
- * @param bool $reset
- *   Whether to reset the static cache variable.
- *
- * @return array
- *   An array with campaign id and name, keyed by campaign ID.
- *   Example: $campaigns[id] => array('id' => id, 'name' => name)
- */
-function market_source_get_campaigns($reset = FALSE) {
-  // If the reset option has been passed clear the static variable
-  if ($reset === TRUE) {
-    drupal_static_reset(__FUNCTION__);
-  }
-
-  $campaigns = &drupal_static(__FUNCTION__, array());
-
-  if (empty($campaigns) && module_exists('salesforce_sync')) {
-    if (($cache = cache_get('market_source_campaigns')) && $reset === FALSE) {
-      $campaigns = $cache->data;
-    }
-    else {
-
-      // Create a new soapclient
-      try {
-        $sync = new SalesforceSync();
-
-        $found_campaigns = $sync->fetchRecords('Campaign', array('Id', 'Name'), array('isActive = TRUE'));
-        // Return a list of Campaign ids.
-        if (is_array($found_campaigns)) {
-          foreach ($found_campaigns as $found_campaign) {
-            $campaigns[$found_campaign->Id] = array(
-              'id' => $found_campaign->Id,
-              'name' => $found_campaign->Name,
-            );
-          }
-        }
-        else {
-          $campaigns = array();
-        }
-        cache_set('market_source_campaigns', $campaigns, 'cache', CACHE_TEMPORARY);
-      }
-      catch (Exception $ex) {
-        watchdog('Market Source', 'Market Source failed to load the campaign ids due to an API error.',
-          array(),
-          WATCHDOG_ERROR);
-        return array();
-      }
-    }
-  }
-
-  return $campaigns;
-}
-
-/**
  * Returns campaigns ready to be used in an #options form api array.
  *
  * @param bool $reset
@@ -918,12 +863,14 @@ function market_source_get_campaigns($reset = FALSE) {
  *   Campaign names keyed by campaign id.
  */
 function market_source_get_campaign_options($reset = FALSE) {
-  $campaigns = market_source_get_campaigns($reset);
   $options = array();
-  foreach ($campaigns as $campaign_id => $campaign) {
-    $options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
-  }
 
+  if(module_exists('salesforce_genmap')) {
+    $campaigns = salesforce_genmap_get_campaigns($reset);
+    foreach ($campaigns as $campaign_id => $campaign) {
+      $options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
+    }
+  }
   return $options;
 }
 
@@ -942,7 +889,7 @@ function market_source_campaign_id_autocomplete($query='') {
   }
 
   $matches = array();
-  $campaigns = market_source_get_campaigns($reset);
+  $campaigns = module_exists('salesforce_genmap') ? salesforce_genmap_get_campaigns($reset) : array();
   foreach ($campaigns as $campaign_id => $campaign) {
     if(preg_match('/.*' . $query . '.*/i', $campaign_id) || preg_match('/.*' . $query . '.*/i', $campaign['name'])) {
       $matches[$campaign_id] = $campaign['name'] . " [$campaign_id]";
@@ -953,7 +900,7 @@ function market_source_campaign_id_autocomplete($query='') {
 }
 
 function market_source_preprocess_webform_components_form(&$vars) {
-  $campaigns = market_source_get_campaigns();
+  $campaigns = module_exists('salesforce_genmap') ? salesforce_genmap_get_campaigns() : array();
 
   foreach($vars['form']['#node']->webform['components'] as $cid => $component) {
     if ($component['form_key'] == 'cid') {
@@ -979,14 +926,7 @@ function market_source_node_load($nodes, $types) {
                 drupal_set_message(t('This donation form is not associated with any Salesforce campaigns. It may not sync to Salesforce without a campaign association. Please go to !link and choose a campaign association.', array('!link' => l('Form Components', '/node/' . $node->nid . '/form-components'))), 'warning', FALSE);
               // If the value is not set, create a warning message advising the admin to set the value.
               } else if ($component['form_key'] == 'cid') {
-                // Webform calls node_load() in its own menu callback, which is before hook_init() is executed,
-                // which is when this soapclient library file *should* be included but, it's not when this code gets
-                // executed. So, here we are.
-                if(!class_exists('SforcePartnerClient')) {
-                  $path = libraries_get_path('salesforce');
-                  require_once $path . '/soapclient/SforcePartnerClient.php';
-                }
-                $campaigns = market_source_get_campaigns();
+                $campaigns = module_exists('salesforce_genmap') ? salesforce_genmap_get_campaigns() : array();
                 drupal_set_message(t('This donation form is associated with the Salesforce campaign: @name, ID: @id', array('@name' => $campaigns[$component['value']]['name'], '@id' => $component['value'])), 'status', FALSE);
               }
             }
