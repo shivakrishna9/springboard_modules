@@ -312,9 +312,10 @@ function springboard_purge_get_donations_in_nonexpired_series() {
   $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
   $replacements = array(
     ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
+    ':queued_status' => FUNDRAISER_SUSTAINERS_QUEUED_STATUS,
     ':max_attempts' => $max_processing_attempts,
   );
-  return db_query('SELECT did FROM {fundraiser_sustainers} r WHERE (r.gateway_resp IS NULL OR (r.gateway_resp = :status && r.attempts != :max_attempts))', $replacements)->fetchCol();
+  return db_query('SELECT did FROM {fundraiser_sustainers} r WHERE (r.gateway_resp IS NULL OR ((r.gateway_resp = :status && r.attempts != :max_attempts) OR (r.gateway_resp = :queued_status)))', $replacements)->fetchCol();
 }
 
 /**

@@ -39,7 +39,7 @@ function fundraiser_date_mode_fundraiser_sustainers_process_recurring_alter(&$pr
     $queue->createQueue();
     // Select records (up to configured maximum).
     $record_count = variable_get('fundraiser_date_mode_batch_record_count', 1000);
-    $donations = _fundraiser_sustainers_cron_get_recurring($record_count);
+    $donations = _fundraiser_sustainers_cron_get_recurring($record_count, TRUE);
     $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
     // Loop over the found orders.
     foreach ($donations as $recurring) {
@@ -157,6 +157,59 @@ function fundraiser_date_mode_fundraiser_donation_delete($donation) {
     ->condition('master_did', $donation->master_did)
     ->condition('did', $donation->did)
     ->execute();
+
+  fundraiser_date_mode_update_sustainer_queue($donation, 'cancel');
+
+}
+
+/**
+ * Implements hook_fundraiser_donation_update().
+ */
+function fundraiser_date_mode_fundraiser_donation_post_update($donation) {
+  fundraiser_date_mode_update_sustainer_queue($donation, 'update');
+}
+
+/**
+ * Implements hook_fundraiser_donation_update().
+ */
+function fundraiser_date_mode_fundraiser_donation_cancel($donation) {
+  fundraiser_date_mode_update_sustainer_queue($donation, 'cancel');
+}
+
+/**
+ * Loop through the queue and update or remove a donation.
+ *
+ * @param object $donation
+ *   The donation object.
+ * @param string $op
+ *   Cancel or update.
+ */
+function fundraiser_date_mode_update_sustainer_queue($donation, $op) {
+
+  $queue = DrupalQueue::get('sustainerQueue');
+  $items = array();
+  // You have to build a separate array of items. Attempting to update
+  // items during the while loop causes a timeout.  DrupalQueue API does not
+  // have retrieval or update methods for individual items, so you have to
+  // aggregate them all.
+  while ($item = $queue->claimItem()) {
+    $items[] = $item;
+  }
+
+  // Delete the queue item, replace it if necessary.
+  foreach ($items as $item) {
+    if ($item->data->did == $donation->did) {
+      $queue->deleteItem($item);
+      if ($op == 'update') {
+        $updated_donation = db_query('SELECT * FROM {fundraiser_sustainers} r LEFT JOIN {fundraiser_donation} d on r.did = d.did WHERE r.did = :id', array(':id' => $donation->did))->fetch();
+        $queue->createItem($updated_donation);
+      }
+      $queue->releaseItem($item);
+    }
+    else {
+      $queue->releaseItem($item);
+    }
+  }
 }
 
 /**

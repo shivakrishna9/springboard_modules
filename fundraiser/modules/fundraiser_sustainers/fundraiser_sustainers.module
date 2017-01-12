@@ -21,6 +21,8 @@ define('FUNDRAISER_SUSTAINERS_CANCELED_STATUS', 'canceled');
 define('FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS', 'scheduled');
 define('FUNDRAISER_SUSTAINERS_LOCKED_STATUS', 'locked');
 define('FUNDRAISER_SUSTAINERS_OMITTED_STATUS', 'omitted');
+define('FUNDRAISER_SUSTAINERS_QUEUED_STATUS', 'queued');
+
 
 
 /**
@@ -3966,10 +3968,11 @@ function _fundraiser_sustainers_count_donations_recurr_remaining($master_did) {
     $replacements = array(
       ':master_did' => $master_did,
       ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
+      ':queued_status' => FUNDRAISER_SUSTAINERS_QUEUED_STATUS,
       ':max_attempts' => $max_processing_attempts,
     );
 
-    $count = db_query('SELECT COUNT(*) FROM {fundraiser_sustainers} r WHERE r.master_did = :master_did AND (r.gateway_resp IS NULL OR (r.gateway_resp = :status && r.attempts != :max_attempts))', $replacements)->fetchField();
+    $count = db_query('SELECT COUNT(*) FROM {fundraiser_sustainers} r WHERE r.master_did = :master_did AND (r.gateway_resp IS NULL OR ((r.gateway_resp = :status && r.attempts != :max_attempts) OR (r.gateway_resp = :queued_status)))', $replacements)->fetchField();
 
     $counts[$master_did] = is_numeric($count) ? $count : 0;
   }
@@ -3984,8 +3987,11 @@ function _fundraiser_sustainers_get_donations_recurr_remaining($master_did) {
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = :master_did ' .
-    'AND (r.gateway_resp IS NULL OR (r.gateway_resp = :status && r.attempts != :max_attempts)) ' .
-    'ORDER BY r.next_charge ASC', array(':master_did' => $master_did, ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':max_attempts' => $max_processing_attempts))->fetchAll();
+    'AND (r.gateway_resp IS NULL OR ((r.gateway_resp = :status && r.attempts != :max_attempts) OR (r.gateway_resp = :queued_status))) ' .
+    'ORDER BY r.next_charge ASC', array(':master_did' => $master_did, ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':queued_status' => FUNDRAISER_SUSTAINERS_QUEUED_STATUS, ':max_attempts' => $max_processing_attempts))->fetchAll();
+
+  dpm($donations);
+
   return $donations;
 }
 
@@ -4030,41 +4036,69 @@ function fundraiser_sustainers_count_donations_in_series($master_did) {
  * DB function, get unlocked donations ready to be processed.
  * Lock them.
  */
-function _fundraiser_sustainers_cron_get_recurring($limit = 200) {
+function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FALSE) {
   $now = strtotime('now');
   $uni_batch_id = uniqid();
   $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
 
-  // Load donations needing to be processed into an array of dids => status.
-  $donations = db_query('SELECT r.did, r.gateway_resp FROM {fundraiser_sustainers} r ' .
+  $donations = array();
+
+  // Load donations needing to be processed into an array of dids => donation objects
+  $donations_to_process = db_query('SELECT r.did as did, r.*, d.* FROM {fundraiser_sustainers} r ' .
+    'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = :status) ' .
     'AND r.next_charge < :now ' .
     'AND (r.attempts < :max_attempts OR r.attempts IS NULL) ' . // If already been tried X times, Stop Trying.
     'AND r.lock_id = 0 ' . // And not locked.
+    'ORDER BY r.next_charge ASC ' .
     'LIMIT 0, ' . $limit,
     array(':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':now' => $now, ':max_attempts' => $max_processing_attempts)
-  )->fetchAllKeyed(0, 1);
+  )->fetchAllAssoc('did');
 
-  // Lock the donations and log the action.
-  if (!empty($donations)) {
-    db_query('UPDATE {fundraiser_sustainers} r1 ' .
-      'SET r1.lock_id = :uni_batch_id, ' .
-      'r1.gateway_resp = :locked ' .
-      'WHERE r1.did IN (:donations)',
-      array(':uni_batch_id' => $uni_batch_id, ':locked' => FUNDRAISER_SUSTAINERS_LOCKED_STATUS, ':donations' => array_keys($donations))
-    );
+  if (!empty($donations_to_process)) {
 
+    $status= !$date_mode ? FUNDRAISER_SUSTAINERS_LOCKED_STATUS :FUNDRAISER_SUSTAINERS_QUEUED_STATUS;
+    // Lock the donations.
+    $num_rows = db_update('fundraiser_sustainers')
+      ->fields(array(
+        'lock_id' => $uni_batch_id,
+        'gateway_resp' => $status
+      ))
+      ->condition ('did', array_keys($donations_to_process), 'IN')
+      ->execute();
+
+    // If nums_rows = $donations to process, we can skip a query and just
+    // loop through the items we've already looked up and add updated values.
+    $donations_to_log = array();
+    if ($num_rows == count($donations_to_process)) {
+      foreach ($donations_to_process as $key => $processed) {
+        $donations_to_process[$key]->lock_id = $uni_batch_id;
+        $donations_to_process[$key]->gateway_resp = FUNDRAISER_SUSTAINERS_LOCKED_STATUS;
+        $donations_to_log[$key] = $donations_to_process[$key]->gateway_resp;
+      }
+      $donations = $donations_to_process;
+    }
+    else {
+      // For unknown reason, there's a mismatch in result counts, so to be safe
+      // do another query. BTW, haven't seen this happen, just being extra
+      // careful.
+      $donations = db_query('SELECT r.did as did, r.* FROM {fundraiser_sustainers} r ' .
+        'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
+        'WHERE r.lock_id = :uni_batch_id ' . // Locked to this unique ID.
+        'ORDER BY r.next_charge ASC',
+        array(':uni_batch_id' => $uni_batch_id))->fetchAllAssoc('did');
+
+      foreach ($donations as $key => $processed) {
+        $donations_to_log[$key] = $processed[$key]->gateway_resp;
+      }
+    }
+
+    // Log the locked donation's original statuses
     $log = fundraiser_sustainers_log();
-    $log->logLockedDonations($donations, $uni_batch_id);
+    $log->logLockedDonations($donations_to_log, $uni_batch_id);
   }
 
-  // Grab the locked donations for this batch.
-  $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
-    'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
-    'WHERE r.lock_id = :uni_batch_id ' . // Locked to this unique ID.
-    'ORDER BY r.next_charge ASC',
-    array(':uni_batch_id' => $uni_batch_id))->fetchAll();
-  // Return them.
+  // Return the donations.
   return $donations;
 }
 
@@ -4441,6 +4475,8 @@ function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $cont
       // Fall through.
     case FUNDRAISER_SUSTAINERS_CANCELED_STATUS:
       // Fall through.
+    case FUNDRAISER_SUSTAINERS_QUEUED_STATUS:
+      // Fall through.
     default:
       drupal_set_message(t('Cannot unlock the sustainer %did because its status is %status', $replacements));
       break;
@@ -4493,6 +4529,8 @@ function fundraiser_sustainers_omit_sustainer_action(&$sustainer_record, $contex
     case FUNDRAISER_SUSTAINERS_SKIPPED_STATUS:
       // Fall through.
     case FUNDRAISER_SUSTAINERS_CANCELED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_QUEUED_STATUS:
       // Fall through.
     default:
       drupal_set_message(t('Cannot unlock the sustainer %did because its status is %status', $replacements));
