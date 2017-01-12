@@ -4057,7 +4057,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
 
   if (!empty($donations_to_process)) {
 
-    $status= !$date_mode ? FUNDRAISER_SUSTAINERS_LOCKED_STATUS :FUNDRAISER_SUSTAINERS_QUEUED_STATUS;
+    $status= !$date_mode ? FUNDRAISER_SUSTAINERS_LOCKED_STATUS : FUNDRAISER_SUSTAINERS_QUEUED_STATUS;
     // Lock the donations.
     $num_rows = db_update('fundraiser_sustainers')
       ->fields(array(
@@ -4073,7 +4073,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
     if ($num_rows == count($donations_to_process)) {
       foreach ($donations_to_process as $key => $processed) {
         $donations_to_process[$key]->lock_id = $uni_batch_id;
-        $donations_to_process[$key]->gateway_resp = FUNDRAISER_SUSTAINERS_LOCKED_STATUS;
+        $donations_to_process[$key]->gateway_resp = $status;
         $donations_to_log[$key] = $donations_to_process[$key]->gateway_resp;
       }
       $donations = $donations_to_process;
