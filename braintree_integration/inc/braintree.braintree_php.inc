@@ -100,8 +100,6 @@ function braintree_transaction_sale(&$sale_data, &$context = array()) {
   // Allow other modules to alter the sale before sending it to Braintree.
   drupal_alter('braintree_transaction_sale_data', $sale_data, $context);
 
-  dpm($sale_data);
-
   if (empty($context['order'])) {
     return array(FALSE, $context);
   }
