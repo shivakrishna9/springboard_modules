@@ -4055,7 +4055,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
 
   if (!empty($donations_to_process)) {
 
-    $status= !$date_mode ? FUNDRAISER_SUSTAINERS_LOCKED_STATUS : FUNDRAISER_SUSTAINERS_QUEUED_STATUS;
+    $status = !$date_mode ? FUNDRAISER_SUSTAINERS_LOCKED_STATUS : FUNDRAISER_SUSTAINERS_QUEUED_STATUS;
     // Lock the donations.
     $num_rows = db_update('fundraiser_sustainers')
       ->fields(array(
@@ -4078,8 +4078,9 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
     }
     else {
       // For unknown reason, there's a mismatch in result counts, so to be safe
-      // do another query. BTW, haven't seen this happen, just being extra
-      // careful.
+      // do another query. BTW, haven't seen this happen, this just happens to
+      // be the way this function has worked since 2013, doing an extra query
+      // that is probably unnecessary.
       $donations = db_query('SELECT r.did as did, r.* FROM {fundraiser_sustainers} r ' .
         'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
         'WHERE r.lock_id = :uni_batch_id ' . // Locked to this unique ID.

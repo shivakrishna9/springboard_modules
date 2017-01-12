@@ -163,14 +163,21 @@ function fundraiser_date_mode_fundraiser_donation_delete($donation) {
 }
 
 /**
- * Implements hook_fundraiser_donation_update().
+ * Implements hook_fundraiser_donation_post_update().
+ *
+ * Update the queue item after a donation has been updated.
  */
 function fundraiser_date_mode_fundraiser_donation_post_update($donation) {
   _fundraiser_date_mode_update_sustainer_queue('update', $donation);
 }
 
 /**
- * Implements hook_fundraiser_donation_update().
+ * Implements hook_fundraiser_donation_cancel().
+ *
+ * Remove a queue item if the donation has been cancelled.
+ *
+ * @todo can we use "clear" instead, from some other hook, or are there
+ * cases where only one single recurring item is cancelled?
  */
 function fundraiser_date_mode_fundraiser_donation_cancel($donation) {
   _fundraiser_date_mode_update_sustainer_queue('cancel', $donation);
@@ -191,7 +198,8 @@ function _fundraiser_date_mode_update_sustainer_queue($op, $donation = NULL) {
   // You have to build a separate array of items. Attempting to update
   // items during the while loop causes a timeout.  DrupalQueue API does not
   // have retrieval or update methods for individual items, so you have to
-  // aggregate them all.
+  // aggregate them all. The data is serialized so they aren't easy to lookup
+  // or indexed by donation ids.
   while ($item = $queue->claimItem()) {
     $items[] = $item;
   }
@@ -218,7 +226,7 @@ function _fundraiser_date_mode_update_sustainer_queue($op, $donation = NULL) {
         $updated_donation = db_query('SELECT * FROM {fundraiser_sustainers} r LEFT JOIN {fundraiser_donation} d on r.did = d.did WHERE r.did = :id', array(':id' => $donation->did))->fetch();
         $queue->createItem($updated_donation);
       }
-      // Release the queue item.
+      // Release the queue item. Probably don't need this.
       $queue->releaseItem($item);
     }
     else {
