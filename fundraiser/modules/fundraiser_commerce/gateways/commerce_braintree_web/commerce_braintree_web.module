@@ -511,7 +511,10 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     $default_token = $pane_values['braintree']['default_method_token'];
   }
   else {
-    $nonce = braintree_get_nonce();
+    drupal_alter('commerce_braintree_web_submit_form_existing_payment_method_token', $token, $customer, $pane_values);
+    if (empty($token)) {
+      $nonce = braintree_get_nonce();
+    }
   }
 
   $context = array(
@@ -569,16 +572,16 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     $hook_name = 'commerce_braintree_web_submit_payment_method';
     foreach (module_implements($hook_name) as $module) {
       $function = $module . '_' . $hook_name;
-      list($success, $context) = $function($customer, $new_payment_method);
+      list($success, $result) = $function($customer, $new_payment_method);
       if (!$success) {
-        form_set_error('braintree', $context['result']);
-        watchdog('commerce_braintree_web', '@error_message', array('@error_message' => $context['result']), WATCHDOG_ERROR, NULL);
+        form_set_error('braintree', $result['result']);
+        watchdog('commerce_braintree_web', '@error_message', array('@error_message' => $result['result']), WATCHDOG_ERROR, NULL);
         return FALSE;
       }
     }
 
     $flag_update_default_method = TRUE;
-    $braintree_payment_method = $context['result']->paymentMethod;
+    $braintree_payment_method = $result['result']->paymentMethod;
     $token = $braintree_payment_method->token;
   }
 
@@ -871,7 +874,7 @@ function _commerce_braintree_web_get_transaction_informations($order) {
     $locality,
     $postal_code,
     $administrative_area,
-    $customer_mail
+    $customer_mail,
   );
 }
 

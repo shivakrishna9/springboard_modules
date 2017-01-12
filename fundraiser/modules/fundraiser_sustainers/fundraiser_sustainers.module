@@ -2438,7 +2438,10 @@ function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustai
 
   // Add a validation hook which will move some of the form elements, needed for
   // commerce cardonfile.
-  $form['#validate'][] = '_fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate';
+  if ($data['update payment'] && $data['update cardonfile']) {
+    $form['#validate'][] = '_fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate';
+  }
+
   $form['#validate'][] = 'fundraiser_sustainers_update_billing_form_validate';
   $form['actions']['submit']['#submit'][] = 'fundraiser_sustainers_update_billing_form_submit';
 }

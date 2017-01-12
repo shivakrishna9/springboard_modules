@@ -188,7 +188,7 @@ function braintree_vault_customer_id($account = NULL) {
     return FALSE;
   }
 
-  $customer_id = db_query('SELECT customer_id FROM {braintree_vault_users} WHERE uid = :uid', array(
+  $customer_id = db_query('SELECT customer_id FROM {braintree_vault_payment_methods} WHERE uid = :uid', array(
     ':uid' => $account->uid,
   ))->fetchField();
 
@@ -502,7 +502,6 @@ function braintree_vault_braintree_transaction_sale_complete($context) {
     'customer_id' => $context['result']->transaction->customer['id'],
     'uid' => $user->uid,
   );
-  braintree_vault_add_user_record($data);
 
   if (!empty($context['result']->transaction->billing['id'])) {
     $billing_fields = $context['result']->transaction->billing;
@@ -517,6 +516,7 @@ function braintree_vault_braintree_transaction_sale_complete($context) {
       ':ccaln' => $billing_fields['lastName'],
     ))->fetchField();
     $data['profile_id'] = $profile_id;
+    $data['payment_method_token'] = $context['result']->transaction->creditCard['token'];
     braintree_vault_add_address_record($data);
   }
 }
@@ -534,42 +534,24 @@ function braintree_vault_commerce_braintree_web_submit_transaction_sale_success(
       'uid' => $card->uid,
     );
     $data['payment_method_token'] = $result->transaction->creditCard['token'];
+    $data['unique_identifier'] = $result->transaction->creditCard['uniqueNumberIdentifier'];
     $data['card_id'] = $card->card_id;
     braintree_vault_add_payment_method_record($data);
   }
 }
 
 /**
- * Creates a user record in the braintree_vault_users table.
- */
-function braintree_vault_add_user_record($data) {
-  drupal_alter('braintree_vault_add_user_record', $data);
-  $required_fields = array('customer_id', 'uid');
-  foreach ($required_fields as $r) {
-    if (!array_key_exists($r, $data)) {
-      watchdog('braintree_vault', 'The $data variable must contain a :type entry.', array(
-        ':type' => $r,
-      ), WATCHDOG_WARNING);
-      return;
-    }
-  }
-
-  db_merge('braintree_vault_users')
-    ->key(array('uid' => $data['uid']))
-    ->fields(array(
-      'uid' => $data['uid'],
-      'customer_id' => $data['customer_id'],
-    ))
-    ->execute();
-}
-
-/**
  * Creates an address record in the braintree_vault_addresses table.
  */
 function braintree_vault_add_address_record($data) {
-  dpm($data);
   drupal_alter('braintree_vault_add_address_record', $data);
-  $required_fields = array('customer_id', 'uid', 'address_id', 'profile_id');
+  $required_fields = array(
+    'customer_id',
+    'uid',
+    'address_id',
+    'profile_id',
+    'payment_method_token',
+  );
   foreach ($required_fields as $r) {
     if (!array_key_exists($r, $data)) {
       watchdog('braintree_vault', 'The $data variable must contain a :type entry.', array(
@@ -586,6 +568,7 @@ function braintree_vault_add_address_record($data) {
       'uid' => $data['uid'],
       'customer_id' => $data['customer_id'],
       'profile_id' => $data['profile_id'],
+      'payment_method_token' => $data['payment_method_token'],
     ))
     ->execute();
 }
@@ -594,13 +577,13 @@ function braintree_vault_add_address_record($data) {
  * Creates an address record in the braintree_vault_payment_methods table.
  */
 function braintree_vault_add_payment_method_record($data) {
-  dpm($data);
   drupal_alter('braintree_vault_add_payment_method_record', $data);
   $required_fields = array(
     'customer_id',
     'uid',
     'payment_method_token',
     'card_id',
+    'unique_identifier',
   );
   foreach ($required_fields as $r) {
     if (!array_key_exists($r, $data)) {
@@ -618,6 +601,7 @@ function braintree_vault_add_payment_method_record($data) {
       'customer_id' => $data['customer_id'],
       'payment_method_token' => $data['payment_method_token'],
       'card_id' => $data['card_id'],
+      'unique_identifier' => $data['unique_identifier'],
     ))
     ->execute();
 }
@@ -632,7 +616,7 @@ function braintree_vault_add_payment_method_record($data) {
  *   The Braintree Vault customer ID or FALSE if not found.
  */
 function braintree_vault_get_customer_id_by_uid($uid) {
-  return db_query('SELECT customer_id FROM {braintree_vault_users} WHERE uid = :uid', array(
+  return db_query('SELECT customer_id FROM {braintree_vault_payment_methods} WHERE uid = :uid', array(
     ':uid' => $uid,
   ))->fetchField();
 }
@@ -658,7 +642,12 @@ function braintree_vault_get_customer_id_by_email($email) {
  * Implements hook_commerce_braintree_web_submit_payment_method().
  */
 function braintree_vault_commerce_braintree_web_submit_payment_method(&$customer, $new_payment_method) {
-  return braintree_vault_payment_method_save($new_payment_method, array('op' => 'add'));
+  if (!empty($customer['id'])) {
+    $customer['creditCards'] = db_query('SELECT unique_identifier FROM {braintree_vault_payment_methods} WHERE customer_id = :customer_id', array(
+      ':customer_id' => $customer['id'],
+    ))->fetchCol();
+  }
+  return braintree_vault_payment_method_save($new_payment_method, array('op' => 'add', 'customer' => $customer));
 }
 
 /**

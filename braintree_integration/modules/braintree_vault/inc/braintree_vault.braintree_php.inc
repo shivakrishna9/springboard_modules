@@ -17,7 +17,7 @@ function braintree_vault_customer_load($customer_id) {
   try {
     $customer = Braintree_Customer::find($customer_id);
     $context['result']->result = $customer;
-    return $customer;
+    return array(TRUE, $customer);
   }
   catch (Braintree_Exception_NotFound $e) {
     $error_message = braintree_report_error($e);
@@ -75,27 +75,19 @@ function braintree_vault_customer_save($customer_data) {
  *   related information like error messages.
  */
 function braintree_vault_payment_method_save($payment_method, $context = array(), $settings = array()) {
-  // Prevent duplicate cards from being created.
-  $payment_method['options']['failOnDuplicatePaymentMethod'] = TRUE;
-
-  dpm($payment_method);
+  if (empty($settings)) {
+    $settings = braintree_default_settings();
+  }
   braintree_initialize($settings);
 
   drupal_alter('braintree_payment_method', $payment_method, $context);
 
-  $params = array();
-  $edit = FALSE;
-  if (isset($context['options'])) {
-    $params['options'] = $context['options'];
-  }
-  if ($context['op'] == 'edit') {
-    $params['paymentMethodNonce'] = $payment_method['paymentMethodNonce'];
-    $edit = TRUE;
-  }
+  dpm($payment_method);
+  dpm($context);
 
   try {
-    if ($edit) {
-      $context['result'] = Braintree_PaymentMethod::update($payment_method['paymentMethodToken'], $params);
+    if ($context['op'] == 'edit') {
+      $context['result'] = Braintree_PaymentMethod::update($payment_method['paymentMethodToken'], $context['options']);
     }
     else {
       $context['result'] = Braintree_PaymentMethod::create($payment_method);
@@ -107,11 +99,42 @@ function braintree_vault_payment_method_save($payment_method, $context = array()
     return array(FALSE, $context);
   }
 
+  dpm(print_r($context['result'], TRUE));
+
   if ($context['result']->success) {
+    // When adding a card, check if it is a duplicate payment method.
+    // Currently, the only way to achieve this is by adding the card first and
+    // determining if the card's unique idenifier ID exists for the user.
+    // @todo Re-implement this when/if Braintree ever supports looking up a
+    // user's card before it has to be saved.
+    if ($context['op'] == 'add' && !empty($context['customer']['creditCards'] && in_array($context['result']->paymentMethod->uniqueNumberIdentifier, $context['customer']['creditCards']))) {
+      // If we already have this card stored, delete this card and update the
+      // stored card.
+      try {
+        Braintree_PaymentMethod::delete($context['result']->paymentMethod->token);
+      }
+      catch (Exception $e) {
+        $error_message = braintree_report_error($e);
+        $context['error'] = $error_message;
+        return array(FALSE, $context);
+      }
+      $token = db_query('SELECT payment_method_token FROM {braintree_vault_payment_methods} WHERE unique_identifier = :u', array(
+        ':u' => $context['result']->paymentMethod->uniqueNumberIdentifier,
+      ))->fetchField();
+      // Edit the card instead.
+      $context['op'] = 'edit';
+      $context['options'] = $payment_method;
+      return braintree_vault_payment_method_save(array(
+        'paymentMethodToken' => $token,
+      ), $context, $settings);
+    }
+
+    // @todo Determine if this should be the current user or the user specified
+    // in the parameters.
     global $user;
     braintree_vault_customer_cache_reset($user->uid);
 
-    // Invoke post hook when sale is completed successfully.
+    // Invoke post hook when payment method is added or updated successfully.
     foreach (module_implements('braintree_vault_payment_method_saved') as $module) {
       $function = $module . '_braintree_vault_payment_method_saved';
       $function($context);
@@ -243,4 +266,38 @@ function braintree_vault_customer_update($customer_id, $customer_data) {
 
   braintree_report_error($result);
   return FALSE;
+}
+
+/**
+ * Update a customer's address in Braintree Vault.
+ *
+ * @param int $customer_id
+ *   The customer ID.
+ * @param string $address_id
+ *   The address ID.
+ * @param array $data
+ *   The new address data.
+ * @param array $settings
+ *   The payment gateway settings to initialize Braintree with.
+ *
+ * @return bool
+ *   TRUE if updated successfully, FALSE otherwise.
+ */
+function braintree_vault_address_update($customer_id, $address_id, $data, $settings = array()) {
+  if (empty($settings)) {
+    $settings = braintree_default_settings();
+  }
+  braintree_initialize($settings);
+
+  drupal_alter('braintree_vault_customer_address_update', $customer_id, $address_id, $data);
+
+  try {
+    $result = Braintree_Address::update($customer_id, $address_id, $data);
+  }
+  catch (Exception $e) {
+    $message = braintree_report_error($e);
+    return array(FALSE, $message);
+  }
+
+  return array(TRUE, $result);
 }

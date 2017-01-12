@@ -388,6 +388,11 @@ function fundraiser_quick_donate_fundraiser_update_billing_form_postprocess($for
 function _fundraiser_quick_donate_check_qd_default($form, $form_state) {
   $values = $form_state['values'];
   $donation = $form_state['donation'];
+
+  if (empty($values['cardonfile'])) {
+    return;
+  }
+
   $old_card = $values['cardonfile']['old_card'];
   $card = $form_state['card'];
   if (!empty($values['cardonfile']['card'])) {

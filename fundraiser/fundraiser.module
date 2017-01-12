@@ -3777,6 +3777,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   $defaults = array(
     'update billing' => TRUE,
     'update cardonfile' => TRUE,
+    'update payment' => TRUE,
     'calling module' => 'fundraiser',
     'donation' => NULL,
     'card' => NULL,
@@ -3839,29 +3840,31 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   }
 
   // CC info.
-  $form['payment_method'] = array(
-    '#type' => 'hidden',
-    '#value' => $data['donation']->donation['payment_method'],
-  );
-  $form['payment_fields'] = array(
-    '#type' => 'fieldset',
-    '#title' => 'Payment Information',
-    '#attributes' => array('id' => 'credit-card-info'),
-    '#tree' => TRUE,
-  );
-  $form['payment_fields'][$data['donation']->donation['payment_method']] = array(
-    '#type' => 'fieldset',
-    '#attributes' => array('id' => 'credit-card-info'),
-  );
+  if ($data['update payment']) {
+    $form['payment_method'] = array(
+      '#type' => 'hidden',
+      '#value' => $data['donation']->donation['payment_method'],
+    );
+    $form['payment_fields'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Payment Information',
+      '#attributes' => array('id' => 'credit-card-info'),
+      '#tree' => TRUE,
+    );
+    $form['payment_fields'][$data['donation']->donation['payment_method']] = array(
+      '#type' => 'fieldset',
+      '#attributes' => array('id' => 'credit-card-info'),
+    );
 
-  // Pull the gateway form from the donation gateway.
-  // Once set a gateway CANNOT be changed on a donation series.
-  // Check against the gateway config for a specific form to go with this
-  // payment gateway.
-  if (isset($data['donation']->gateway['form callback'])) {
-    $form_func = $data['donation']->gateway['form callback'];
-    if (function_exists($form_func)) {
-      $form['payment_fields'][$data['donation']->donation['payment_method']] += $form_func($data['donation']->donation['payment_method']);
+    // Pull the gateway form from the donation gateway.
+    // Once set a gateway CANNOT be changed on a donation series.
+    // Check against the gateway config for a specific form to go with this
+    // payment gateway.
+    if (isset($data['donation']->gateway['form callback'])) {
+      $form_func = $data['donation']->gateway['form callback'];
+      if (function_exists($form_func)) {
+        $form['payment_fields'][$data['donation']->donation['payment_method']] += $form_func($data['donation']->donation['payment_method']);
+      }
     }
   }
 
@@ -3883,7 +3886,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
 
   // If the "update cardonfile" element is non-empty, add the cardonfile
   // validation and submission handlers.
-  if ($data['update cardonfile']) {
+  if ($data['update payment'] && $data['update cardonfile']) {
     $use_cardonfile = FALSE;
     if (!empty($data['card'])) {
       $use_cardonfile = TRUE;
@@ -3924,7 +3927,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   }
 
   // Set any payment information from the $data variable.
-  if (isset($data['payment_fields'])) {
+  if ($data['update payment'] && isset($data['payment_fields'])) {
     $form['payment_fields'] = array_replace_recursive($form['payment_fields'], $data['payment_fields']);
   }
 
