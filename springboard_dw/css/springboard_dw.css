@@ -49,6 +49,12 @@ body .view-springboard-dw-donations-report .view-content #sbv-export-download-ms
   margin-top: -5px; 
   float: right;
 }
+#views-exposed-form-springboard-dw-donations-report-page .views-exposed-widget.views-submit-button:before {
+  content: "";
+}
+#views-exposed-form-springboard-dw-donations-report-page .views-exposed-widget.views-submit-button input {
+  width: 34px;
+}
 #views-exposed-form-springboard-dw-donations-report-page #edit-transaction-date-wrapper {
   bottom: 35px;
   position: relative;
