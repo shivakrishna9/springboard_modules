@@ -446,3 +446,19 @@ function springboard_views_springboard_dashboard_panes() {
   );
   return $panes;
 }
+
+/** 
+ * Implements hook_form_FORM_ID_alter().
+ */
+function springboard_views_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['#id']) && $form['#id'] == 'views-exposed-form-sbv-donations-page') {
+    $prefix_text = t('Filter Donations');
+    $oldest_order_time = db_query("SELECT created FROM {commerce_order} WHERE created > 0 ORDER BY created LIMIT 1")
+      ->fetchField();
+    if ($oldest_order_time) {
+      $days = floor((time() - $oldest_order_time) / 60 / 60 / 24);
+      $prefix_text = '<h2>' . t('Filter Donations - past') . ' ' . $days . ' ' . format_plural($days, 'day', 'days') . '</h2>';
+    }
+    $form['#prefix'] = $prefix_text;
+  }
+}
