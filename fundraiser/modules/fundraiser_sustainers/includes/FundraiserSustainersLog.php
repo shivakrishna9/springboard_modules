@@ -129,6 +129,39 @@ class FundraiserSustainersLog {
   }
 
   /**
+   * Log that donations have been locked for processing.
+   *
+   * @param array $donations
+   *   Array of donations, did as key and status as the value, to log as locked.
+   * @param string $lock_id
+   *   The new lock ID.
+   */
+  public function logQueuedDonations(array $donations, $lock_id) {
+    foreach ($donations as $did => $status) {
+      $this->logQueuedDonation($did, $status, $lock_id);
+    }
+  }
+
+  /**
+   * Log that a donation has been queued for processing.
+   *
+   * @param int $did
+   *   The donation ID to log as locked.
+   * @param string $lock_id
+   *   The new lock ID.
+   */
+  public function logQueuedDonation($did, $status, $lock_id) {
+    $queued_log_record = array(
+      'did' => $did,
+      // Pass the old state through.
+      'old_state' => empty($status) ? NULL : $status,
+      'new_state' => 'queued',
+      'lock_id' => $lock_id,
+    );
+    $this->log($queued_log_record);
+  }
+
+  /**
    * Log that a sustainer has been unlocked.
    *
    * @param int $did
@@ -144,6 +177,22 @@ class FundraiserSustainersLog {
       $log_record['new_state'] = $new_state;
     }
 
+    $this->log($log_record);
+  }
+
+  /**
+   * Log that a sustainer has been unlocked.
+   *
+   * @param int $did
+   *   The donation ID to log as unlocked.
+   */
+  public function logUnQueuedDonation($did) {
+    $log_record = array(
+      'did' => $did,
+      'lock_id' => 0,
+      'old_state' => 'queued',
+      'new_state' => NULL,
+    );
     $this->log($log_record);
   }
 
