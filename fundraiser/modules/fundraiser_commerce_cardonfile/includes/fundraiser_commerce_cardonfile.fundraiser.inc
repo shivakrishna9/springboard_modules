@@ -17,13 +17,6 @@ function fundraiser_commerce_cardonfile_fundraiser_commerce_update_donation_resu
 }
 
 /**
- * Implements hook_fundraiser_donation_post_create().
- */
-function fundraiser_commerce_cardonfile_fundraiser_donation_post_create($donation) {
-  fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donation);
-}
-
-/**
  * Implements hook_fundraiser_donation_post_update().
  *
  * This function will update the 'field_data_commerce_cardonfile_profile'
@@ -34,7 +27,8 @@ function fundraiser_commerce_cardonfile_fundraiser_donation_post_create($donatio
  * billing addresses for individual cards.
  */
 function fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donation) {
-  if (!variable_get('fundraiser_commerce_cardonfile_patch_cardonfile', TRUE) || empty($donation->data['cardonfile']) || empty($donation->did)) {
+  $updated_donation = &drupal_static(__FUNCTION__, FALSE);
+  if (!variable_get('fundraiser_commerce_cardonfile_patch_cardonfile', TRUE) || empty($donation->data['cardonfile']) || empty($donation->did) || !empty($updated_donation)) {
     return;
   }
 
@@ -46,6 +40,8 @@ function fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donatio
 
   $card_wrapper->commerce_cardonfile_profile = $order_wrapper->commerce_customer_billing->value();
   $card_wrapper->save();
+
+  $updated_donation = TRUE;
 }
 
 /**
