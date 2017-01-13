@@ -193,7 +193,17 @@ function fundraiser_date_mode_fundraiser_donation_cancel($donation) {
  */
 function _fundraiser_date_mode_update_sustainer_queue($op, $donation = NULL) {
 
+  // Load the Queue.
   $queue = DrupalQueue::get('sustainerQueue');
+
+  // Process the clear op.
+  if ($op == 'clear') {
+    // Date mode has been disabled, the batch update completed - empty the queue
+    // and reset donation statuses.
+    _fundraiser_date_mode_clear_queue($queue);
+    return;
+  }
+
   $items = array();
   // You have to build a separate array of items. Attempting to update
   // items during the while loop causes a timeout.  DrupalQueue API does not
@@ -203,22 +213,9 @@ function _fundraiser_date_mode_update_sustainer_queue($op, $donation = NULL) {
   while ($item = $queue->claimItem()) {
     $items[] = $item;
   }
-
   // Delete the queue item, replace it if necessary.
   foreach ($items as $item) {
-
-    // Date mode is being disabled, clear the queue and unlock the donation.
-    if ($op == 'clear' && empty($donation)) {
-      $recurring = array(
-        'did' => $item->data->did,
-        'gateway_resp' => NULL,
-        'lock_id' => 0,
-      );
-      _fundraiser_sustainers_update_recurring($recurring);
-      $queue->deleteItem($item);
-    }
-    // We been summoned by a fundraiser hook about a change to a donation.
-    elseif (is_object($donation) && $item->data->did == $donation->did) {
+    if (is_object($donation) && $item->data->did == $donation->did) {
       // First, delete the queue item.
       $queue->deleteItem($item);
       // If it's an update hook, recreate the queue item.
@@ -232,6 +229,47 @@ function _fundraiser_date_mode_update_sustainer_queue($op, $donation = NULL) {
     else {
       // This queue item does not match the donation, release it and try next.
       $queue->releaseItem($item);
+    }
+  }
+}
+
+/**
+ * Clear the queue and update locks and statuses of queued donations.
+ *
+ * This will happen if date mode is disabled.
+ *
+ * @param object $queue
+ *   A DrupalQueue object.
+ */
+function _fundraiser_date_mode_clear_queue($queue) {
+
+  // Delete the entire queue.
+  $queue->deleteQueue();
+  _fundraiser_date_mode_update_unqueued_donations();
+}
+
+
+/**
+ * Update locks and statuses of donations after the queue is emptied.
+ *
+ * Triggered after the disable date mode batch process completes.
+ */
+function _fundraiser_date_mode_update_unqueued_donations() {
+  // Reset the the locks and statuses of previously queued donations.
+  $queued_donations = db_query('SELECT r.did FROM {fundraiser_sustainers} r WHERE (r.gateway_resp = :status)', array(':status' => FUNDRAISER_SUSTAINERS_QUEUED_STATUS))->fetchAllAssoc('did', PDO::FETCH_ASSOC);
+  if (!empty($queued_donations)) {
+    db_update('fundraiser_sustainers')
+      ->fields(array(
+        'lock_id' => 0,
+        'gateway_resp' => NULL,
+      ))
+      ->condition('did', array_keys($queued_donations), 'IN')
+      ->execute();
+
+    // Log the unqueued donation's statuses.
+    $log = fundraiser_sustainers_log();
+    foreach ($queued_donations as $did) {
+      $log->logUnQueuedDonation($did['did']);
     }
   }
 }
@@ -487,7 +525,7 @@ function fundraiser_date_mode_get_sustainer_series_data() {
     // Initiate an array with the master and series sustainer objects.
     $data[$master_did] = array(
       'master_order' => NULL,
-      'series' => array()
+      'series' => array(),
     );
 
     // Loop through the results and populate the array.
