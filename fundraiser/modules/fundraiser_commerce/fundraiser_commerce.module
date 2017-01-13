@@ -2311,6 +2311,10 @@ function fundraiser_commerce_get_payment_method_expiration_date_from_donation($d
   if (isset($donation->gateway['expire callback'])) {
     $expiration_func = $donation->gateway['expire callback'];
     if (function_exists($expiration_func)) {
+      // Add cardonfile data to $donation->donation for payment methods.
+      if (empty($donation->donation['cardonfile']) && !empty($donation->data['cardonfile'])) {
+        $donation->donation['cardonfile'] = $donation->data['cardonfile'];
+      }
       $expires = $expiration_func($donation->donation);
       if (isset($expires['month']) && isset($expires['year'])) {
         return $expires;

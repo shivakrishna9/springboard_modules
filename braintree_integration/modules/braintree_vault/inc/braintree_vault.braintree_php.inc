@@ -82,9 +82,6 @@ function braintree_vault_payment_method_save($payment_method, $context = array()
 
   drupal_alter('braintree_payment_method', $payment_method, $context);
 
-  dpm($payment_method);
-  dpm($context);
-
   try {
     if ($context['op'] == 'edit') {
       $context['result'] = Braintree_PaymentMethod::update($payment_method['paymentMethodToken'], $context['options']);
@@ -93,13 +90,11 @@ function braintree_vault_payment_method_save($payment_method, $context = array()
       $context['result'] = Braintree_PaymentMethod::create($payment_method);
     }
   }
-  catch (Exception $e) {
+  catch (Braintree_Exception_Unexpected $e) {
     $error_message = braintree_report_error($e);
     $context['error'] = $error_message;
     return array(FALSE, $context);
   }
-
-  dpm(print_r($context['result'], TRUE));
 
   if ($context['result']->success) {
     // When adding a card, check if it is a duplicate payment method.
@@ -121,12 +116,7 @@ function braintree_vault_payment_method_save($payment_method, $context = array()
       $token = db_query('SELECT payment_method_token FROM {braintree_vault_payment_methods} WHERE unique_identifier = :u', array(
         ':u' => $context['result']->paymentMethod->uniqueNumberIdentifier,
       ))->fetchField();
-      // Edit the card instead.
-      $context['op'] = 'edit';
-      $context['options'] = $payment_method;
-      return braintree_vault_payment_method_save(array(
-        'paymentMethodToken' => $token,
-      ), $context, $settings);
+      $context['result']->paymentMethod->token = $token;
     }
 
     // @todo Determine if this should be the current user or the user specified

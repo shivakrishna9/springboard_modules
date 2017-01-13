@@ -106,6 +106,13 @@ function commerce_braintree_web_fundraiser_commerce_expire($submission_fields) {
     $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
     $expires['year'] = $submission_fields['payment_fields']['credit']['card_expiration_year'];
   }
+  // If the cardonfile element is set, load the card and use its expiration
+  // month and year values.
+  elseif (!empty($submission_fields['cardonfile']) && is_numeric($submission_fields['cardonfile'])) {
+    $card = commerce_cardonfile_load($submission_fields['cardonfile']);
+    $expires['month'] = $card->card_exp_month;
+    $expires['year'] = $card->card_exp_year;
+  }
   // If we don't find them in payment_fields, look in the payload returned from
   // the braintree transaction sale.
   elseif (isset($submission_fields['txn_id'])) {
