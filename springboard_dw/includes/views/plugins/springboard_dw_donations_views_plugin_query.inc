@@ -68,6 +68,11 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
         if ($filter_key == 'items_per_page') {
           $filter_key = 'perPage';
         }
+        if ($filter_key == 'gateway') {
+          $params['gatewayLike'] = $filter_value;
+          continue;
+        }
+
         $params[$filter_key] = $filter_value;
       }
 
