@@ -30,7 +30,7 @@ function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
       }
 
       if ($key == 'cid') {
-        $campaigns = module_exists('salesforce_genmap') ? salesforce_genmap_get_campaigns(FALSE) : array();
+        $campaigns = market_source_get_campaigns(FALSE);
         $campaign_options = array(
           '' => '(blank)',
         );

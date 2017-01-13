@@ -979,6 +979,7 @@ function market_source_node_load($nodes, $types) {
                 drupal_set_message(t('This donation form is not associated with any Salesforce campaigns. It may not sync to Salesforce without a campaign association. Please go to !link and choose a campaign association.', array('!link' => l('Form Components', '/node/' . $node->nid . '/form-components'))), 'warning', FALSE);
               // If the value is not set, create a warning message advising the admin to set the value.
               } else if ($component['form_key'] == 'cid') {
+                }
                 $campaigns = market_source_get_campaigns();
                 drupal_set_message(t('This donation form is associated with the Salesforce campaign: @name, ID: @id', array('@name' => $campaigns[$component['value']]['name'], '@id' => $component['value'])), 'status', FALSE);
               }
