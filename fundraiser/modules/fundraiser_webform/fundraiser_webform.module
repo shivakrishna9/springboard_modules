@@ -1569,7 +1569,15 @@ function _fundraiser_webform_results_page_content($node) {
     $view->set_display($table_view_display);
     $view->pre_execute(array($node->nid));
     $view->execute();
-    $title = isset($view->build_info['title']) ? $view->build_info['title'] : t('Filter Recent Submissions - past 90 days');
+    // Determine how old submissions are:
+    $oldest_order_time = db_query("SELECT created FROM {fundraiser_donation} WHERE nid = :nid AND created > 0 ORDER BY created LIMIT 1",
+      array(':nid' => $node->nid))
+      ->fetchField();
+    $title = t('Filter Recent Submissions');
+    if ($oldest_order_time) {
+      $days = floor((time() - $oldest_order_time) / 60 / 60 / 24);
+      $title = t('Filter Recent Submissions') . ' - ' . t('past') . ' ' . format_plural($days, 'day', $days . ' days');
+    }
     $view_content = $view->render();
     $form['sb-results-tab-override-content'] = array(
       '#type' => 'fieldset',
