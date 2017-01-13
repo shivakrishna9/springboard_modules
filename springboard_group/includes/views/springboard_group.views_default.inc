@@ -10,10 +10,8 @@
  */
 function springboard_group_views_default_views() {
 
-  /*
-   *
+  /**
    * All Groups view.
-   *
    */
   $view = new view();
   $view->name = 'springboard_group';
@@ -237,14 +235,11 @@ function springboard_group_views_default_views() {
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'admin/springboard/groups';
 
-
   $views[$view->name] = $view;
 
 
-  /*
-   *
+  /**
    * My Groups view.
-   *
    */
   $view = new view();
   $view->name = 'springboard_group_my_groups';
@@ -417,10 +412,8 @@ function springboard_group_views_default_views() {
 
   $views[$view->name] = $view;
 
-  /*
-   *
+  /**
    * Bulk add members view.
-   *
    */
   $view = new view();
   $view->name = 'springboard_group_bulk_add';
@@ -476,13 +469,22 @@ function springboard_group_views_default_views() {
   $handler->display->display_options['fields']['name']['id'] = 'name';
   $handler->display->display_options['fields']['name']['table'] = 'users';
   $handler->display->display_options['fields']['name']['field'] = 'name';
-  $handler->display->display_options['fields']['name']['label'] = '';
+  $handler->display->display_options['fields']['name']['label'] = 'Username';
   $handler->display->display_options['fields']['name']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['name']['alter']['ellipsis'] = FALSE;
+  /* Field: User: E-mail */
+  $handler->display->display_options['fields']['mail']['id'] = 'mail';
+  $handler->display->display_options['fields']['mail']['table'] = 'users';
+  $handler->display->display_options['fields']['mail']['field'] = 'mail';
+  /* Field: User: Roles */
+  $handler->display->display_options['fields']['rid']['id'] = 'rid';
+  $handler->display->display_options['fields']['rid']['table'] = 'users_roles';
+  $handler->display->display_options['fields']['rid']['field'] = 'rid';
   /* Field: Bulk operations: User */
   $handler->display->display_options['fields']['views_bulk_operations']['id'] = 'views_bulk_operations';
   $handler->display->display_options['fields']['views_bulk_operations']['table'] = 'users';
   $handler->display->display_options['fields']['views_bulk_operations']['field'] = 'views_bulk_operations';
+  $handler->display->display_options['fields']['views_bulk_operations']['label'] = 'Select';
   $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['display_type'] = '0';
   $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['enable_select_all_pages'] = 1;
   $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['row_clickable'] = 1;
@@ -582,7 +584,9 @@ function springboard_group_views_default_views() {
   $views[$view->name] = $view;
 
 
-
+  /**
+   * Group Members Admin view.
+   */
   $view = new view();
   $view->name = 'springboard_group_member_admin';
   $view->description = '';
