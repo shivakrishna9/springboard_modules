@@ -484,25 +484,31 @@ function fundraiser_commerce_fundraiser_gateway_info() {
  *   An array of options suitable for #options.
  */
 function fundraiser_commerce_get_country_options(array $countries, array $default_available = array()) {
-  $options = array();
-
-  // Include all countries.
-  if (count($default_available) == 0) {
-    foreach ($countries as $country) {
-      if (!empty($country->iso) && !in_array($country->iso, array_keys($options))) {
-        $options[$country->iso] = $country->country_name;
-      }
-    }
+  if ($cache = cache_get('fundraiser_commerce_country_options')) {
+    $options = $cache->data;
   }
-  // Only include some countries.
   else {
-    foreach ($countries as $country) {
-      if (in_array($country->iso, $default_available)) {
-        $options[$country->iso] = $country->country_name;
+    $options = array();
+    // Include all countries.
+    if (count($default_available) == 0) {
+      foreach ($countries as $country) {
+        if (!empty($country->iso) && !in_array($country->iso, array_keys($options))) {
+          $options[$country->iso] = $country->country_name;
+        }
       }
     }
-  }
+    // Only include some countries.
+    else {
+      foreach ($countries as $country) {
+        if (in_array($country->iso, $default_available)) {
+          $options[$country->iso] = $country->country_name;
+        }
+      }
+    }
 
+    cache_set('fundraiser_commerce_country_options', $options, 'cache');
+  }
+  
   return $options;
 }
 
