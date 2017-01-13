@@ -4062,7 +4062,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
         'lock_id' => $uni_batch_id,
         'gateway_resp' => $status
       ))
-      ->condition ('did', array_keys($donations_to_process), 'IN')
+      ->condition('did', array_keys($donations_to_process), 'IN')
       ->execute();
 
     // If nums_rows = $donations to process, we can skip a query and just
@@ -4070,9 +4070,13 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
     $donations_to_log = array();
     if ($num_rows == count($donations_to_process)) {
       foreach ($donations_to_process as $key => $processed) {
+
+        // Set the log value to the old statuses.
+        $donations_to_log[$key] = $donations_to_process[$key]->gateway_resp;
+
+        // Update the lockid and status to send back to the caller.
         $donations_to_process[$key]->lock_id = $uni_batch_id;
         $donations_to_process[$key]->gateway_resp = $status;
-        $donations_to_log[$key] = $donations_to_process[$key]->gateway_resp;
       }
       $donations = $donations_to_process;
     }
@@ -4088,13 +4092,23 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
         array(':uni_batch_id' => $uni_batch_id))->fetchAllAssoc('did');
 
       foreach ($donations as $key => $processed) {
-        $donations_to_log[$key] = $processed[$key]->gateway_resp;
+        if (isset($donations_to_process[$key])) {
+          $donations_to_log[$key] = $donations_to_process[$key]->gateway_resp;
+        }
+        else {
+          $donations_to_log[$key] = $processed[$key]->gateway_resp;
+        }
       }
     }
 
-    // Log the locked donation's original statuses
+    // Log the locked donation's original statuses.
     $log = fundraiser_sustainers_log();
-    $log->logLockedDonations($donations_to_log, $uni_batch_id);
+    if ($date_mode == FALSE) {
+      $log->logLockedDonations($donations_to_log, $uni_batch_id);
+    }
+    else {
+      $log->logQueuedDonations($donations_to_log, $uni_batch_id);
+    }
   }
 
   // Return the donations.
