@@ -1292,9 +1292,11 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
   if (!$fundraiser->show_other_amount) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
+
   // Update the min with fundraiser's min.
-  $field['#extra']['description'] = $field['#node_extra_settings']['description'] =
-    'Minimum payment [currency-symbol]' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
+  $currency = fundraiser_get_currency_from_node($fundraiser);
+  $field['#extra']['description'] = $field['#node_extra_settings']['description'] = t('Minimum payment') . ' ' .
+    commerce_currency_format(number_format($fundraiser->minimum_donation_amount, $currency['decimals']), $currency['code'], NULL, FALSE);
 
   // Return the field to be created.
   return $field;
@@ -1312,12 +1314,22 @@ function _fundraiser_other_amount_field_display($form, $form_state, $field) {
     $currency = fundraiser_get_currency_from_node($form['#node']);
   }
 
+  // Set the currency symbol for the Other amount field:
   $field['#attributes']['class'][] = 'input-medium';
-  $field['#field_prefix'] = $currency['symbol'];
+  unset($field['#field_prefix']);
+  unset($field['#field_suffix']);
+  if ($currency['symbol_placement'] != 'hidden') {
+    $field[($currency['symbol_placement'] == 'after' ? '#field_suffix' : '#field_prefix')] = $currency['symbol'];
+  }
 
-  // Replace the currency-symbol token.
-  if (isset($field['#description'])) {
-    $field['#description'] = str_replace('[currency-symbol]', $currency['symbol'], $field['#description']);
+  // Populate the Other field's description:
+  if (!empty($form['#node']->minimum_donation_amount) && isset($field['#description'])) {
+    $minimum_donation_amount = number_format(
+      $form['#node']->minimum_donation_amount,
+      $currency['decimals']
+    );
+    $field['#description'] = t('Minimum payment') . ' ' .
+      commerce_currency_format($minimum_donation_amount, $currency['code'], NULL, FALSE);
   }
 
   return $field;
@@ -1656,21 +1668,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
     $zip = _fundraiser_get_form_field($form, 'zip');
     $zip['#attributes']['class'][] = 'input-medium';
     $form = _fundraiser_update_form_field($form, 'zip', $zip);
-
-    // Change ask amount labels.
-    $amount = _fundraiser_get_form_field($form, 'amount');
-    if (isset($amount) && !empty($amount)) {
-      if (isset($amount['#options'])) {
-        foreach ($amount['#options'] as $val => $label) {
-          $amount['#options'][$val] = str_replace('$', $symbol, $label);
-        }
-      }
-      else {
-        $amount['#field_prefix'] = $symbol;
-      }
-    }
-    $form = _fundraiser_update_form_field($form, 'amount', $amount);
-
 
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
