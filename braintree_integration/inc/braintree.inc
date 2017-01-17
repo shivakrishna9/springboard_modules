@@ -108,6 +108,7 @@ function braintree_initialize($settings) {
     Braintree_Configuration::publicKey($settings['public_key']);
     Braintree_Configuration::privateKey($settings['private_key']);
     Braintree_Configuration::environment($settings['environment']);
+    Braintree_Configuration::sslVersion(CURL_SSLVERSION_TLSv1_2);
     $booted = TRUE;
   }
   else {
