@@ -1729,6 +1729,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     $profile->data['premise'] = $donation->donation['address_line_2'];
     $profile->data['locality'] = $donation->donation['city'];
     $profile->data['postal_code'] = $donation->donation['zip'];
+    $profile->commerce_customer_address[LANGUAGE_NONE][0] = $profile->data;
     commerce_customer_profile_save($profile);
     $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
   }
