@@ -610,14 +610,14 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
  */
 function _fundraiser_webform_populate_ticket_field(&$form, &$form_state) {
   // Locate and obtain the ticket values if they are available:
-  foreach ($form_state['build_info']['args'][1]->data as $ticket_data) { 
+  foreach ($form_state['build_info']['args'][1]->data as $ticket_data) {
     if (is_array($ticket_data['value'])
       && (strpos(serialize($ticket_data['value']), 'ticket-quant') !== FALSE
       || strpos(serialize($ticket_data['value']), 'tickets-extra-donation') !== FALSE)
     ) {
       $ticket_values = $ticket_data['value'];
    }
-  } 
+  }
   if (!isset($ticket_values)) {
     return;
   }
@@ -1488,7 +1488,7 @@ function fundraiser_webform_webform_submission_render_alter(&$renderable) {
     $commerce_view->execute();
 
     $view_html = $commerce_view->render();
-    
+
     // Populate the additional amount if available:
     if ($total_amount != $original_amount) {
       $additional_row = '<tr class="additional-row"><td>Additional amount</td><td>' .
@@ -1498,7 +1498,7 @@ function fundraiser_webform_webform_submission_render_alter(&$renderable) {
     // Populate the total amount:
     $total_row = '<tr><td class="total-row" colspan="3">Total</td><td class="amount">' .
       $total_formatted . '</td></tr>';
-    $view_html = str_replace('</tbody>', $total_row . '</tbody>', $view_html);       
+    $view_html = str_replace('</tbody>', $total_row . '</tbody>', $view_html);
     $renderable['tickets']['#description'] = $view_html;
   }
 

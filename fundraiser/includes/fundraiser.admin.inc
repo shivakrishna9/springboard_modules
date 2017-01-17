@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Administration page callbacks for the fundraiser module.
@@ -25,10 +24,8 @@ function fundraiser_admin_settings($form, &$form_state) {
   $form['fundraiser']['fundraiser_http_error_message'] = array(
     '#type' => 'textarea',
     '#title' => t('HTTPS error message'),
-    '#default_value' => variable_get('fundraiser_http_error_message', t('We\'re sorry, but this ' .
-        'donation form is experiencing a temporary problem. Please try again later.')),
-    '#description' => t('The message to display to the user when a donation page is not secure and the site is ' .
-      'NOT in development mode.'),
+    '#default_value' => variable_get('fundraiser_http_error_message', t("We're sorry, but this donation form is experiencing a temporary problem. Please try again later.")),
+    '#description' => t('The message to display to the user when a donation page is not secure and the site is NOT in development mode.'),
   );
   $form['fundraiser']['fundraiser_default_minimum'] = array(
     '#type' => 'textfield',
@@ -97,7 +94,7 @@ function fundraiser_admin_settings($form, &$form_state) {
 }
 
 /**
- * Validate handler for our component, also sets the default value
+ * Validate handler for our component, also sets the default value.
  */
 function _fundraiser_form_payment_method_settings_validate($form, &$form_state) {
   // Check the set payment methods.
@@ -106,12 +103,13 @@ function _fundraiser_form_payment_method_settings_validate($form, &$form_state) 
   $enabled_methods = array_filter($values, '_fundraiser_payment_method_array_filter_enabled');
   unset($form_state['values']['fundraiser_payment_method_config_defaults']['_default']);
   unset($enabled_methods['_default']);
-  // Check that there is at least one method enabled
+  // Check that there is at least one method enabled.
   if (empty($enabled_methods)) {
     form_set_error('payment_methods', t('At least one payment method must be enabled.'));
   }
   else {
-    // Check that the marked payment type actually have selected gateways to match.
+    // Check that the marked payment type actually have selected gateways to
+    // match.
     foreach ($enabled_methods as $method => $enabled_method) {
       if (empty($enabled_method['id'])) {
         form_set_error('fundraiser_payment_method_config_defaults][' . $method . '][id', t('All enabled payment methods must select a gateway.'));
