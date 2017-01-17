@@ -522,6 +522,7 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
  */
 function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
   $values = $form_state['values'];
+  $input = $form_state['input'];
   $card = $form_state['card'];
   if (!empty($values['cardonfile']['card'])) {
     $card = $values['cardonfile']['card'];
@@ -549,86 +550,85 @@ function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
   $payment_fields = $values['payment_fields'];
   $payment_method = $values['payment_method'];
 
+  $disabling_qd = !empty($form['payment_fields']['credit']['quickdonate']['#default_value']) && empty($values['payment_fields']['credit']['quickdonate']);
+  $enabling_qd = empty($form['payment_fields']['credit']['quickdonate']['#default_value']) && !empty($values['payment_fields']['credit']['quickdonate']);
+
   // If quickdonate is not true the user may be opting this card out.
-  if (!$payment_fields['credit']['quickdonate']) {
-    fundraiser_quick_donate_opt_out_card($values['uid'], $donation, $form_state['card']->card_id);
-  }
-
-  // First reset all existing cards' status to 0.
-  db_query('UPDATE {fundraiser_quick_donate_cardonfile} SET status = 0 WHERE uid = :uid', array(
-    ':uid' => $values['uid'],
-  ));
-
-  // If the checkbox was left unchecked, we can return early.
-  if (empty($payment_fields[$payment_method]['quickdonate'])) {
+  if ($disabling_qd) {
+    fundraiser_quick_donate_opt_out_card($values['uid'], $donation, $card->card_id);
+    db_query('UPDATE {fundraiser_quick_donate_cardonfile} SET status = 0 WHERE card_id = :card_id', array(
+      ':card_id' => $card->card_id,
+    ));
     return;
   }
+  elseif ($enabling_qd) {
+    $user = user_load($values['uid']);
+    $did = NULL;
 
-  $user = user_load($values['uid']);
-  $did = NULL;
-
-  // Check if the card has a corresponding record in
-  // {fundraiser_quick_donate_cardonfile}, if it does just update that one.
-  // Otherwise we'll need to create one.
-  $results = db_query('SELECT card_id, did FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id ORDER BY optin_date LIMIT 1', array(
-    ':card_id' => $form_state['card']->card_id,
-  ))->fetchAllKeyed();
-  $did = reset($results);
-
-  if (empty($results)) {
-    // Need a node id, query the table for any pre-existing ones the user has
-    // opted into.
-    $nid = db_query('SELECT nid FROM {fundraiser_quick_donate_cardonfile} WHERE uid = :uid LIMIT 1', array(
-      ':uid' => $values['uid'],
-    ))->fetchField();
-
-    // If the user isn't currently opted into any quick donation forms, select
-    // one from {fundraiser_quick_donate}.
-    if (empty($nid)) {
-      $nid = db_query('SELECT fundraiser_nid FROM {fundraiser_quick_donate} LIMIT 1')->fetchField();
-    }
-
-    // If no quick donation forms exist, we'll need to exit prematurely.
-    if (empty($nid)) {
-      return;
-    }
-
-    $did = db_query('SELECT did FROM fundraiser_donation WHERE nid = :nid AND uid = :uid LIMIT 1', array(
-      ':nid' => $nid,
-      ':uid' => $values['uid'],
-    ))->fetchField();
-
-    // Set all existing cards to status=0.
-    db_query('UPDATE {fundraiser_quick_donate_cardonfile} SET status = 0 WHERE uid = :uid', array(
-      ':uid' => $values['uid'],
-    ));
-
-    // Set the opted in card to status=1. Using db_merge in case card doesn't
-    // exist in table yet.
-    db_insert('fundraiser_quick_donate_cardonfile')
-      ->fields(array(
-        'uid' => $values['uid'],
-        'status' => 1,
-        'card_id' => $form_state['card']->card_id,
-        'optin_date' => time(),
-        'ms' => 'default_ms',
-        'cid' => NULL,
-        'nid' => $nid,
-        'did' => $did,
-        'gateway' => $form_state['card']->instance_id,
-      ))
-      ->execute();
-  }
-  else {
-    db_query('UPDATE {fundraiser_quick_donate_cardonfile} SET status = 1, optin_date = :time WHERE card_id = :card_id', array(
-      ':time' => time(),
+    // Check if the card has a corresponding record in
+    // {fundraiser_quick_donate_cardonfile}, if it does just update that one.
+    // Otherwise we'll need to create one.
+    $results = db_query('SELECT card_id, did FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id ORDER BY optin_date LIMIT 1', array(
       ':card_id' => $form_state['card']->card_id,
-    ));
-  }
+    ))->fetchAllKeyed();
+    $did = reset($results);
 
-  if (!empty($did)) {
-    $donation = fundraiser_donation_get_donation($did);
-    module_invoke_all('fundraiser_quick_donate_update_card', $user, $donation, $card);
+    if (empty($results)) {
+      // Need a node id, query the table for any pre-existing ones the user has
+      // opted into.
+      $nid = db_query('SELECT nid FROM {fundraiser_quick_donate_cardonfile} WHERE uid = :uid LIMIT 1', array(
+        ':uid' => $values['uid'],
+      ))->fetchField();
+
+      // If the user isn't currently opted into any quick donation forms, select
+      // one from {fundraiser_quick_donate}.
+      if (empty($nid)) {
+        $nid = db_query('SELECT fundraiser_nid FROM {fundraiser_quick_donate} LIMIT 1')->fetchField();
+      }
+
+      // If no quick donation forms exist, we'll need to exit prematurely.
+      if (empty($nid)) {
+        return;
+      }
+
+      // Select a donation ID to use based on the donation form ID we just
+      // selected.
+      $did = db_query('SELECT did FROM fundraiser_donation WHERE nid = :nid AND uid = :uid LIMIT 1', array(
+        ':nid' => $nid,
+        ':uid' => $values['uid'],
+      ))->fetchField();
+
+      // Set all existing cards to status=0.
+      db_query('UPDATE {fundraiser_quick_donate_cardonfile} SET status = 0 WHERE uid = :uid', array(
+        ':uid' => $values['uid'],
+      ));
+
+      // Add the opted in card.
+      db_insert('fundraiser_quick_donate_cardonfile')
+        ->fields(array(
+          'uid' => $values['uid'],
+          'status' => 1,
+          'card_id' => $form_state['card']->card_id,
+          'optin_date' => time(),
+          'ms' => 'default_ms',
+          'cid' => NULL,
+          'nid' => $nid,
+          'did' => $did,
+          'gateway' => $form_state['card']->instance_id,
+        ))
+        ->execute();
+    }
+    else {
+      db_query('UPDATE {fundraiser_quick_donate_cardonfile} SET status = 1, optin_date = :time WHERE card_id = :card_id', array(
+        ':time' => time(),
+        ':card_id' => $form_state['card']->card_id,
+      ));
+    }
+
+    if (!empty($did)) {
+      $donation = fundraiser_donation_get_donation($did);
+      module_invoke_all('fundraiser_quick_donate_update_card', $user, $donation, $card);
+    }
   }
 }
 
