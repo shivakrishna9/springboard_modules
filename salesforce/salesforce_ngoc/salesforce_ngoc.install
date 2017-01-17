@@ -251,7 +251,7 @@ function salesforce_ngoc_create_salesforce_donation_mappings() {
     drupal_set_message(t('The default Donation to NGOC Batch Upload object record has been created.'));
   }
 
-  $maps = db_query("SELECT nid from {salesforce_genmap_map} WHERE map_handler = 'salesforce_donation' AND salesforce_object_type = 'Opportunity'");
+  $maps = db_query("SELECT nid from {salesforce_genmap_map} WHERE map_handler = 'salesforce_donation' AND (salesforce_object_type = 'Opportunity' OR salesforce_object_type = 'rC_Connect__Batch_Upload__c')");
   foreach ($maps as $map){
     // Remove existing donation mapping provided by Springboard.
     salesforce_genmap_delete_map($map->nid, 'salesforce_donation');
