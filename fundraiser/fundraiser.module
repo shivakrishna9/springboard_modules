@@ -2124,6 +2124,8 @@ function fundraiser_donation_delete($donation) {
     $donation = fundraiser_donation_get_donation($donation);
   }
 
+  // Set a 'deleted' flag so other modules know that this donation is going to
+  // be deleted.
   $donation->deleted = TRUE;
 
   // Make a log entry.

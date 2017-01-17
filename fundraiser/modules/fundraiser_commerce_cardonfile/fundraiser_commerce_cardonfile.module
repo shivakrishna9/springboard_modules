@@ -99,6 +99,7 @@ function fundraiser_commerce_cardonfile_views_pre_render(&$view) {
  * Delete donations attached to a card when the card is deleted.
  */
 function fundraiser_commerce_cardonfile_entity_delete($entity, $type) {
+  // If this isn't a cardonfile, return early.
   if ($type != 'commerce_cardonfile') {
     return;
   }
@@ -113,6 +114,7 @@ function fundraiser_commerce_cardonfile_entity_delete($entity, $type) {
     return;
   }
 
+  // Allow other modules to alter the array of donations that will be deleted.
   drupal_alter('fundraiser_commerce_cardonfile_deleted_card_donations', $donations);
 
   foreach ($donations as $donation_id) {
@@ -122,6 +124,8 @@ function fundraiser_commerce_cardonfile_entity_delete($entity, $type) {
 
 /**
  * Implements hook_entity_view().
+ *
+ * Shows a confirmation page before a card is deleted.
  */
 function fundraiser_commerce_cardonfile_entity_view($entity, $type, $view_mode, $langcode) {
   $arg = arg();

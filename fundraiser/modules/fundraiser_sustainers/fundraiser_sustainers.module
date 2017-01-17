@@ -4598,6 +4598,10 @@ function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) 
 
 /**
  * Implements hook_fundraiser_commerce_cardonfile_deleted_card_donations_alter().
+ *
+ * For each donation in the array of donations to be deleted, determine if a
+ * series is connected with it, and if so, add the rest of the donations in the
+ * series to the array of donations to be deleted.
  */
 function fundraiser_sustainers_fundraiser_commerce_cardonfile_deleted_card_donations_alter(&$donations) {
   foreach ($donations as $donation_id) {
