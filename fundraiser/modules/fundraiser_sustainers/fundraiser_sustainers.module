@@ -4548,7 +4548,7 @@ function _fundraiser_sustainers_calculate_installments($donation) {
 function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
   $data = db_query('SELECT fd.*, fs.master_did, fss.* FROM {fundraiser_donation} fd, {fundraiser_sustainers} fs LEFT JOIN {fundraiser_sustainers_series} fss ON fss.did = fs.master_did WHERE fd.status = :status AND fd.card_id = :card_id AND fd.did = fs.did GROUP BY fs.master_did', array(
     ':card_id' => $card_id,
-    ':status' => 'pending_future_payment',
+    ':status' => 'payment_received',
   ))->fetchAll();
 
   if (empty($data)) {
