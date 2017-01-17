@@ -4546,6 +4546,9 @@ function _fundraiser_sustainers_calculate_installments($donation) {
  *   The QD field record.
  */
 function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
+  // Select cards from donations that are "master" donations which have already
+  // been processed. Future donations aren't gauranteed to have a card_id value
+  // set.
   $data = db_query('SELECT fd.*, fs.master_did, fss.* FROM {fundraiser_donation} fd, {fundraiser_sustainers} fs LEFT JOIN {fundraiser_sustainers_series} fss ON fss.did = fs.master_did WHERE fd.status = :status AND fd.card_id = :card_id AND fd.did = fs.did GROUP BY fs.master_did', array(
     ':card_id' => $card_id,
     ':status' => 'payment_received',
@@ -4555,6 +4558,8 @@ function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
     return array();
   }
 
+  // For each donation found, add to a return array the master donation
+  // overwritten with data from the next donation in the series.
   foreach ($data as $key => $row) {
     $query = db_query('SELECT * FROM {fundraiser_donation} fd WHERE fd.sid = :sid AND fd.status = :status ORDER BY fd.did LIMIT 1', array(
       ':sid' => $row->sid,
