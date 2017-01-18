@@ -397,7 +397,7 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['fields']['email']['field'] = 'email';
   $handler->display->display_options['fields']['email']['label'] = 'Email';
   $handler->display->display_options['fields']['email']['alter']['make_link'] = TRUE;
-  $handler->display->display_options['fields']['email']['alter']['path'] = 'mailto:[email]';
+  $handler->display->display_options['fields']['email']['alter']['path'] = 'admin/reports/data-warehouse/donations/[donation_id]';
   /* Field: Springboard DW Donations: Form Name */
   $handler->display->display_options['fields']['form_name']['id'] = 'form_name';
   $handler->display->display_options['fields']['form_name']['table'] = 'sp_dw_donations_psudo';
@@ -407,6 +407,7 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['fields']['recurs_monthly']['id'] = 'recurs_monthly';
   $handler->display->display_options['fields']['recurs_monthly']['table'] = 'sp_dw_donations_psudo';
   $handler->display->display_options['fields']['recurs_monthly']['field'] = 'recurs_monthly';
+  $handler->display->display_options['fields']['recurs_monthly']['label'] = 'Recurs';
   /* Field: Springboard DW Donations: Payment */
   $handler->display->display_options['fields']['payment_link']['id'] = 'payment_link';
   $handler->display->display_options['fields']['payment_link']['table'] = 'sp_dw_donations_psudo';
@@ -422,7 +423,7 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['filters']['donation_id']['group'] = 1;
   $handler->display->display_options['filters']['donation_id']['exposed'] = TRUE;
   $handler->display->display_options['filters']['donation_id']['expose']['operator_id'] = 'donation_id_op';
-  $handler->display->display_options['filters']['donation_id']['expose']['label'] = 'Donation ID';
+  $handler->display->display_options['filters']['donation_id']['expose']['label'] = 'Order ID';
   $handler->display->display_options['filters']['donation_id']['expose']['operator'] = 'donation_id_op';
   $handler->display->display_options['filters']['donation_id']['expose']['identifier'] = 'donation_id';
   $handler->display->display_options['filters']['donation_id']['expose']['remember_roles'] = array(
