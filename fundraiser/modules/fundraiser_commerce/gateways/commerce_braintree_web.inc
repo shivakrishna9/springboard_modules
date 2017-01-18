@@ -359,6 +359,10 @@ function commerce_braintree_web_fundraiser_commerce_update($donation, $card_data
     }
     $needs_update = TRUE;
   }
+  else {
+    // Otherwise the nonce wasn't set, so return now.
+    return $card_data;
+  }
 
   // Update the payment information.
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');

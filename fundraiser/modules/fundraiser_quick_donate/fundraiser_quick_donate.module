@@ -492,16 +492,20 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
     ),
   ) + $form;
 
-  $gateway_type = $form['payment_method']['#value'];
-  $enabled = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
-    ':card_id' => $card->card_id,
-  ))->fetchField();
+  // If the gateway isn't configured for cardonfile, skip the quick donate
+  // feature.
+  if (!empty($form['#donation']->gateway['gateway_details']['settings']['cardonfile'])) {
+    $gateway_type = $form['#donation']->data['payment_method'];
+    $enabled = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
+      ':card_id' => $card->card_id,
+    ))->fetchField();
 
-  $form['payment_fields'][$gateway_type]['quickdonate'] = array(
-    '#type' => 'checkbox',
-    '#title' => '&nbsp;' . t('Use this card for Quick Donate'),
-    '#default_value' => !!$enabled,
-  );
+    $form['payment_fields'][$gateway_type]['quickdonate'] = array(
+      '#type' => 'checkbox',
+      '#title' => '&nbsp;' . t('Use this card for Quick Donate'),
+      '#default_value' => !!$enabled,
+    );
+  }
 
   $form['actions']['submit']['#submit'][] = '_fundraiser_quick_donate_set_new_qd_cof';
 
@@ -521,6 +525,11 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
  * @see fundraiser_update_billing_form()
  */
 function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
+  // If the gateway isn't set up to use cardonfile, return early.
+  if (empty($form['#donation']->gateway['gateway_details']['settings']['cardonfile'])) {
+    return;
+  }
+
   $values = $form_state['values'];
   $input = $form_state['input'];
   $card = $form_state['card'];
