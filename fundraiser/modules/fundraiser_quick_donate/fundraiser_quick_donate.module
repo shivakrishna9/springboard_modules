@@ -86,16 +86,6 @@ function fundraiser_quick_donate_springboard_admin_admin_menu_items_alter(&$item
 }
 
 /**
- * Implements hook_views_api().
- */
-function fundraiser_quick_donate_views_api() {
-  return array(
-    'api' => 3,
-    'path' => drupal_get_path('module', 'fundraiser_quick_donate') . '/includes/views',
-  );
-}
-
-/**
  * Implements hook_FORM_ID_alter().
  *
  * Used to add a quick donation related message.
@@ -298,6 +288,12 @@ function fundraiser_quick_donate_webform_user_save_profile_map_alter(&$account, 
         ),
       ),
     );
+    // If there was an opt-out date previously, reset it now.
+    $account->field_quick_donate_opt_out = array(
+      LANGUAGE_NONE => array(
+        0 => NULL,
+      ),
+    );
   }
 }
 
@@ -310,7 +306,7 @@ function fundraiser_quick_donate_webform_user_save_profile_map_alter(&$account, 
  */
 function fundraiser_quick_donate_webform_user_profile_fields_alter(&$fields, $node) {
   $fields = array_filter($fields, function($value) {
-    return $value['name'] != 'field_quick_donate_opt_in';
+    return ($value['name'] != 'field_quick_donate_opt_in' && $value['name'] != 'field_quick_donate_opt_out');
   });
 }
 
@@ -320,10 +316,15 @@ function fundraiser_quick_donate_webform_user_profile_fields_alter(&$fields, $no
  * Used to add a webform component for quick donations.
  */
 function fundraiser_quick_donate_fundraiser_field_info_alter(&$fields) {
-  $fields['quick_donate'] = array(
+  $fields['quick_donate_opt_in'] = array(
     '#type' => 'hidden',
     '#name' => 'sbp_quick_donate_opt_in',
     '#title' => 'Quick Donate Opt-in',
+  );
+  $fields['quick_donate_opt_out'] = array(
+    '#type' => 'hidden',
+    '#name' => 'sbp_quick_donate_opt_out',
+    '#title' => 'Quick Donate Opt-out',
   );
   return $fields;
 }
@@ -352,6 +353,7 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form($card, $user
   $data = array(
     'calling module' => 'fundraiser_quick_donate',
     'donation' => $donation,
+    'card' => $card,
     'payment_fields' => array(
       'credit' => array(
         'expiration_date' => array(
@@ -388,7 +390,20 @@ function _fundraiser_quick_donate_check_qd_default($form, $form_state) {
   $card = $form_state['card'];
   $values = $form_state['values'];
 
+  // If the card number is the same, don't do anything.
   if ($card->card_number == $values['credit_card']['number']) {
+    return;
+  }
+
+  $cardonfile_fields = array(
+    'card_number' => substr($values['credit_card']['number'], -4),
+    'card_exp_month' => $values['credit_card']['exp_month'],
+    'card_exp_year' => $values['credit_card']['exp_year'],
+  ) + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
+
+  $new_card = _fundraiser_commerce_cardonfile_match($cardonfile_fields, TRUE);
+
+  if (empty($new_card)) {
     return;
   }
 
@@ -398,38 +413,34 @@ function _fundraiser_quick_donate_check_qd_default($form, $form_state) {
     ':card_id' => $card->card_id,
     ':uid' => $values['uid'],
   ))->fetch();
+
   if (empty($qd)) {
     return;
   }
 
-  $cardonfile_fields = array(
-    'card_number' => substr($values['credit_card']['number'], -4),
-    'card_exp_month' => $values['credit_card']['exp_month'],
-    'card_exp_year' => $values['credit_card']['exp_year'],
-  ) + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
-  $new_card = _fundraiser_commerce_cardonfile_match($cardonfile_fields, TRUE);
-  if (!empty($new_card)) {
-    db_update('fundraiser_quick_donate_cardonfile')
-      ->fields(array(
-        'status' => 0,
-      ))
-      ->condition('card_id', $card->card_id, '=')
-      ->execute();
-    db_merge('fundraiser_quick_donate_cardonfile')
-      ->key(array('card_id' => $new_card->card_id))
-      ->fields(array(
-        'status' => 1,
-        'uid' => $donation->uid,
-        'optin_date' => $qd->optin_date,
-        'did' => $qd->did,
-        'ms' => $qd->ms,
-        'cid' => $qd->cid,
-        'nid' => $qd->nid,
-        'gateway' => $donation->gateway['id'],
-      ))
-      ->condition('card_id', $new_card->card_id, '=')
-      ->execute();
-  }
+  db_update('fundraiser_quick_donate_cardonfile')
+    ->fields(array(
+      'status' => 0,
+    ))
+    ->condition('card_id', $card->card_id, '=')
+    ->execute();
+  db_merge('fundraiser_quick_donate_cardonfile')
+    ->key(array('card_id' => $new_card->card_id))
+    ->fields(array(
+      'status' => 1,
+      'uid' => $donation->uid,
+      'optin_date' => $qd->optin_date,
+      'did' => $qd->did,
+      'ms' => $qd->ms,
+      'cid' => $qd->cid,
+      'nid' => $qd->nid,
+      'gateway' => $donation->gateway['id'],
+    ))
+    ->condition('card_id', $new_card->card_id, '=')
+    ->execute();
+
+  $user = user_load($donation->uid);
+  module_invoke_all('fundraiser_quick_donate_optin_update', $user, $donation, $card->card_id, $new_card->card_id);
 }
 
 /**
@@ -479,7 +490,7 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
 
   $form['payment_fields'][$gateway_type]['quickdonate'] = array(
     '#type' => 'checkbox',
-    '#title' => '&nbsp;' . t('Make this my default Quick Donate card.'),
+    '#title' => '&nbsp;' . t('Use this card for Quick Donate'),
     '#default_value' => !!$enabled,
   );
 
@@ -500,19 +511,26 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
  * @see fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quick_donate__alter()
  * @see fundraiser_update_billing_form()
  */
-function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
+function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
+  // Check if the expiration date changed. If it has and this is a recurring
+  // series, we need to add the submission handler from the
+  // fundraiser_sustainers module to the submission handler array.
+  if (module_exists('fundraiser_sustainers') && property_exists($form_state['donation'], 'recurring')) {
+    $exp_month_match = $form['payment_fields']['credit']['expiration_date']['card_expiration_month']['#default_value'] == $form_state['input']['payment_fields']['credit']['expiration_date']['card_expiration_month'];
+    $exp_year_match = $form['payment_fields']['credit']['expiration_date']['card_expiration_year']['#default_value'] == $form_state['input']['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+    if (!$exp_month_match || !$exp_year_match) {
+      $form_state['values']['master_did'] = $form_state['donation']->recurring->master_did;
+      fundraiser_sustainers_update_billing_form_submit($form, $form_state);
+    }
+  }
+
   $values = $form_state['values'];
   $payment_fields = $values['payment_fields'];
   $payment_method = $values['payment_method'];
 
-  // See if the user currently has a default card.
-  $default_card = fundraiser_quick_donate_get_default_card($values['uid']);
-  if ($default_card && $default_card == $form_state['card']->card_id) {
-    // If quickdonate is not true the user is opting this card out.
-    if (!$payment_fields['credit']['quickdonate']) {
-      // Invoke quick donate opt-out hook.
-      module_invoke_all('fundraiser_quick_donate_optout', $form_state['card']->card_id, $values['uid']);
-    }
+  // If quickdonate is not true the user may be opting this card out.
+  if (!$payment_fields['credit']['quickdonate']) {
+    fundraiser_quick_donate_opt_out_card($values['uid'], $form_state['card']->card_id);
   }
 
   // First reset all existing cards' status to 0.
@@ -525,14 +543,18 @@ function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
     return;
   }
 
+  $user = user_load($values['uid']);
+  $did = NULL;
+
   // Check if the card has a corresponding record in
   // {fundraiser_quick_donate_cardonfile}, if it does just update that one.
   // Otherwise we'll need to create one.
-  $existing_card_id = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id', array(
+  $results = db_query('SELECT card_id, did FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id ORDER BY optin_date LIMIT 1', array(
     ':card_id' => $form_state['card']->card_id,
-  ))->fetchField();
+  ))->fetchAllKeyed();
+  $did = reset($results);
 
-  if (empty($existing_card_id)) {
+  if (empty($results)) {
     // Need a node id, query the table for any pre-existing ones the user has
     // opted into.
     $nid = db_query('SELECT nid FROM {fundraiser_quick_donate_cardonfile} WHERE uid = :uid LIMIT 1', array(
@@ -582,16 +604,57 @@ function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
       ':card_id' => $form_state['card']->card_id,
     ));
   }
+
+  if (!empty($did)) {
+    $donation = fundraiser_donation_get_donation($did);
+    module_invoke_all('fundraiser_quick_donate_optin_create', $user, $donation, $form_state['card']->card_id);
+  }
 }
 
 /**
  * Returns a user's quick donate card or FALSE if they have none.
  *
- * @param $uid
+ * @param int $uid
  *   The id of the user whose quick donate card you want to retreive.
  */
 function fundraiser_quick_donate_get_default_card($uid) {
   return db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE status = 1 and uid = :uid', array(':uid' => $uid))->fetchField();
+}
+
+/**
+ * Helper function to invoke a hook when a card is opted out of Quick Donate.
+ *
+ * Whenever a card is taken out of QD eligility, either by explicit opting out
+ * or by deletion, check if it was the QD default and if so make opt-out-related
+ * updates.
+ *
+ * @param int $uid
+ *   The user's uid.
+ * @param int $card_id
+ *   The card's id.
+ *
+ * @throws \Exception
+ */
+function fundraiser_quick_donate_opt_out_card($uid, $card_id) {
+  // See if the user currently has a default card.
+  $default_card = fundraiser_quick_donate_get_default_card($uid);
+  if ($default_card && $default_card == $card_id) {
+    // Update the user, setting the opt-out date.
+    $account = user_load($uid);
+    $account->field_quick_donate_opt_out = array(
+      LANGUAGE_NONE => array(
+        0 => array(
+          'value' => date("Y-m-d H:i:s"),
+          'timezone' => drupal_get_user_timezone(),
+          'timezone_db' => 'UTC',
+          'date_type' => 'datetime',
+        ),
+      ),
+    );
+    user_save($account);
+    // Invoke quick donate opt-out hook.
+    module_invoke_all('fundraiser_quick_donate_optout', $card_id, $uid);
+  }
 }
 
 /**
@@ -612,12 +675,22 @@ function fundraiser_quick_donate_entity_presave($entity, $type) {
 }
 
 /**
+ * Implements hook_entity_delete().
+ */
+function fundraiser_quick_donate_entity_delete($entity, $type) {
+  if ($type == 'commerce_cardonfile') {
+    fundraiser_quick_donate_opt_out_card($entity->uid, $entity->card_id);
+  }
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  *
- * Remove the Quick Donate Opt In field from appearing on the user edit form.
+ * Remove the Quick Donate Opt In and Opt Out fields from appearing on the user edit form.
  */
 function fundraiser_quick_donate_form_user_profile_form_alter(&$form, $form_state) {
   unset($form['field_quick_donate_opt_in']);
+  unset($form['field_quick_donate_opt_out']);
 }
 
 /**
@@ -710,44 +783,5 @@ function fundraiser_quick_donate_user_view_alter(&$build) {
 function fundraiser_quick_donate_field_extra_fields_display_alter(&$displays, $context) {
   if (!empty($displays['summary'])) {
     $displays['summary']['weight'] = 8;
-  }
-}
-
-/**
- * Implements hook_views_pre_render().
- *
- * Remove cards that have no used by entries.
- */
-function fundraiser_quick_donate_views_pre_render(&$view) {
-  if ($view->name != 'commerce_card_on_file_user_cards') {
-    return;
-  }
-
-  foreach ($view->result as $key => $result) {
-    // If this card isn't being used by quick donate or for a recurring donation
-    // unset it.
-    if (empty($result->used_by)) {
-      unset($view->result[$key]);
-      continue;
-    }
-
-    // Array of payment gateways used by cards that should not be displayed.
-    $blacklist = array(
-      'braintree_hostedfields|commerce_payment_braintree_hostedfields',
-      'commerce_psi_credit|commerce_payment_commerce_psi_credit',
-    );
-
-    // If the payment gateway is in the blacklist, unset this card.
-    $card = commerce_cardonfile_load($result->card_id);
-    if (in_array($card->instance_id, $blacklist)) {
-      return;
-    }
-
-    // If this card isn't of type "credit", unset it.
-    $gateway = _fundraiser_gateway_info($card->instance_id);
-    if ($gateway['payment_method'][0] != 'credit') {
-      unset($view->result[$key]);
-      continue;
-    }
   }
 }
