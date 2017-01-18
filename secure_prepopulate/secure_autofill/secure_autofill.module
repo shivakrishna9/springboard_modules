@@ -1,0 +1,141 @@
+<?php
+
+/**
+ * @file
+ * This module provides functionality for pre-populating forms from
+ *   an encrypted query string parameter without bootstrapping drupal
+ *   or busting cache.
+ */
+
+/**
+ * Implements hook_js_info().
+ */
+function secure_autofill_js_info() {
+  $callbacks['get_amounts'] = array(
+      'methods' => array('POST', 'GET'),
+      'token' => FALSE,
+    );
+  return $callbacks;
+}
+
+/**
+ * Implements MODULE_js_callback_CALLBACK().
+ *
+ * Callback for decrypting a dynamic gift string.
+ */
+function secure_autofill_js_callback_get_amounts($gs) {
+  $json = array();
+
+  // Ensure that the gift string variable was provided.
+  if (empty($gs)) {
+    drupal_set_message(t('You must provide a gift string.'), 'error');
+    $json['content'] = NULL;
+  }
+  else {
+    // Decrypt gs per dynamic gift strings.
+    $raw_qs = secure_autofill_decrypt($gs);
+    $json['content'] = secure_autofill_parse_qs($raw_qs);
+  }
+
+  return $json;
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Add secure_autofill js to donation forms.
+ */
+function secure_autofill_form_alter(&$form, &$form_state, $form_id) {
+  if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type) && arg(4) != 'edit') {
+    $form['#attached']['js'][] = drupal_get_path('module', 'secure_autofill') . '/js/ask-amounts.js';
+  }
+}
+
+function secure_autofill_decrypt($cipher) {
+  // The 128 bit key to use to decrypt the string.
+  $key = secure_autofill_variable_get('secure_prepopulate_key', NULL);
+  // The initialization vector to use to decrypt the string.
+  $iv = secure_autofill_variable_get('secure_prepopulate_iv', NULL);
+  if (!$key || !$iv) {
+    drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+    watchdog('Secure Autofill', 'Cannot perform decryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+    return FALSE;
+  }
+  $kv = array('key' => $key, 'iv' => $iv);
+  $cipher = base64_decode($cipher);
+  $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
+  mcrypt_generic_init($descriptor, $kv['key'], $kv['iv']);
+  $decrypted_data = mdecrypt_generic($descriptor, $cipher);
+  mcrypt_generic_deinit($descriptor);
+  mcrypt_module_close($descriptor);
+  // Account for some PHP AES shortcomings.
+  $decrypted_data = _secure_autofill_pkcs5_unpad($decrypted_data);
+  $decrypted_data = rtrim($decrypted_data);
+  return $decrypted_data;
+}
+
+/**
+ * Helper function, Parses the decrypted query string into an array.
+ *
+ * @param $qs
+ *   The query string to parse in key/value pair format.
+ */
+function secure_autofill_parse_qs($qs) {
+  $result = array();
+  $segments = explode('&', $qs);
+  // Loop over each field in the segement and extract the key/value pairs.
+  if (count($segments)) {
+    foreach ($segments as $segment) {
+      $key_value = explode('=', $segment);
+      if (isset($key_value[1])) {
+        $result[$key_value[0]] = $key_value[1];
+      } else {
+        // No key given, so fall back to numeric index.
+        $result[] = $key_value[0];
+      }
+    }
+  }
+  return $result;
+}
+
+/**
+ * Helper function, gets variables without bootstrap.
+ *
+ * @param $name
+ *   The var name to get.
+ * @param $default
+ *   The var to return if $name is not found.
+ */
+function secure_autofill_variable_get($name, $default = NULL) {
+  // Use db_query here for performance reasons, see https://www.drupal.org/node/310075.
+  $result = db_query("SELECT value FROM {variable} WHERE name = :name", array(":name" => $name))->fetchField();
+
+  return isset($result) ? unserialize($result) : $default;
+}
+
+/**
+ * Helper function, for padding text to PKCS5 specification.
+ *
+ * @param $text
+ *   The text to pad.
+ * @param $blocksize
+ *   The size of the PKCS5 blocksize to use.
+ */
+function _secure_autofill_pkcs5_pad($text, $blocksize) {
+  $pad = $blocksize - (strlen($text) % $blocksize);
+  return $text . str_repeat(chr($pad), $pad);
+}
+
+/**
+ * Helper function, to unpad PKCS5 padded text.
+ *
+ * @param $text
+ *   The text to unpad.
+ */
+function _secure_autofill_pkcs5_unpad($text) {
+  $pad = ord($text{strlen($text) -1});
+  if ($pad > strlen($text)) {
+    return FALSE;
+  }
+  return str_pad($text, 0, -1 * $pad);
+}

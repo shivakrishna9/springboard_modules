@@ -1,0 +1,9 @@
+name = Secure Autofille
+description = Uses an encrypted url string to pre-populate form fields without bootstrapping Drupal.
+core = 7.x
+package = Webform Extra
+dependencies[] = webform
+dependencies[] = js
+dependencies[] = secure_prepopulate
+version = 7.x-4.x-dev
+configure = 'admin/config/system/secure-autofill'
