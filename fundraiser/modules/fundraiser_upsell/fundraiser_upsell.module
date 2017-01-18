@@ -770,7 +770,9 @@ function fundraiser_upsell_create_recurring_series($donation) {
   // Allows recurring.
   if (_fundraiser_sustainers_supports_recurring($gateway_info['allow_recurring'], $donation->donation['payment_method'])) {
     // Is not an offline recurring.
-    if (!_fundraiser_sustainers_offsite_recurring($gateway_info['offsite_recurring'], $donation->donation['payment_method'])) {
+    // Now handle the recurring object, and the rest of the orders.
+    $offsite = _fundraiser_sustainers_offsite_recurring($gateway_info, $donation->donation['payment_method']);
+    if (!$offsite) { // Is not an offline recurring
       if (isset($gateway_info['expire callback'])) {
         $expiration_func = $gateway_info['expire callback'];
         if (function_exists($expiration_func)) {
@@ -1381,7 +1383,9 @@ function fundraiser_upsell_get_upsold_did($upsell_did) {
  */
 function fundraiser_upsell_donation_is_offsite_recurring($donation) {
   $info = _fundraiser_get_donation_gateway($donation->did);
-  if (_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) {
+  // Now handle the recurring object, and the rest of the orders.
+  $offsite = _fundraiser_sustainers_offsite_recurring($info, $donation->donation['payment_method']);
+  if (!$offsite) { // Is not an offline recurring
 
     return TRUE;
   }
@@ -1404,7 +1408,7 @@ function fundraiser_upsell_gateway_supports_upsell($info, $payment_method) {
   // Gateway supports upsell if it supports recurring and is not offsite
   // recurring for the payment method.
   $supports_recurring = _fundraiser_sustainers_supports_recurring($info['allow_recurring'], $payment_method);
-  $is_offsite_recurring = _fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $payment_method);
+  $is_offsite_recurring = _fundraiser_sustainers_offsite_recurring($info, $payment_method);
 
   if ($supports_recurring && !$is_offsite_recurring) {
     return TRUE;

@@ -400,7 +400,8 @@ class FundraiserDonationDestination extends MigrateDestination {
         ->execute();
 
       // Now handle the recurring object, and the rest of the orders.
-      if (!_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) { // Is not an offline recurring
+      $offsite = _fundraiser_sustainers_offsite_recurring($info, $donation->donation['payment_method']);
+      if (!$offsite) { // Is not an offline recurring
         // Load the newly created recurring donation into salesforce.
         if (module_exists('salesforce_genmap')) {
           $sf_donation = fundraiser_donation_get_donation($donation->did, TRUE);

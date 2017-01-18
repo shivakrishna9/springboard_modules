@@ -511,7 +511,7 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
   if ($context['module'] == 'salesforce_donation') {
     $donation = $context['object'];
     $info = _fundraiser_get_donation_gateway($donation->did);
-    $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method']);
+    $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info, $donation->donation['payment_method']);
     $map = $context['map'];
     $is_recurring = $donation->donation['recurs_monthly'] ? TRUE : FALSE;
     // Check to see if the is recurring donation field was mapped.
@@ -1373,14 +1373,21 @@ function fundraiser_sustainers_user_overview($user, $did = NULL) {
         if ($remaining) {
           $this_next_donation = fundraiser_donation_get_donation($remaining[0]->did);
         }
-        $edit_link = l($this_next_donation->donation['amount_formatted'],
-          'user/' . $this_next_donation->user->uid . '/recurring_overview/' . $master_donation->master_did);
+        $info = _fundraiser_get_donation_gateway($this_donation->did);
+        $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info, $this_donation->donation['payment_method']);
+        if (!$offsite_recurring) {
+          $edit_link = l($this_next_donation->donation['amount_formatted'],
+            'user/' . $this_next_donation->user->uid . '/recurring_overview/' . $master_donation->master_did);
+        }
+        else {
+          $edit_link = $this_next_donation->donation['amount_formatted'];
+        }
         $donations_rows[] = array(
           'data' => array(
             'amount' => $edit_link,
             'start_date' => date('m/d/y', $master_donation->start_date),
             'next_charge' => !empty($master_donation->next_charge) ? date('m/d/y', $master_donation->next_charge) : '--/--/--',
-            'expire_date' => date('m/d/y', $master_donation->expire_date),
+            'expire_date' => !empty($master_donation->expire_date) ? date('m/d/y', $master_donation->expire_date) : '--/--/--',
             'status' => $master_donation->status,
           ),
           'class' => array('recurring-order'),
@@ -3279,8 +3286,8 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
         $fundraiser_sustainers_series = entity_create('fundraiser_sustainers_series', $fundraiser_sustainers_series_data);
         $fundraiser_sustainers_series->save();
 
-        // Now handle the recurring object, and the rest of the orders.
-        if (!_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) { // Is not an offline recurring
+        $offsite = _fundraiser_sustainers_offsite_recurring($info, $donation->donation['payment_method']);
+        if (!$offsite) { // Is not an offline recurring.
           $info = _fundraiser_get_donation_gateway($donation->did);
           // This created donation is the master, so passing it in to create the set.
           // We can't predict the form key for these values, so ask the gateway to provide.
@@ -3773,8 +3780,11 @@ function _fundraiser_sustainers_supports_recurring($allow_recurring, $payment_me
 /**
  * Helper function, given a gateway determine if the gateway supports recurring donations.
  */
-function _fundraiser_sustainers_offsite_recurring($offsite_recurring, $payment_method) {
-  if (isset($offsite_recurring) && !empty($offsite_recurring) && in_array($payment_method, $offsite_recurring)) {
+function _fundraiser_sustainers_offsite_recurring($info, $payment_method) {
+  if (isset($info['offsite_recurring']) && !empty($info['offsite_recurring']) && in_array($payment_method, $info['offsite_recurring'])) {
+    return TRUE;
+  }
+  if (isset($info['offsite_recurring_external']) && !empty($info['offsite_recurring_external']) && in_array($payment_method, $info['offsite_recurring_external'])) {
     return TRUE;
   }
   return FALSE;
@@ -3897,6 +3907,18 @@ function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
     else {
       $donation_sets[$index]->next_charge = '';
       $donation_sets[$index]->status = t('No next charge');
+      $info = _fundraiser_get_donation_gateway($donation_sets[$index]->master_did);
+      $donation = fundraiser_donation_get_donation($donation_sets[$index]->master_did);
+      $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info, $donation->donation['payment_method']);
+      // Don't show offsite recurring donations to the donor.
+      if (!empty($offsite_recurring)) {
+        // @todo if showing this item becomes a configuration option we'd need
+        // to do something like in the following commented lines:
+        // $status = t('This recurring donation uses a third-party processor. Please contact us to modify this charge.');
+        // $donation_sets[$index]->expire_date = '';
+        // $donation_sets[$index]->status = $status;
+        unset($donation_sets[$index]);
+      }
     }
   }
   return $donation_sets;
