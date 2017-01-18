@@ -71,7 +71,7 @@ function braintree_settings($settings, $active = TRUE) {
  * @param array $settings
  *   The settings array used to configure the Braintree library API.
  */
-function braintree_initialize($settings) {
+function braintree_initialize($settings = array()) {
   $booted = &drupal_static(__FUNCTION__);
   if (!isset($booted)) {
     $booted = FALSE;
@@ -101,6 +101,9 @@ function braintree_initialize($settings) {
   }
 
   // Load the settings and configure the Braintree PHP library.
+  if (empty($settings)) {
+    $settings = braintree_default_settings();
+  }
   $settings = braintree_settings($settings);
   $needed_settings_loaded = !empty($settings['merchant_id']) && !empty($settings['public_key']) && !empty($settings['private_key']) && !empty($settings['environment']);
   if ($needed_settings_loaded) {

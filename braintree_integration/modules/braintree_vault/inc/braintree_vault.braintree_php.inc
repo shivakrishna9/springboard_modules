@@ -9,11 +9,14 @@
  *
  * @param int $customer_id
  *   The customer ID.
+ * @param array $settings
+ *   An array of settings to initialize Braintree with.
  *
  * @return bool|\Braintree\Customer
  *   The Braintree\Customer object or FALSE if not found.
  */
-function braintree_vault_customer_load($customer_id) {
+function braintree_vault_customer_load($customer_id, $settings = array()) {
+  braintree_initialize($settings);
   try {
     $customer = Braintree_Customer::find($customer_id);
     $context['result']->result = $customer;
@@ -31,11 +34,16 @@ function braintree_vault_customer_load($customer_id) {
  *
  * @param array $customer_data
  *   The customer data used to create the customer.
+ * @param array $settings
+ *   An array of settings to initialize Braintree with.
  *
  * @return bool|\Braintree_Customer
+ *   The Braintree_Customer object or FALSE if the customer wasn't saved.
  */
-function braintree_vault_customer_save($customer_data) {
+function braintree_vault_customer_save($customer_data, $settings = array()) {
   drupal_alter('braintree_vault_customer_data', $customer_data);
+
+  braintree_initialize($settings);
 
   try {
     $result = Braintree_Customer::create($customer_data);
@@ -75,12 +83,9 @@ function braintree_vault_customer_save($customer_data) {
  *   related information like error messages.
  */
 function braintree_vault_payment_method_save($payment_method, $context = array(), $settings = array()) {
-  if (empty($settings)) {
-    $settings = braintree_default_settings();
-  }
-  braintree_initialize($settings);
-
   drupal_alter('braintree_payment_method', $payment_method, $context);
+
+  braintree_initialize($settings);
 
   try {
     if ($context['op'] == 'edit') {
@@ -153,6 +158,8 @@ function braintree_vault_payment_method_save($payment_method, $context = array()
  *   related information like error messages.
  */
 function braintree_vault_payment_method_delete($payment_method, $context = array(), $settings = array()) {
+  braintree_initialize($settings);
+
   try {
     $context['result'] = Braintree_PaymentMethod::delete($payment_method->token);
   }
@@ -185,19 +192,23 @@ function braintree_vault_payment_method_delete($payment_method, $context = array
  *   An object of Braintree payment method.
  * @param array $context
  *   An array of contextual information for other code.
+ * @param array $settings
+ *   An array of settings to initialize Braintree with.
  *
  * @return array
  *   An array structure where the first element is whether the payment method
  *   was saved successfully, and the second element is a contextual array of
  *   related information like error messages.
  */
-function braintree_vault_payment_method_make_default($payment_method, $context = array()) {
+function braintree_vault_payment_method_make_default($payment_method, $context = array(), $settings = array()) {
   if (braintree_payment_method_is_paypal($payment_method)) {
     $class = 'Braintree_PayPalAccount';
   }
   else {
     $class = 'Braintree_PaymentMethod';
   }
+
+  braintree_initialize($settings);
 
   try {
     $context['result'] = $class::update($payment_method->token, array(
@@ -230,11 +241,15 @@ function braintree_vault_payment_method_make_default($payment_method, $context =
  *   The customer's Braintree ID.
  * @param array $customer_data
  *   The customer data used to update the customer.
+ * @param array $settings
+ *   An array of settings to initialize Braintree with.
  *
  * @return bool|\Braintree_Customer
  */
-function braintree_vault_customer_update($customer_id, $customer_data) {
+function braintree_vault_customer_update($customer_id, $customer_data, $settings = array()) {
   drupal_alter('braintree_vault_customer_data', $customer_data);
+
+  braintree_initialize($settings);
 
   try {
     $result = Braintree_Customer::update($customer_id, $customer_data);
@@ -274,9 +289,6 @@ function braintree_vault_customer_update($customer_id, $customer_data) {
  *   TRUE if updated successfully, FALSE otherwise.
  */
 function braintree_vault_address_update($customer_id, $address_id, $data, $settings = array()) {
-  if (empty($settings)) {
-    $settings = braintree_default_settings();
-  }
   braintree_initialize($settings);
 
   drupal_alter('braintree_vault_customer_address_update', $customer_id, $address_id, $data);
