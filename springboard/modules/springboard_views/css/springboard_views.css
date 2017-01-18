@@ -122,9 +122,17 @@ body.page-node-webform-results .view-sbv-donations a.views-data-export {
   padding: 3px 5px;
 }
 .view-sbv-donations table.views-table td {
+  border-top: none;
   font-size: 11px;
-  padding: 1px 2px;
+  line-height: 16px;
+  padding: 2px 3px 1px;
+}
+.view-sbv-donations table.views-table td.first {
+  border-left: 1px solid #e6e6e6;
 }
 .view-sbv-donations #sbv-export-download-msg {
   float: right;
+}
+.view-sbv-donations #sb-db-items-per-page {
+  font-size: 11px;
 }
