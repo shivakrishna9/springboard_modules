@@ -122,13 +122,32 @@ body.page-node-webform-results .view-sbv-donations a.views-data-export {
   padding: 3px 5px;
 }
 .view-sbv-donations table.views-table td {
-  border-top: none;
   font-size: 11px;
-  line-height: 16px;
-  padding: 2px 3px 1px;
+  padding: 3px 2px;
 }
-.view-sbv-donations table.views-table td.first {
-  border-left: 1px solid #e6e6e6;
+body.page-node .view-sbv-donations table.views-table td {
+  padding: 2px 3px 1px;
+  border: none;
+  line-height: 16px;
+}
+body.page-node .view-sbv-donations table.views-table tr.odd td {
+  background-color: #f7f7f4;
+}
+body.page-node .view-sbv-donations table.views-table tr.even td {
+  background-color: #fff;
+}
+body.page-node .view-sbv-donations table.views-table td.views-field-order-id,
+body.page-node .view-sbv-donations table.views-table td.views-field-uid {
+  width: 60px;
+}
+body.page-node .view-sbv-donations table.views-table td.views-field-sid {
+  width: 70px;
+}
+body.page-node .view-sbv-donations table.views-table td.views-field-remote-addr {
+  width: 80px;
+}
+body.page-node .view-sbv-donations table.views-table td.views-field-created {
+  width: 120px;
 }
 .view-sbv-donations #sbv-export-download-msg {
   float: right;
