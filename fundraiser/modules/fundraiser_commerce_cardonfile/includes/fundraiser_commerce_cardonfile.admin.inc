@@ -20,7 +20,7 @@ function fundraiser_commerce_cardonfile_admin_settings($form, $form_state) {
     $options = array(
       '!n' => '<strong>' . $number_unupdated_donations . '</strong>',
       '@message' => 'You can either use the following button to process all donations, or use this drush command:',
-      '!command' => '<code>drush fccp</code>.<br/>',
+      '!command' => '<code>drush fccdp</code>.<br/>',
     );
     if ($number_unupdated_donations >= FUNDRAISER_COMMERCE_CARDONFILE_DONATION_ENTRIES_THRESHOLD) {
       $options['@message'] = 'Since the number of donations without associated card ids is greater than the recommmended threshold for processing all donations, it is recommmended you process a set of donations at a time. You can either use the following buttons to process a set number of donations, all donations, or use the following drush command:';
@@ -62,7 +62,7 @@ function fundraiser_commerce_cardonfile_admin_settings($form, $form_state) {
       $options = array(
         '!n' => '<strong>' . $number_unupdated_cards . '</strong>',
         '@message' => 'You can either use the following button to process all donations, or use this drush command:',
-        '!command' => '<code>drush fccp</code>.<br/>',
+        '!command' => '<code>drush fcccp</code>.<br/>',
       );
       if ($number_unupdated_cards >= FUNDRAISER_COMMERCE_CARDONFILE_CARD_ENTRIES_THRESHOLD) {
         $options['@message'] = 'Since the number of cards without associated addresses is greater than the recommmended threshold for processing all cards, it is recommmended you process a set of cards at a time. You can either use the following buttons to process a set number of cards, all cards, or use the following drush command:';
