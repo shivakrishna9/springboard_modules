@@ -222,8 +222,17 @@
 
         // Other Amount
         var $other_amount = $('input[name*="other_amount"][type!="hidden"]');
+        $($other_amount).blur(function () {
+
+          var otherAmountField = $(this);
+          if (otherAmountField.parent().children('.field-suffix').length > 0) {
+            var errorMessage = otherAmountField.parent().children('label.error').detach();
+            otherAmountField.parent().children('.description').after(errorMessage);
+          }
+        });
         if ($other_amount.length) {
           $($other_amount).each(function() {
+            var otherAmountField = $(this);
             $(this).rules('add', {
               required: function(element) {
                 return $('input[type="radio"][name$="[amount]"]:checked').length == 0 || $('input[type="radio"][name$="[amount]"][value="other"]:visible').is(":checked");
