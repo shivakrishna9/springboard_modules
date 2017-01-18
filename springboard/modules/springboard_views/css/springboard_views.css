@@ -12,6 +12,10 @@ body.page-node .view-sbv-donations .view-filters {
   zoom: 0.75;
   -moz-transform: scale(0.75);
 }
+body.page-admin .view-sbv-donations .view-table {
+  zoom: 0.70;
+  -moz-transform: scale(0.70);
+}
 body.page-node .view-sbv-donations .view-table {
   zoom: 0.85;
   -moz-transform: scale(0.85);
@@ -94,7 +98,7 @@ body.page-node .view-sbv-donations .view-table {
 .view-sbv-donations a.views-data-export {
   margin-top: -46px;
   position: absolute;
-  right: 0;
+  right: 10px;
   top: inherit;
 }
 body.page-node-webform-results .view-sbv-donations a.views-data-export {
@@ -123,7 +127,7 @@ body.page-node-webform-results .view-sbv-donations a.views-data-export {
 }
 .view-sbv-donations table.views-table td {
   font-size: 11px;
-  padding: 3px 2px;
+  padding: 3px 1px;
 }
 body.page-node .view-sbv-donations table.views-table td {
   padding: 2px 3px 1px;
@@ -154,4 +158,23 @@ body.page-node .view-sbv-donations table.views-table td.views-field-created {
 }
 .view-sbv-donations #sb-db-items-per-page {
   font-size: 11px;
+}
+body.page-admin .view-sbv-donations {
+  background: #fff;
+  border: 2px solid #e1e9db;
+  border-top: none;
+  padding: 8px 8px;
+  margin-top: -10px;
+}
+
+@media (max-width: 989px) {
+  body.page-admin-reports-salesforce-donations #main {
+    width: 95%;
+  }
+  body.page-admin .view-sbv-donations {
+    padding: 0px 6px;
+  }
+  body.page-admin .view-sbv-donations .views-table td {
+    padding: 1px 1px;
+  }
 }
