@@ -1,8 +1,0 @@
-name = Fundraiser Addressbook
-description = Integrates the Fundraiser module with the Commerce Addressbook module.
-core = 7.x
-package = Jackson River Springboard
-dependencies[] = commerce_addressbook
-dependencies[] = commerce_customer
-dependencies[] = fundraiser
-version = 7.x-4.x-dev
