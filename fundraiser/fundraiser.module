@@ -1915,6 +1915,9 @@ function fundraiser_donation_create($donation) {
  * For example, in the course of updating a sustainers information.
  */
 function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
+  if (!function_exists('commerce_payment_validate_credit_card_type')) {
+    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  }
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_update', $donation);
   // The additional fields $donation->additional, ready to process.
