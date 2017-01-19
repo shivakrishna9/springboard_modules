@@ -118,6 +118,7 @@ function braintree_vault_schema() {
       ),
     ),
   );
+  return $schema;
 }
 
 /**
