@@ -666,7 +666,16 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
 
         $min_amount = isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0;
         $min_amount = number_format($min_amount, 2);
-        $recurring = _fundraiser_sustainers_get_donations_recurr_remaining($payload['did']);
+
+        $offsite_recurring = _fundraiser_sustainers_offsite_recurring($donation->gateway, $donation->donation['payment_method']);
+        if ($offsite_recurring) {
+          $recurring = array($donation);
+        }
+        else {
+          $recurring = _fundraiser_sustainers_get_donations_recurr_remaining($payload['did']);
+
+        }
+
         $message = fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount);
         $status['status'] = $message;
         $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
