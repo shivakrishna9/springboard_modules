@@ -177,7 +177,7 @@ function commerce_cybersource_soap_cc_settings_form($settings = NULL) {
     $form['cardonfile'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enable card on file to store credit card information.'),
-      '#default_value' => $settings['credit_card']['cardonfile'],
+      '#default_value' => !empty($settings['credit_card']['cardonfile']) ? $settings['credit_card']['cardonfile'] : FALSE,
     );
   }
 
