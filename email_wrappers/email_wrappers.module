@@ -461,13 +461,19 @@ function email_wrappers_mail($key, &$message, $params) {
   $token_set = array(
     'node' => isset($params['node']) ? $params['node'] : NULL,
   );
-  if (isset($params['donation'])) {
-   $token_set['donation'] = $params['donation'];
-  }
-  if ($key == 'wf_submission') {
 
+  if (empty($params['donation']) && !empty($params['submission'])) {
+    $params['donation'] = _fundraiser_webform_get_donation_by_sid($params['submission']->sid);
+  }
+
+  if (!empty($params['donation'])) {
+    $token_set['donation'] = $params['donation'];
+  }
+
+  if ($key == 'wf_submission') {
     // Fish the original message array out of params.
     $message = $params['message'];
+    $message['params']['donation'] = $params['donation'];
     $message['module'] = 'email_wrappers';
     $message['subject'] = token_replace($params['subject'], $token_set, array('clear' => TRUE));
     $eid = $params['email']['eid'];
@@ -484,7 +490,7 @@ function email_wrappers_mail($key, &$message, $params) {
       email_wrappers_render_email_body($eid, $message, $settings),
     );
   }
-  elseif(isset($params['mail']->subject)) {
+  elseif (isset($params['mail']->subject)) {
     $params['mail']->subject = token_replace($params['mail']->subject, $token_set, array('clear' => TRUE));
   }
 }
@@ -581,6 +587,10 @@ function email_wrappers_mail_alter(&$message) {
 
   // Processing an email constructed via the dev API.
   if ($message['module'] == 'email_wrappers' && isset($message['params']['module'], $message['params']['delta'])) {
+    if (empty($message['params']['donation']) && !empty($message['params']['submission'])) {
+      $message['params']['donation'] = _fundraiser_webform_get_donation_by_sid($message['params']['submission']->sid);
+    }
+
     // Format body & headers.
     $message['params']['boundary'] = '----=_NextPart_' . md5(uniqid());
     $message['headers']['MIME-version'] = '1.0';
@@ -640,6 +650,10 @@ function email_wrappers_render_email_body($eid, $message, $settings = array()) {
   }
   $html_raw = token_replace($html_raw, $token_set, array('clear' => TRUE));
   $text_raw = token_replace($text_raw, $token_set, array('clear' => TRUE));
+
+  // Allow other modules to modify the messages.
+  drupal_alter('email_wrappers_email_body_messages', $html_raw, $text_raw, $message);
+
   $multi_body  = "
 
 This is a multi-part message in MIME format.

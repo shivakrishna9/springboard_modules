@@ -1,0 +1,135 @@
+<?php
+/**
+ * @file
+ * Module file for email_wrappers_twig.
+ */
+
+/**
+ * Implements hook_libraries_info().
+ *
+ * Define the Twig templating library.
+ */
+function email_wrappers_twig_libraries_info() {
+  // A very simple library. No changing APIs (hence, no versions), no variants.
+  // Expected to be extracted into 'sites/all/libraries/simple'.
+  $libraries['twig'] = array(
+    'name' => 'Twig',
+    'vendor url' => 'http://twig.sensiolabs.org/',
+    'download url' => 'https://github.com/twigphp/Twig/archive/v2.1.0.tar.gz',
+    'version arguments' => array(
+      'file' => 'CHANGELOG',
+      'pattern' => '/(\d+\.\d+\.\d \(\d{4}\-\d{2}\-\d{2}\))/',
+      'lines' => 1,
+    ),
+    'files' => array(
+      'php' => array('lib/Twig/Autoloader.php'),
+    ),
+  );
+
+  return $libraries;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Adds description to email webform to inform user their ability to use Twig in
+ * their messages, and which variables are available to them.
+ */
+function email_wrappers_twig_form_webform_email_edit_form_alter(&$form, &$form_state) {
+  // Insert text after the components token field.
+  $i = array_search('preview_url', array_keys($form['template']));
+  $twig_description = array(
+    'twig' => array(
+      '#type' => 'markup',
+      '#markup' => t('You may also use the Twig templating language in your messages. The available object variables are !variables. For more information about Twig, visit !url.!breaks', array(
+        '!variables' => '<code>node</code>, <code>submission</code>, and <code>donation</code>',
+        '!url' => l(t('the Twig project page'), 'http://twig.sensiolabs.org/doc/1.x/', array(
+          'attributes' => array(
+            'target' => '_blank',
+          ),
+        )),
+        '!breaks' => '<br/><br/>',
+      )),
+    ),
+  );
+  $twig_variables = array(
+    'Node' => array(
+      'nid' => t('The node ID.'),
+      'title' => t('The node title.'),
+    ),
+    'Submission' => array(
+      'sid' => t('The submission ID.'),
+      'nid' => t('The node ID.'),
+      'uid' => t("The user's ID."),
+    ),
+    'Donation' => array(
+      'did' => t('The donation ID.'),
+      'nid' => t('The node ID.'),
+      'sid' => t('The submission ID.'),
+      'uid' => t("The user's ID."),
+      'user' => t('The user object.'),
+      'user.name' => t("The user's name."),
+      'user.mail' => t("The user's email."),
+      'amount' => t('The amount of the donation.'),
+      'currency' => t('The currency of the donation.'),
+      'transaction_date' => t('The transaction date.'),
+    ),
+  );
+
+  $header = array(
+    array('data' => 'Variable'),
+    array('data' => 'Description'),
+  );
+  $rows = array();
+  foreach ($twig_variables as $category => $children) {
+    $rows[] = array('<strong>' . $category . '</strong>');
+    foreach ($children as $variable_name => $description) {
+      $rows[] = array($variable_name, $description);
+    }
+  }
+
+  $twig_variables_fieldset = array(
+    'twig_variables' => array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => t('Twig Variables'),
+      'twig_variables_table' => array(
+        '#type' => 'markup',
+        '#markup' => theme('table', array(
+          'header' => $header,
+          'rows' => $rows,
+        )),
+      ),
+    ),
+  );
+
+  $form['template'] = array_slice($form['template'], 0, $i, TRUE) + $twig_description + $twig_variables_fieldset + array_slice($form['template'], $i, NULL, TRUE);
+}
+
+/**
+ * Implements hook_email_wrappers_email_body_messages_alter().
+ *
+ * Process the email messages with the Twig templating language.
+ */
+function email_wrappers_twig_email_wrappers_email_body_messages_alter(&$html_raw, &$text_raw, &$message) {
+  $library_name = 'twig';
+  if (($library = libraries_load($library_name)) && !empty($library['installed'])) {
+    Twig_Autoloader::register();
+    $loader = new Twig_Loader_Array();
+    $twig = new Twig_Environment($loader);
+    $twig->addExtension(new Twig_Extension_StringLoader());
+    $replacements = array(
+      'donation' => $message['params']['donation'],
+      'node' => $message['params']['node'],
+      'submission' => $message['params']['submission'],
+    );
+    $html_raw = $twig->createTemplate($html_raw)->render($replacements);
+    $text_raw = $twig->createTemplate($text_raw)->render($replacements);
+  }
+  else {
+    $error = $library['error'];
+    $error_message = $library['error message'];
+    drupal_set_message($error_message, 'warning');
+  }
+}
