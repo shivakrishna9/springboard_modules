@@ -200,7 +200,9 @@ function commerce_authnet_fundraiser_commerce_update($donation, $card_data = NUL
   // If it does then we use the update function
   // if its a new card check if we should create a new CIM profile
   $action = 'update';
-  if ($cardonfile_fields['card_number'] != $card_data->card_number) {
+  // If the card_number in $cardonfile_fields is FALSE, the number wasn't
+  // entered, so the address might need updating.
+  if ($cardonfile_fields['card_number'] && $cardonfile_fields['card_number'] != $card_data->card_number) {
     // This is a new card for this donation, make sure we don't have an existing profile
     // First check with the card number and date
     if ($existing = _fundraiser_commerce_cardonfile_match($cardonfile_fields)) {
