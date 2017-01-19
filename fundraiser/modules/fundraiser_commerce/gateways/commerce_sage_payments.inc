@@ -376,6 +376,9 @@ function _commerce_sage_payments_fundraiser_commerce_update_cc($donation, $card_
       $guid = trim($vault_response['GUID']);
 
       // Get the card type
+      if (!function_exists('commerce_payment_validate_credit_card_type')) {
+        module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+      }
       $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
       $all_types = commerce_payment_credit_card_types();
       $card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : 'card';
@@ -442,7 +445,7 @@ function _commerce_sage_payments_fundraiser_commerce_update_eft($donation, $card
       $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
       $card_name = $billing_address['name_line'];
     }
- 
+
     // Save the credit card in the Vault.
     $vault_response = commerce_sage_payments_vault_request_insert($payment_method, $payment_details);
 
