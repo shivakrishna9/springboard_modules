@@ -1580,9 +1580,7 @@ function _fundraiser_donation_form_js_validation_config($node) {
  */
 function fundraiser_donation_form(&$form, &$form_state) {
   $node = $form['#node'];
-  // Load any custom configuration options.
-  $config = db_query('SELECT * FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
-
+  
   // Attach the js files.
   $path = drupal_get_path('module', 'fundraiser');
   $form['#attached']['js'][] =  $path . '/js/jquery.alphanumeric.min.js';
