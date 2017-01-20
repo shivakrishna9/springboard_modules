@@ -657,13 +657,9 @@ function fundraiser_designation_donation_amount_form_validate($form, &$form_stat
  */
 function fundraiser_designation_donation_amount_form_submit($form, $form_state) {
   $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($form['master_did']['#value']);
-  $donations = array($form['#donation']);
-  if ($remaining) {
-    $donations = $remaining;
-  }
-  foreach ($donations as $donation_obj) {
+  foreach ($remaining as $donation_obj) {
     $donation = fundraiser_donation_get_donation($donation_obj->did);
-    _fundraiser_designations_update_line_items($donation);
+    _fundraiser_designations_update_line_items($donation, $remaining);
   }
 }
 
@@ -676,13 +672,16 @@ function fundraiser_designation_donation_amount_form_submit($form, $form_state) 
  * We grab that order's line items and re-apply their values to the other
  * orders so that DCOM recognizes the update.
  */
-function _fundraiser_designations_update_line_items($donation) {
+function _fundraiser_designations_update_line_items($donation, $remaining) {
   if (fundraiser_designations_is_designation_type($donation->node->type) && !empty($donation->master_did)) {
+    $next_donation = $donation;
+    if (!empty($remaining)) {
+      $next_donation = fundraiser_donation_get_donation($remaining[0]->did);
+    }
     if (!empty($donation->recurring->master_did)) {
-
       // Get the next pending sustainer order (the one that was updated when
       // we saved the sustainer edit form).
-      $first_order = commerce_order_load($donation->did);
+      $first_order = commerce_order_load($next_donation->did);
       $first_order_wrapper = entity_metadata_wrapper('commerce_order', $first_order);
 
       // Update the donation amount on the donation object with the total from
