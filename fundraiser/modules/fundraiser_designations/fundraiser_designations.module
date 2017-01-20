@@ -678,16 +678,11 @@ function fundraiser_designation_donation_amount_form_submit($form, $form_state) 
  */
 function _fundraiser_designations_update_line_items($donation) {
   if (fundraiser_designations_is_designation_type($donation->node->type) && !empty($donation->master_did)) {
-    $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($donation->master_did);
-    $next_donation = $donation;
-    if ($remaining) {
-      $next_donation = fundraiser_donation_get_donation($remaining[0]->did);
-    }
     if (!empty($donation->recurring->master_did)) {
 
       // Get the next pending sustainer order (the one that was updated when
       // we saved the sustainer edit form).
-      $first_order = commerce_order_load($next_donation->did);
+      $first_order = commerce_order_load($donation->did);
       $first_order_wrapper = entity_metadata_wrapper('commerce_order', $first_order);
 
       // Update the donation amount on the donation object with the total from
