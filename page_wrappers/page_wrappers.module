@@ -1011,11 +1011,30 @@ function _page_wrappers_tokens($content) {
 
   // Then look for possible Token tokens.
   $candidates = token_scan($content);
-  foreach ($candidates as $type => $tokens) {
-    foreach ($tokens as $token) {
-      $data = ($type == 'node') ? '"node" => isset($node) ? $node : null' : '';
-      $replacement = "<?php print token_replace('$token', array($data), array('clear' => TRUE)) ?>";
-      $content = str_replace($token, $replacement, $content);
+  if(!empty($candidates)) {
+    // Load token info so we can prepare the correct $data for each token. At this point, $data is a string that will
+    // be output into the page wrapper .tpl.php file. $data will represent the variables available to the .tpl.php at
+    // the time the node utilizing this page wrapper is rendered by Drupal.
+    $token_info = token_info();
+
+    foreach ($candidates as $type => $tokens) {
+      $data = "array()";
+      if(isset($token_info['types'][$type]['needs-data'])) {
+        // Depending on which type of data is needed, we can use our knowledge of the variables available to page.tpl.php
+        // to create a PHP string that will pass the appropriate $data variable to token_replace().
+        switch($token_info['types'][$type]['needs-data']) {
+          case 'node':
+            $data = "is_object(\$node) ? array('node' => \$node) : array()";
+            break;
+          case 'current-user':
+              $data = "is_object(\$user) ? array('user' => \$user) : array()";
+            break;
+        }
+      }
+      foreach ($tokens as $token) {
+        $replacement = "<?php print token_replace('$token', $data, array('clear' => TRUE)) ?>";
+        $content = str_replace($token, $replacement, $content);
+      }
     }
   }
 
