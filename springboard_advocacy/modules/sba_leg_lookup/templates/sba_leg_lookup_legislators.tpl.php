@@ -45,14 +45,17 @@
       <!-- Title and District name -->
       <div class="sba-legislator-type"><?php print $legislator['role']; ?></div>
       <!-- Phone  -->
-      <div class="sba-legislator-main-phone">Phone: <?php print $legislator['main_phone']; ?></div>
-
+      <?php if (!empty($legislator['main_phone'])): ?>
+        <div class="sba-legislator-main-phone">Phone: <?php print $legislator['main_phone']; ?></div>
+      <?php endif;?>
       <?php if (empty($phone_only)): ?>
         <!-- Fax  -->
+      <?php if (!empty($legislator['main_fax'])): ?>
         <div class="sba-legislator-main-fax">Fax: <?php print $legislator['main_fax']; ?></div>
+        <?php endif;?>
         <!-- Email -->
         <?php if (!empty($legislator['email'])): ?>
-        <div class="sba-legislator-email"><a class="sba-legislator-email" href="mailto:<?php print $legislator['email']; ?> '" itemprop="email"><?php print $legislator['email'];?></a></div>
+        <div class="sba-legislator-email"> Email: <a class="sba-legislator-email" href="mailto:<?php print $legislator['email']; ?> '" itemprop="email"><?php print $legislator['email'];?></a></div>
         <?php endif;?>
         <!-- Facebook -->
         <?php  if (!empty($legislator['facebook'])): ?>
@@ -64,7 +67,7 @@
         <?php endif;?>
         <!-- Youtube -->
         <?php if (!empty($legislator['youtube'])): ?>
-          <div class="sba-legislator-email"> <a class="sba-legislator-youtube" href="<?php print $legislator['youtube'] ?>">Youtube</a></div>
+          <div class="sba-legislator-email"> <a class="sba-legislator-youtube" href="<?php print $legislator['youtube'] ?>">YouTube</a></div>
         <?php endif;?>
         <!-- Contact form or website -->
         <?php if (!empty($legislator['contact_form'])): ?>
@@ -93,9 +96,16 @@
               <div class="leg-lookup-address">
                 <div class="leg-lookup-address-<?php print $address['office_type'];?>">
                   <strong><?php print $address['office_type'];?></strong><br/>
-                  <div class="leg-lookup-address-street"><?php print $address['street'];?></div>
+                  <?php if (!empty($address['street'])): ?>
+                   <div class="leg-lookup-address-street"><?php print $address['street'];?></div>
+                  <?php endif;?>
+                  <?php if (!empty($address['phone'])): ?>
                   <div class="sba-legislator-phone">Phone: <?php print $address['phone'];?></div>
-                  <div class="sba-legislator-phone">Fax: <?php print $address['fax'];?></div>
+                  <?php endif;?>
+                  <?php if (!empty($address['fax'])): ?>
+                    <div class="sba-legislator-phone">Fax: <?php print $address['fax'];?></div>
+                  <?php endif;?>
+
                 </div>
              </div>
             <?php endforeach; ?>
