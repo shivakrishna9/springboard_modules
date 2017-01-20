@@ -151,3 +151,21 @@ function fundraiser_commerce_cardonfile_entity_view($entity, $type, $view_mode, 
     }
   }
 }
+
+/**
+ * Implements hook_FORM_ID_alter().
+ *
+ * Add a confirmation dialog to the cancel card form to ensure the user really
+ * wants to delete their card.
+ */
+function fundraiser_commerce_cardonfile_form_commerce_cardonfile_delete_form_alter($form, $form_state) {
+  $script = <<<EOT
+jQuery(document).ready(function() {
+  jQuery('#commerce-cardonfile-delete-form').on('submit', function() {
+    var conf = confirm('Are you sure you want to delete this card? Any future and recurring donations associated with it will be canceled.');
+    return conf;
+  });
+});
+EOT;
+  drupal_add_js($script, 'inline');
+}
