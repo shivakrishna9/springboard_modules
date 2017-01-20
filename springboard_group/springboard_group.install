@@ -109,3 +109,17 @@ function springboard_group_enable() {
   $context = array_merge($context, array('springboard_group' => array()));
   variable_set('og_context_negotiation_group_context', $context);
 }
+
+/**
+ * Implements hook_update_N().
+ *
+ * Update Springboard Groups field instances to be displayed on teaser node view.
+ */
+
+function springboard_group_update_7001() {
+  module_load_include('inc', 'springboard_group', 'includes/install/springboard_group.install_fields');
+  $instances = springboard_group_field_default_field_instances();
+  foreach($instances as $instance) {
+    field_update_instance($instance);
+  }
+}

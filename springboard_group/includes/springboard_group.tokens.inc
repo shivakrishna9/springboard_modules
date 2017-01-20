@@ -110,9 +110,9 @@ function springboard_group_tokens($type, $tokens, array $data = array(), array $
               $group = node_load($nid);
               // If the element is a field, render it.
               if (is_array($group->$name)) {
-                // With a little bit of regex magic, we could add the ability to specificy the view mode by appending it
+                // With a little bit of regex magic, we could add the ability to specify the view mode by appending it
                 // to the token name, i.e. [springboard_group:field_name:view_mode], but this is not currently in scope.
-                $field_render = field_view_field('node', $group, $name, 'default');
+                $field_render = field_view_field('node', $group, $name, 'teaser');
                 $content .= is_array($field_render) ? drupal_render($field_render) : '';
               // If the element is a string, output as is.
               } else if (is_string($group->$name)) {
