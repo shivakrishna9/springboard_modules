@@ -110,7 +110,7 @@ function springboard_group_tokens($type, $tokens, array $data = array(), array $
               $group = node_load($nid);
               // If the element is a field, render it.
               if (is_array($group->$name)) {
-                $field_render = field_view_field('node', $group, $name, 'teaser');
+                $field_render = field_view_field('node', $group, $name, 'default');
                 $content .= is_array($field_render) ? drupal_render($field_render) : '';
               // If the element is a string, output as is.
               } else if (is_string($group->$name)) {
