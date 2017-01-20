@@ -661,8 +661,8 @@ function fundraiser_designation_donation_amount_form_submit($form, $form_state) 
   if ($remaining) {
     $donations = $remaining;
   }
-  foreach ($donations as $thing) {
-    $donation = fundraiser_donation_get_donation($thing->did);
+  foreach ($donations as $donation_obj) {
+    $donation = fundraiser_donation_get_donation($donation_obj->did);
     _fundraiser_designations_update_line_items($donation);
   }
 }
