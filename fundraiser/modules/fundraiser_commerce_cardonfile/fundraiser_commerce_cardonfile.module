@@ -32,7 +32,7 @@ function fundraiser_commerce_cardonfile_fundraiser_donation_post_create($donatio
  * billing addresses for individual cards.
  */
 function fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donation) {
-  if (empty($donation->data['cardonfile']) || empty($donation->did) || !empty($donation->deleted)) {
+  if (empty($donation->data['cardonfile']) || empty($donation->did) || !empty($donation->deleted) || !empty($donation->cancelled)) {
     return;
   }
 
@@ -117,8 +117,10 @@ function fundraiser_commerce_cardonfile_entity_delete($entity, $type) {
   // Allow other modules to alter the array of donations that will be deleted.
   drupal_alter('fundraiser_commerce_cardonfile_deleted_card_donations', $donations);
 
-  foreach ($donations as $donation_id) {
-    fundraiser_donation_delete($donation_id);
+  foreach ($donations as $key => $donation_id) {
+    $donation = fundraiser_donation_get_donation($donation_id);
+    fundraiser_donation_cancel($donation);
+    unset($donation);
   }
 }
 
