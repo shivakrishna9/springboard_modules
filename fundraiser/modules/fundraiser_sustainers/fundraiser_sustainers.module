@@ -4543,27 +4543,33 @@ function _fundraiser_sustainers_calculate_installments($donation) {
  *   The QD field record.
  */
 function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
-  $data = db_query('SELECT fd.*, fs.master_did, fss.* FROM {fundraiser_donation} fd, {fundraiser_sustainers} fs LEFT JOIN {fundraiser_sustainers_series} fss ON fss.did = fs.master_did WHERE fd.status = :status AND fd.card_id = :card_id AND fd.did = fs.did GROUP BY fs.master_did', array(
+  $data = db_query('SELECT fd.*, fs.*, fss.* FROM {fundraiser_donation} fd, {fundraiser_sustainers} fs, {fundraiser_sustainers_series} fss WHERE fd.did = fs.did AND fd.card_id = :card_id AND fs.master_did = fss.did GROUP BY fd.sid', array(
     ':card_id' => $card_id,
-    ':status' => 'payment_received',
-  ))->fetchAll();
+  ))->fetchAllAssoc('did', PDO::FETCH_ASSOC);
 
   if (empty($data)) {
     return array();
   }
 
   foreach ($data as $key => $row) {
-    $query = db_query('SELECT * FROM {fundraiser_donation} fd WHERE fd.sid = :sid AND fd.status = :status ORDER BY fd.did LIMIT 1', array(
-      ':sid' => $row->sid,
+    $query = db_query('SELECT * FROM {fundraiser_donation} WHERE sid = :sid AND status = :status AND card_id = :card_id ORDER BY did LIMIT 1', array(
+      ':sid' => $row['sid'],
       ':status' => 'pending_future_payment',
+      ':card_id' => $card_id,
     ))->fetchAssoc();
 
     if (empty($query)) {
       unset($data[$key]);
       continue;
     }
-
-    $data[$key] = array_merge((array) $data[$key], $query);
+    elseif ($key !== $query['did']) {
+      $data[$query['did']] = array_merge($row, $query);
+      unset($data[$key]);
+      continue;
+    }
+    else {
+      $data[$key] = array_merge($row, $query);
+    }
   }
 
   return $data;
