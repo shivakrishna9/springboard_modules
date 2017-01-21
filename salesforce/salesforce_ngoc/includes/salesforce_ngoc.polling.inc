@@ -135,13 +135,13 @@ function salesforce_ngoc_release_children_from_hold_queue(&$changed_records) {
   // Loop through the hold_queue records to find the changed_record that has the
   // corresponding parent did or uid.
   foreach ($child_hold_queue_items as $hold_queue_record) {
-    $unsync_parent_found = FALSE;
+    $unsyncd_parent_found = FALSE;
     foreach ($changed_records as $changed_record) {
       if (($hold_queue_record->parent_type == 'Contact' && $hold_queue_record->parent_drupal_id == $changed_record->uid) ||
           ($hold_queue_record->parent_type == 'Opportunity' && $hold_queue_record->parent_drupal_id == $changed_record->did)) {
         // We've found the corresponding changed_record, now see if it has
         // the sfid for contact or opportunity or both depending on object type.
-        foreach ($salesforce_ngoc_parent_objects[$hold_queue_record->object_type] as $parent_object_type) {
+        foreach ($salesforce_ngoc_parent_objects[$hold_queue_record->object_type] as $parent_object_type => $drupal_object_type) {
           if ($parent_object_type == 'Contact') {
             if (empty($changed_record->contact_sfid)) {
               // No contact_sfid found so $hold_queue_record has an
