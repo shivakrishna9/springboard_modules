@@ -585,15 +585,17 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     $token = $braintree_payment_method->token;
   }
 
+  $card = new stdClass();
+
   $order_data = unserialize(decrypt($order->data['fundraiser_commerce']));
   if (isset($order_data['cardonfile'])) {
-    $cardonfile = commerce_cardonfile_load($order_data['cardonfile']);
+    $card = commerce_cardonfile_load($order_data['cardonfile']);
     // Fail now if it is no longer available or the card is inactive.
-    if (empty($cardonfile) || $cardonfile->status == 0) {
+    if (empty($card) || $card->status == 0) {
       drupal_set_message(t('The requested card on file is no longer valid.'), 'error');
       return FALSE;
     }
-    $token = $cardonfile->remote_id;
+    $token = $card->remote_id;
   }
 
   if (!empty($token)) {
@@ -662,7 +664,9 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
       }
     }
 
-    module_invoke_all('commerce_braintree_web_submit_transaction_sale_success', $braintree_result, $card);
+    if (!empty($braintree_result) && !empty($card)) {
+      module_invoke_all('commerce_braintree_web_submit_transaction_sale_success', $braintree_result, $card);
+    }
   }
 
   // Process the Braintree response and create a payment transaction.
