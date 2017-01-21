@@ -4546,32 +4546,41 @@ function _fundraiser_sustainers_calculate_installments($donation) {
  *   The QD field record.
  */
 function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
-  // Select cards from donations that are "master" donations which have already
-  // been processed. Future donations aren't gauranteed to have a card_id value
-  // set.
-  $data = db_query('SELECT fd.*, fs.master_did, fss.* FROM {fundraiser_donation} fd, {fundraiser_sustainers} fs LEFT JOIN {fundraiser_sustainers_series} fss ON fss.did = fs.master_did WHERE fd.status = :status AND fd.card_id = :card_id AND fd.did = fs.did GROUP BY fs.master_did', array(
+  // Select donations that have the associated card_id value, and key the
+  // results by `did` (important).
+  $data = db_query('SELECT fd.*, fs.*, fss.* FROM {fundraiser_donation} fd, {fundraiser_sustainers} fs, {fundraiser_sustainers_series} fss WHERE fd.did = fs.did AND fd.card_id = :card_id AND fs.master_did = fss.did GROUP BY fd.sid', array(
     ':card_id' => $card_id,
-    ':status' => 'payment_received',
-  ))->fetchAll();
+  ))->fetchAllAssoc('did', PDO::FETCH_ASSOC);
 
+  // If no donations have the associated card_id, return early.
   if (empty($data)) {
     return array();
   }
 
-  // For each donation found, add to a return array the master donation
-  // overwritten with data from the next donation in the series.
   foreach ($data as $key => $row) {
-    $query = db_query('SELECT * FROM {fundraiser_donation} fd WHERE fd.sid = :sid AND fd.status = :status ORDER BY fd.did LIMIT 1', array(
-      ':sid' => $row->sid,
+    // For each donation found, select the first future, non-processed donation
+    // that has the same submission and card IDs.
+    $query = db_query('SELECT * FROM {fundraiser_donation} WHERE sid = :sid AND status = :status AND card_id = :card_id ORDER BY did LIMIT 1', array(
+      ':sid' => $row['sid'],
       ':status' => 'pending_future_payment',
+      ':card_id' => $card_id,
     ))->fetchAssoc();
 
     if (empty($query)) {
+      // If no results, unset this result and continue.
       unset($data[$key]);
       continue;
     }
-
-    $data[$key] = array_merge((array) $data[$key], $query);
+    elseif ($key !== $query['did']) {
+      // Ensure the did matches the key did. If it doesn't move the result to a
+      // new element with the correct keyed did and unset this one.
+      $data[$query['did']] = array_merge($row, $query);
+      unset($data[$key]);
+      continue;
+    }
+    else {
+      $data[$key] = array_merge($row, $query);
+    }
   }
 
   return $data;
