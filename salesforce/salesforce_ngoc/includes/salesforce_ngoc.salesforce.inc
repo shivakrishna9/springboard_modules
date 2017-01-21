@@ -85,6 +85,15 @@ function salesforce_ngoc_salesforce_mapping_destination_queue_alter(&$queue_name
 }
 
 /**
+ * Implements hook_salesforce_mapping_map_fields_alter().
+ */
+function salesforce_ngoc_salesforce_mapping_map_fields_alter(&$fields, $context){
+  if ($context['entity_type'] == 'user') {
+    $fields['rC_Connect__Address_Type__c'] = variable_get('salesforce_ngoc_default_address_type', SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE);
+  }
+}
+
+/**
  * Implements hook_salesforce_sync_save_map_alter().
  */
 function salesforce_ngoc_salesforce_sync_save_map_alter($record) {
