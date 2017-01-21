@@ -21,36 +21,40 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
   // The batch upload object needs some system flags set correct in order
   // to do it's thing. Let's do that here instead of implementing in the
   // mapping interface because these flags have no donation counterpart.
-  if ($context['module'] == 'salesforce_donation' && $context['map']->salesforce_object_type == 'rC_Connect__Batch_Upload__c') {
-    $fields['rC_Connect__Giving_Paid__c'] = TRUE;
+  if ($context['map']->salesforce_object_type == 'rC_Connect__Batch_Upload__c') {
     $fields['rC_Connect__Address_Type__c'] = variable_get('salesforce_ngoc_default_address_type', SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE);
-    $fields['rC_Connect__Giving_Payment_Frequency__c'] = variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY);
-    // Prevents NGOC from trying to process the payment.
-    $fields['rC_Connect__Disable_Merchant_Messages__c'] = TRUE;
-    // Depends on one-time or recurring gift.
-    $fields['rC_Connect__Giving_Giving_Frequency__c'] = 'One Payment';
-    $fields['rC_Connect__Giving_Record_Type__c'] = variable_get('salesforce_ngoc_default_record_type', SALESFORCE_NGOC_DEFAULT_RECORD_TYPE);
-    // Per tom: "for online donations the Address: Preferred Billing and
-    // Address: Preferred Shipping should be set to TRUE.  (For advocacy
-    // actions these should be set to FALSE.)" which appears to be the default
-    // so not explicitly setting FALSE for those.
-    $fields['rC_Connect__Address_Preferred_Shipping__c'] = TRUE;
+    // Fields specific to donations.
+    if ($context['module'] == 'salesforce_donation') {
+      $fields['rC_Connect__Giving_Paid__c'] = TRUE;
+      $fields['rC_Connect__Giving_Payment_Frequency__c'] = variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY);
+      // Prevents NGOC from trying to process the payment.
+      $fields['rC_Connect__Disable_Merchant_Messages__c'] = TRUE;
+      // Depends on one-time or recurring gift.
+      $fields['rC_Connect__Giving_Giving_Frequency__c'] = 'One Payment';
+      $fields['rC_Connect__Giving_Record_Type__c'] = variable_get('salesforce_ngoc_default_record_type', SALESFORCE_NGOC_DEFAULT_RECORD_TYPE);
+      // Per tom: "for online donations the Address: Preferred Billing and
+      // Address: Preferred Shipping should be set to TRUE.  (For advocacy
+      // actions these should be set to FALSE.)" which appears to be the default
+      // so not explicitly setting FALSE for those.
+      $fields['rC_Connect__Address_Preferred_Shipping__c'] = TRUE;
 
-    // Set fields that change depending on payment method type.
-    switch ($fields['rC_Connect__Payment_Method_Payment_Type__c']) {
-      case 'credit':
-        $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'Charge Card';
-        break;
+      // Set fields that change depending on payment method type.
+      switch ($fields['rC_Connect__Payment_Method_Payment_Type__c']) {
+        case 'credit':
+          $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'Charge Card';
+          break;
 
-      case 'bank account':
-        $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'EFT';
-        break;
+        case 'bank account':
+          $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'EFT';
+          break;
 
-      case 'paypal':
-        $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'Paypal';
-        break;
+        case 'paypal':
+          $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'Paypal';
+          break;
+
+        default:
+      }
     }
-
   }
 }
 
