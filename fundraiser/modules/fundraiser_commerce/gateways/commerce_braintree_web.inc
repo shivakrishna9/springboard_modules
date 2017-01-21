@@ -338,7 +338,7 @@ function commerce_braintree_web_fundraiser_commerce_update($donation, $card_data
 
   // If the addresses don't match call the API to update.
   if ($address_change) {
-    braintree_vault_address_update($customer_id, $address_id, $data, $donation->gateway['gateway_details']['settings']);
+    braintree_vault_address_update($customer_id, $address_id, $address_data, $donation->gateway['gateway_details']['settings']);
 
     $options['billingAddressId'] = $address_id;
 
