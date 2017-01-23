@@ -59,7 +59,7 @@ class springboard_dw_donation_stats_views_plugin_query extends views_plugin_quer
       // Populate the status based on donation ID:
       $node_status = db_query("SELECT status FROM {node} WHERE nid = :nid", array(':nid' => $target_donation_id))
         ->fetchField();
-      if ($node_status){
+      if ($node_status !== FALSE){
         $response_data['node_status'] = $node_status == 0 ? t('Not Published') : t('Published');
       }
       else {
