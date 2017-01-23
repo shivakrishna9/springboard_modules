@@ -1322,16 +1322,6 @@ function _fundraiser_other_amount_field_display($form, $form_state, $field) {
     $field[($currency['symbol_placement'] == 'after' ? '#field_suffix' : '#field_prefix')] = $currency['symbol'];
   }
 
-  // Populate the Other field's description:
-  if (!empty($form['#node']->minimum_donation_amount) && isset($field['#description'])) {
-    $minimum_donation_amount = number_format(
-      $form['#node']->minimum_donation_amount,
-      $currency['decimals']
-    );
-    $field['#description'] = t('Minimum payment') . ' ' .
-      commerce_currency_format($minimum_donation_amount, $currency['code'], NULL, FALSE);
-  }
-
   return $field;
 }
 
