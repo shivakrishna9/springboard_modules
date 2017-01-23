@@ -29,13 +29,17 @@ class springboard_dw_donation_stats_views_plugin_query extends views_plugin_quer
     $start = microtime(TRUE);
     $method = 'GET';
     $target_donation_id = $view->args[0];
-    $params = array('formId' => $target_donation_id);
+    $params = array(
+      'formId' => $target_donation_id,
+      'transactionDateRangeEnd' => date('m/d/Y', time()),
+    );
     $view->result = array();
 
     // Fetch the statistics
     $endpoint = 'metrics/donation/count';
     $response = springboard_dw_api_call($endpoint, $params, $method);
     $response_data = json_decode((string) $response->getBody(), TRUE);
+
     if (!empty($response_data)) {
       foreach ($response_data as $response_key => $value) {
         if (!is_array($value)) {
