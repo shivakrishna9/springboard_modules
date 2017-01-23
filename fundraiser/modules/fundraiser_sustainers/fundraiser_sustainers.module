@@ -4058,7 +4058,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
       'SET r1.lock_id = :uni_batch_id, ' .
       'r1.gateway_resp = :locked ' .
       'WHERE r1.did IN (:donations)',
-      array(':uni_batch_id' => $uni_batch_id, ':locked' => FUNDRAISER_SUSTAINERS_LOCKED_STATUS, ':donations' => array_keys($donations_to_process))
+      array(':uni_batch_id' => $uni_batch_id, ':locked' => $status, ':donations' => array_keys($donations_to_process))
     );
 
     $donations_to_log = array();
