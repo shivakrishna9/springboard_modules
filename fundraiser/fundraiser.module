@@ -1318,8 +1318,13 @@ function _fundraiser_other_amount_field_display($form, $form_state, $field) {
   $field['#attributes']['class'][] = 'input-medium';
   unset($field['#field_prefix']);
   unset($field['#field_suffix']);
-  if ($currency['symbol_placement'] != 'hidden') {
-    $field[($currency['symbol_placement'] == 'after' ? '#field_suffix' : '#field_prefix')] = $currency['symbol'];
+  if ($currency['symbol_placement'] != 'hidden' && isset($currency['symbol'])) {
+    if ($currency['symbol_placement'] == 'after') {
+       $field['#field_suffix'] = '&nbsp;' . $currency['symbol'];
+    }
+    else {
+       $field['#field_prefix'] = $currency['symbol'];
+    } 
   }
 
   return $field;
