@@ -27,11 +27,10 @@ function fundraiser_entity_info() {
   $info['fundraiser'] = array(
     'label' => t('Fundraiser'),
     'base table' => 'fundraiser',
-    'fieldable' => FALSE,
     'entity keys' => array(
       'id' => 'nid',
     ),
-    'static cache' => TRUE,
+    'static cache' => FALSE,
     'bundles' => array(
       'fundraiser' => array(
         'label' => 'Fundraiser',
@@ -39,6 +38,36 @@ function fundraiser_entity_info() {
     ),
     'entity class' => 'Fundraiser',
     'controller class' => 'FundraiserController',
+  );
+  $info['donation'] = array(
+    'label' => t('Donation'),
+    'base table' => 'fundraiser_donation',
+    'entity keys' => array(
+      'id' => 'nid',
+    ),
+    'static cache' => FALSE,
+    'bundles' => array(
+      'donation' => array(
+        'label' => 'Donation',
+      ),
+    ),
+    'entity class' => 'Donation',
+    'controller class' => 'DonationController',
+  );
+  $info['refund'] = array(
+    'label' => t('Refund'),
+    'base table' => 'fundraiser_refund',
+    'entity keys' => array(
+      'id' => 'nid',
+    ),
+    'static cache' => FALSE,
+    'bundles' => array(
+      'refund' => array(
+        'label' => 'Refund',
+      ),
+    ),
+    'entity class' => 'Refund',
+    'controller class' => 'RefundController',
   );
 
   return $info;

@@ -10,11 +10,11 @@
  * @deprecated
  */
 function _fundraiser_create_fundraiser($fundraiser) {
-  $fundraiser_controller = new FundraiserController();
+  $controller = entity_get_controller('fundraiser');
   if (!$fundraiser instanceof Fundraiser) {
-    $fundraiser = $fundraiser_controller->create($fundraiser);
+    $fundraiser = $controller->create($fundraiser);
   }
-  $fundraiser_controller->save($fundraiser);
+  $controller->save($fundraiser);
 }
 
 /**
@@ -23,8 +23,7 @@ function _fundraiser_create_fundraiser($fundraiser) {
  * @deprecated
  */
 function _fundraiser_get_fundraiser_by_nid($nid) {
-  $fundraiser_controller = new FundraiserController();
-  return $fundraiser_controller->loadByNid($nid);
+  return entity_get_controller('fundraiser')->loadByNid($nid);
 }
 
 /**
@@ -33,8 +32,7 @@ function _fundraiser_get_fundraiser_by_nid($nid) {
  * @deprecated
  */
 function _fundraiser_update_fundraiser($fundraiser) {
-  $fundraiser_controller = new FundraiserController();
-  return $fundraiser_controller->update($fundraiser);
+  return entity_get_controller('fundraiser')->update($fundraiser);
 }
 
 /**
@@ -43,9 +41,9 @@ function _fundraiser_update_fundraiser($fundraiser) {
  * @deprecated
  */
 function _fundraiser_delete_fundraiser($nid) {
-  $fundraiser_controller = new FundraiserController();
-  $fundraiser = $fundraiser_controller->loadByNid($nid);
-  $fundraiser_controller->delete($fundraiser);
+  $controller = entity_get_controller('fundraiser');
+  $fundraiser = $controller->loadByNid($nid);
+  $controller->delete($fundraiser);
 }
 
 /**
@@ -54,8 +52,7 @@ function _fundraiser_delete_fundraiser($nid) {
  * @deprecated
  */
 function _fundraiser_get_fundraiser_by_nids($nids) {
-  $fundraiser_controller = new FundraiserController();
-  return $fundraiser_controller->loadByNids($nids);
+  return entity_get_controller('fundraiser')->loadByNids($nids);
 }
 
 /**
@@ -64,10 +61,8 @@ function _fundraiser_get_fundraiser_by_nids($nids) {
  * @deprecated
  */
 function _fundraiser_delete_fundraisers($fundraisers) {
-  $fundraiser_controller->delete($fundraisers);
+  entity_get_controller('fundraiser')->delete($fundraisers);
 }
-
-$donation_controller = new DonationController();
 
 /**
  * Create a Donation.
@@ -75,11 +70,12 @@ $donation_controller = new DonationController();
  * @deprecated
  */
 function _fundraiser_create_donation($donation) {
+  $controller = entity_get_controller('donation');
   if (!$donation instanceof Donation) {
-    $donation = $donation_controller->create($donation);
+    $donation = $controller->create($donation);
   }
 
-  $donation_controller->save($donation);
+  $controller->save($donation);
 }
 
 /**
@@ -88,7 +84,7 @@ function _fundraiser_create_donation($donation) {
  * @deprecated
  */
 function _fundraiser_get_donation_by_did($did) {
-  return reset($donation_controller->load(array($did)));
+  return reset(entity_get_controller('donation')->load(array($did)));
 }
 
 /**
@@ -106,7 +102,7 @@ function _fundraiser_get_donations() {
  * @deprecated
  */
 function _fundraiser_update_donation($donation) {
-  return $donation_controller->update($donation);
+  return entity_get_controller('donation')->update($donation);
 }
 
 /**
@@ -115,10 +111,8 @@ function _fundraiser_update_donation($donation) {
  * @deprecated
  */
 function _fundraiser_delete_donation($did) {
-  $donation_controller->delete(array($did));
+  entity_get_controller('donation')->delete(array($did));
 }
-
-$refund_controller = new EntityAPIController('refund');
 
 /**
  * Create a refund.
@@ -126,11 +120,12 @@ $refund_controller = new EntityAPIController('refund');
  * @deprecated
  */
 function _fundraiser_create_refund($refund) {
+  $controller = entity_get_controller('refund');
   if (!$refund instanceof Refund) {
-    $refund = $refund_controller->create($refund);
+    $refund = $controller->create($refund);
   }
 
-  $refund_controller->save($refund);
+  $controller->save($refund);
 }
 
 /**
@@ -139,7 +134,7 @@ function _fundraiser_create_refund($refund) {
  * @deprecated
  */
 function _fundraiser_get_refund_by_rid($rid) {
-  $refund_controller->loadSingleById($rid);
+  entity_get_controller('refund')->loadSingleById($rid);
 }
 
 /**
@@ -148,7 +143,7 @@ function _fundraiser_get_refund_by_rid($rid) {
  * @deprecated
  */
 function _fundraiser_update_refund($refund) {
-  $refund_controller->update($refund);
+  entity_get_controller('refund')->update($refund);
 }
 
 /**
@@ -157,7 +152,7 @@ function _fundraiser_update_refund($refund) {
  * @deprecated
  */
 function _fundraiser_delete_refund($rid) {
-  $refund_controller->delete(array($rid));
+  entity_get_controller('refund')->delete(array($rid));
 }
 
 /**
