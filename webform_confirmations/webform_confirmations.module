@@ -331,11 +331,15 @@ function webform_confirmations_fundraiser_donation_decline($donation) {
  * Implements hook_node_load().
  */
 function webform_confirmations_node_load($nodes, $types) {
-  $webform_confirmations = _webform_confirmations_get_by_nids(array_keys($nodes));
-  foreach ($webform_confirmations as $webform_confirmation) {
-    $nodes[$webform_confirmation->nid]->webform_confirmations_set = 1;
-    $nodes[$webform_confirmation->nid]->confirmation_page_title =
-      isset($webform_confirmation->confirmation_page_title) ? $webform_confirmation->confirmation_page_title : '';
+  $webform_types = variable_get('webform_node_types', array());
+  $has_types = array_intersect($types, $webform_types);
+  if (!empty($has_types)) {
+    $webform_confirmations = _webform_confirmations_get_by_nids(array_keys($nodes));
+    foreach ($webform_confirmations as $webform_confirmation) {
+      $nodes[$webform_confirmation->nid]->webform_confirmations_set = 1;
+      $nodes[$webform_confirmation->nid]->confirmation_page_title
+        = isset($webform_confirmation->confirmation_page_title) ? $webform_confirmation->confirmation_page_title : '';
+    }
   }
 }
 
