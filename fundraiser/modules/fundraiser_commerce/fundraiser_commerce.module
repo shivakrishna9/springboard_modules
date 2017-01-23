@@ -2888,7 +2888,7 @@ function fundraiser_commerce_form_alter(&$form, &$form_state, $form_id) {
   if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type) && arg(4) != 'edit') {
     $node = $form['#node'];
     // Load any custom configuration options.
-    $config = db_query('SELECT * FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
+    $config = fundraiser_webform_get_config($form['#node']->nid);
 
     $enabled = 0;
     $button_info = array();

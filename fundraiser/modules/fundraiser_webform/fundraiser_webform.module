@@ -669,7 +669,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   $form['#calling_module'] = 'fundraiser_webform';
   fundraiser_display_form_fields('fundraiser_webform', $form, $form_state);
   $submit_text = !empty($node->webform['submit_text']) ? strtoupper($node->webform['submit_text']) : 'SUBMIT';
-  $text = db_query('SELECT nid, message FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
+  $text = fundraiser_webform_get_config($form['#node']->nid);
   if ($text['nid']) {
     $message =  $text['message'];
   }
@@ -1401,7 +1401,7 @@ function fundraiser_webform_form_webform_configure_form_alter(&$form, &$form_sta
   // Custom help text for submit button.
   if (fundraiser_is_donation_type($form['#node']->type)) {
     if (isset($form['#node']->nid)) {
-      $text = db_query('SELECT nid, message, sitewide_submit FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
+      $text = fundraiser_webform_get_config($form['#node']->nid);
       if ($text['nid']) {
         $message = $text['message'];
         $sitewide_submit = $text['sitewide_submit'];
@@ -1510,4 +1510,22 @@ function fundraiser_webform_webform_submission_render_alter(&$renderable) {
     }
   }
   $renderable['amount']['#markup'] = $markup;
+}
+
+
+/**
+ * Retrieve fundraiser webform config for a node.
+ *
+ * @param int $nid
+ *   The node id.
+ *
+ * @return array
+ *   The fundraiser webform configuration details.
+ */
+function fundraiser_webform_get_config($nid) {
+  $config = &drupal_static(__FUNCTION__);
+  if (empty($config)) {
+    $config = db_query('SELECT * FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $nid))->fetchAssoc();
+  }
+  return $config;
 }
