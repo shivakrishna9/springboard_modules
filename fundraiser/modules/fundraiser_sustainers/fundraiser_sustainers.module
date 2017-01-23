@@ -1206,7 +1206,6 @@ function fundraiser_sustainers_process_recurring_donations() {
   // Loop over the found orders
   foreach ($donations as $recurring) {
     try {
-
       fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
     }
     catch (Exception $e) {
@@ -3989,7 +3988,6 @@ function _fundraiser_sustainers_get_donations_recurr_remaining($master_did) {
     'WHERE r.master_did = :master_did ' .
     'AND (r.gateway_resp IS NULL OR ((r.gateway_resp = :status && r.attempts != :max_attempts) OR (r.gateway_resp = :queued_status))) ' .
     'ORDER BY r.next_charge ASC', array(':master_did' => $master_did, ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':queued_status' => FUNDRAISER_SUSTAINERS_QUEUED_STATUS, ':max_attempts' => $max_processing_attempts))->fetchAll();
-
   return $donations;
 }
 
@@ -4041,9 +4039,8 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
 
   $donations = array();
 
-  // Load donations needing to be processed into an array of dids => donation objects
-  $donations_to_process = db_query('SELECT r.did as did, r.*, d.* FROM {fundraiser_sustainers} r ' .
-    'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
+  // Load donations needing to be processed into an array of dids => status
+  $donations_to_process = db_query('SELECT r.did, r.gateway_resp FROM {fundraiser_sustainers} r ' .
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = :status) ' .
     'AND r.next_charge < :now ' .
     'AND (r.attempts < :max_attempts OR r.attempts IS NULL) ' . // If already been tried X times, Stop Trying.
@@ -4051,49 +4048,29 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
     'ORDER BY r.next_charge ASC ' .
     'LIMIT 0, ' . $limit,
     array(':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':now' => $now, ':max_attempts' => $max_processing_attempts)
-  )->fetchAllAssoc('did');
+  )->fetchAllKeyed(0, 1);
 
+  // Lock the donations and log the action.
   if (!empty($donations_to_process)) {
 
     $status = !$date_mode ? FUNDRAISER_SUSTAINERS_LOCKED_STATUS : FUNDRAISER_SUSTAINERS_QUEUED_STATUS;
-    // Lock the donations.
-    $num_rows = db_update('fundraiser_sustainers')
-      ->fields(array(
-        'lock_id' => $uni_batch_id,
-        'gateway_resp' => $status
-      ))
-      ->condition('did', array_keys($donations_to_process), 'IN')
-      ->execute();
+    db_query('UPDATE {fundraiser_sustainers} r1 ' .
+      'SET r1.lock_id = :uni_batch_id, ' .
+      'r1.gateway_resp = :locked ' .
+      'WHERE r1.did IN (:donations)',
+      array(':uni_batch_id' => $uni_batch_id, ':locked' => FUNDRAISER_SUSTAINERS_LOCKED_STATUS, ':donations' => array_keys($donations_to_process))
+    );
 
-    // If nums_rows = $donations to process, we can skip a query and just
-    // loop through the items we've already looked up and add updated values.
     $donations_to_log = array();
-    if ($num_rows == count($donations_to_process)) {
-      foreach ($donations_to_process as $key => $processed) {
 
-        // Set the log value to the old statuses.
-        $donations_to_log[$key] = $donations_to_process[$key]->gateway_resp;
+    $donations = db_query('SELECT r.did as did, r.* FROM {fundraiser_sustainers} r ' .
+      'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
+      'WHERE r.lock_id = :uni_batch_id ' . // Locked to this unique ID.
+      'ORDER BY r.next_charge ASC',
+      array(':uni_batch_id' => $uni_batch_id))->fetchAllAssoc('did');
 
-        // Update the lockid and status to send back to the caller.
-        $donations_to_process[$key]->lock_id = $uni_batch_id;
-        $donations_to_process[$key]->gateway_resp = $status;
-      }
-      $donations = $donations_to_process;
-    }
-    else {
-      // For unknown reason, there's a mismatch in result counts, so to be safe
-      // do another query. BTW, haven't seen this happen, this just happens to
-      // be the way this function has worked since 2013, doing an extra query
-      // that is probably unnecessary.
-      $donations = db_query('SELECT r.did as did, r.* FROM {fundraiser_sustainers} r ' .
-        'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
-        'WHERE r.lock_id = :uni_batch_id ' . // Locked to this unique ID.
-        'ORDER BY r.next_charge ASC',
-        array(':uni_batch_id' => $uni_batch_id))->fetchAllAssoc('did');
-
-      foreach ($donations as $key => $processed) {
-        $donations_to_log[$key] = $processed[$key]->gateway_resp;
-      }
+    foreach ($donations as $key => $processed) {
+      $donations_to_log[$key] = $processed->gateway_resp;
     }
 
     // Log the locked donation's original statuses.
@@ -4103,7 +4080,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
     }
   }
 
-  // Return the donations.
+  // Return them.
   return $donations;
 }
 
