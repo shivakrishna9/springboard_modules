@@ -4092,22 +4092,14 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200, $date_mode = FA
         array(':uni_batch_id' => $uni_batch_id))->fetchAllAssoc('did');
 
       foreach ($donations as $key => $processed) {
-        if (isset($donations_to_process[$key])) {
-          $donations_to_log[$key] = $donations_to_process[$key]->gateway_resp;
-        }
-        else {
-          $donations_to_log[$key] = $processed[$key]->gateway_resp;
-        }
+        $donations_to_log[$key] = $processed[$key]->gateway_resp;
       }
     }
 
     // Log the locked donation's original statuses.
-    $log = fundraiser_sustainers_log();
-    if ($date_mode == FALSE) {
+    if (!empty($donations_to_log)) {
+      $log = fundraiser_sustainers_log();
       $log->logLockedDonations($donations_to_log, $uni_batch_id);
-    }
-    else {
-      $log->logQueuedDonations($donations_to_log, $uni_batch_id);
     }
   }
 
