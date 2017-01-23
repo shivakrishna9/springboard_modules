@@ -10,8 +10,7 @@ require_once 'includes/fundraiser_webform.goals.inc';
  * Implements hook_menu_alter().
  */
 function fundraiser_webform_menu_alter(&$items) {
-  // Override webform's original submission, to filter out donation content.
-  // Submissions listing.
+  // Override webform's original submission, to filter out donation content submissions listing:
   $items['admin/content/webform'] = array(
     'title' => 'Webforms',
     'page callback' => 'fundraiser_webform_admin_content',
@@ -21,6 +20,7 @@ function fundraiser_webform_menu_alter(&$items) {
     'type' => MENU_LOCAL_TASK,
   );
   // Override webform's original results tab with Views-based results.
+  $weight = isset($items['node/%webform_menu/webform-results']['weight']) ? $items['node/%webform_menu/webform-results']['weight'] : 1000;
   $items['node/%node/webform-results'] = array(
     'title' => 'Results',
     'page callback' => '_fundraiser_webform_results_page_content',
@@ -29,6 +29,7 @@ function fundraiser_webform_menu_alter(&$items) {
     'access arguments' => array('access all webform results'),
     'description' => 'Browse recent webform results.',
     'type' => MENU_LOCAL_TASK,
+    'weight' => $weight, 
   );
 }
 
