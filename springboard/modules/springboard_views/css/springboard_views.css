@@ -1,5 +1,5 @@
 
-.view-sbv-donations,
+/* .view-sbv-donations,
 #ui-datepicker-div {
    zoom: 0.75;
   -moz-transform: scale(0.75);
@@ -7,19 +7,20 @@
 body.page-node .view-sbv-donations {
   zoom: 1.00;
   -moz-transform: scale(1.00);
+} */
+
+#ui-datepicker-div {
+  zoom: 0.90;
+  -moz-transform: scale(0.90);
 }
-body.page-node .view-sbv-donations .view-filters {
-  zoom: 0.75;
-  -moz-transform: scale(0.75);
+.view-sbv-donations .view-filters {
+  zoom: 0.78;
+  -moz-transform: scale(0.78);
 }
-body.page-admin .view-sbv-donations .view-table {
+/* body.page-admin .view-sbv-donations .view-table {
   zoom: 0.70;
   -moz-transform: scale(0.70);
-}
-body.page-node .view-sbv-donations .view-table {
-  zoom: 0.85;
-  -moz-transform: scale(0.85);
-}
+} */
 #views-exposed-form-sbv-donations-page #sb-db-donations-report-help,
 #views-exposed-form-sbv-donations-page-2 #sb-db-donations-report-help {
   cursor: pointer;
@@ -121,36 +122,38 @@ body.page-node-webform-results .view-sbv-donations a.views-data-export {
 #views-exposed-form-sbv-donations-page-2 .views-exposed-form .views-reset-button {
   margin-top: -9px;
 }
-.view-sbv-donations table.views-table th {
+.view-sbv-donations table th {
   font-size: 11px;
+  line-height: 2em;
   padding: 3px 5px;
 }
 .view-sbv-donations table.views-table td {
-  font-size: 11px;
-  padding: 3px 1px;
-}
-body.page-node .view-sbv-donations table.views-table td {
-  padding: 2px 3px 1px;
   border: none;
-  line-height: 16px;
+  border-left: 1px dotted #d4d4c9;
+  font-size: 11px;
+  line-height: 2em;
+  padding: .75em .75em;
 }
-body.page-node .view-sbv-donations table.views-table tr.odd td {
-  background-color: #f7f7f4;
+.view-sbv-donations table.views-table td.first {
+  border-left: none;
 }
-body.page-node .view-sbv-donations table.views-table tr.even td {
-  background-color: #fff;
+.view-sbv-donations table.views-table tr.even td {
+  background-color: #d4d4c9;
 }
-body.page-node .view-sbv-donations table.views-table td.views-field-order-id,
-body.page-node .view-sbv-donations table.views-table td.views-field-uid {
+.view-sbv-donations table.views-table tr:hover td {
+  background-color: #e6f1fb;
+}
+body.page-node .view-sbv-donations table.views-table .views-field-order-id,
+body.page-node .view-sbv-donations table.views-table .views-field-uid {
   width: 60px;
 }
-body.page-node .view-sbv-donations table.views-table td.views-field-sid {
+body.page-node .view-sbv-donations table.views-table .views-field-sid {
   width: 70px;
 }
-body.page-node .view-sbv-donations table.views-table td.views-field-remote-addr {
+body.page-node .view-sbv-donations table.views-table .views-field-remote-addr {
   width: 80px;
 }
-body.page-node .view-sbv-donations table.views-table td.views-field-created {
+body.page-node .view-sbv-donations table.views-table .views-field-created {
   width: 120px;
 }
 .view-sbv-donations #sbv-export-download-msg {
