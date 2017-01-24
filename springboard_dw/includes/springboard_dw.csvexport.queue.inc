@@ -70,7 +70,7 @@ function springboard_dw_csv_export($item) {
   // instead of the data warehouse.
   if ($item['queue_type'] == 'Drupal') {
 
-    $drush_response = springboard_views_drush_export_donations_csv
+    $drush_response = springboard_export_drush_export_donations_csv
     ($item['export_filters']);
 
     $drush_response = json_decode($drush_response);
