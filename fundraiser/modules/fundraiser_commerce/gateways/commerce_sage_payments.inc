@@ -311,6 +311,12 @@ function _commerce_sage_payments_fundraiser_commerce_update_cc($donation, $card_
 
   // Pull the new credit card values from the donation
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+
+  // If no new information is present, return early.
+  if (empty($pane_values['credit_card']['number']) && empty($pane_values['credit_card']['code'])) {
+    return;
+  }
+
   $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
 
   // Check the card number to see if it matches the current card data number
