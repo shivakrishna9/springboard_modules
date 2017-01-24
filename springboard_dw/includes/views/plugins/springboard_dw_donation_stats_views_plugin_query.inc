@@ -38,7 +38,9 @@ class springboard_dw_donation_stats_views_plugin_query extends views_plugin_quer
     // Fetch the statistics
     $endpoint = 'metrics/donation/count';
     $response = springboard_dw_api_call($endpoint, $params, $method);
-    $response_data = json_decode((string) $response->getBody(), TRUE);
+    if (is_object($response) && method_exists($response, 'getBody')) {
+      $response_data = json_decode((string) $response->getBody(), TRUE);
+    }
 
     if (!empty($response_data)) {
       foreach ($response_data as $response_key => $value) {
