@@ -375,7 +375,7 @@ function sba_target_search_process_matches($matches) {
     foreach ($matches as $match) {
       $names[] = sba_target_search_match_details($match);
     }
-    $output .= check_plain(implode(' | ', $names));
+    $output .= implode(' | ', $names);
   }
   elseif (!empty($matches)) {
     // @todo show in modal?
@@ -402,7 +402,7 @@ function sba_target_search_process_groups($groups) {
     foreach ($groups as $group) {
       $names[] = $group->name;
     }
-    $output .= check_plain(implode(' | ', $names));
+    $output .= implode(' | ', $names);
   }
   elseif (!empty($groups)) {
     // @todo show in modal?
