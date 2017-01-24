@@ -732,8 +732,8 @@ function _fundraiser_designations_update_line_items($donation, $remaining) {
             TRUE
           );
           commerce_line_item_save($line_item_wrapper->value());
-          commerce_order_save($this_order_wrapper->value());
         }
+        commerce_order_save($this_order_wrapper->value());
       }
     }
   }
