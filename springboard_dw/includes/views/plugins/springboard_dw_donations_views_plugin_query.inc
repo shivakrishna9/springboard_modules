@@ -59,15 +59,28 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
         if (empty($filter_value) || empty($filter_key) || in_array($filter_key, $filter_values_to_skip)) {
           continue;
         }
-        elseif ($filter_key == 'dw_global_search') {
-          if (!empty($filter_value)) {
-            $params['first_name'] = $filter_value;
-          }
-          continue;
+
+        // Set filters expected by the data warehouse:
+        switch ($filter_key) {
+          case 'form_name':
+            $filter_key = 'formLike';
+            break;
+          case 'items_per_page':
+            $filter_key = 'perPage';
+            break;
+          case 'email':
+            $filter_key = 'emailLike';
+            $filter_value = strtolower($filter_value);
+            break;
+          case 'first_name':
+            $filter_key = 'firstNameLike';
+            break;
+          case 'last_name':
+            $filter_key = 'lastNameLike';
+            break;
+         
         }
-        if ($filter_key == 'items_per_page') {
-          $filter_key = 'perPage';
-        }
+
         if ($filter_key == 'gateway') {
           $params['gatewayLike'] = $filter_value;
           continue;
