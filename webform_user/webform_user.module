@@ -875,22 +875,30 @@ function webform_user_node_delete($node) {
  * Implements hook_node_load().
  */
 function webform_user_node_load($nodes, $types) {
-  $webform_users = db_query('SELECT * FROM {webform_user} WHERE nid IN (:nids)',
-    array(':nids' => array_keys($nodes)));
-  $maps = db_query('SELECT nid, cid, map_id FROM {webform_user_component_map} WHERE nid IN (:nids)',
-    array(':nids' => array_keys($nodes)));
-  foreach ($webform_users as $webform_user) {
-    $webform_user = (array) $webform_user;
-    $nodes[$webform_user['nid']]->is_webform_user = $webform_user['is_webform_user'];
-    $nodes[$webform_user['nid']]->send_new_user_email = $webform_user['send_new_user_email'];
-    $map = array();
-    foreach ($maps as $row) {
-      $row = (array) $row;
-      if ($row['nid'] == $webform_user['nid']) {
-        $map[$row['cid']] = $row['map_id'];
-      }
+  $has_types = FALSE;
+  foreach ($types as $type) {
+    if (_webform_user_is_webform_user_node_type($type)) {
+      $has_types = TRUE;
     }
-    $nodes[$webform_user['nid']]->map = $map;
+  }
+  if ($has_types) {
+    $webform_users = db_query('SELECT * FROM {webform_user} WHERE nid IN (:nids)',
+      array(':nids' => array_keys($nodes)));
+    $maps = db_query('SELECT nid, cid, map_id FROM {webform_user_component_map} WHERE nid IN (:nids)',
+      array(':nids' => array_keys($nodes)));
+    foreach ($webform_users as $webform_user) {
+      $webform_user = (array) $webform_user;
+      $nodes[$webform_user['nid']]->is_webform_user = $webform_user['is_webform_user'];
+      $nodes[$webform_user['nid']]->send_new_user_email = $webform_user['send_new_user_email'];
+      $map = array();
+      foreach ($maps as $row) {
+        $row = (array) $row;
+        if ($row['nid'] == $webform_user['nid']) {
+          $map[$row['cid']] = $row['map_id'];
+        }
+      }
+      $nodes[$webform_user['nid']]->map = $map;
+    }
   }
 }
 
