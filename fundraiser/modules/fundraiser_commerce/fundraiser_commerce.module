@@ -2987,6 +2987,7 @@ function fundraiser_sustainers_fundraiser_update_billing_form_alter__fundraiser_
  * Form validation handler for billing address update form.
  */
 function fundraiser_commerce_update_billing_form_validate($form, &$form_state) {
+  $submission_fields = $form_state['values'];
   // If it's a credit card, do some generic validation.
   // This is because the gateway's validation doesn't happen during a
   // billing update.

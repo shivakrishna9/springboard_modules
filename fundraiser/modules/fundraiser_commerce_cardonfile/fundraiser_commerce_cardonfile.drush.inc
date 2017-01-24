@@ -73,7 +73,7 @@ function drush_fundraiser_commerce_cardonfile_donation_process() {
   $limit = drush_get_option('limit', 200);
 
   module_load_include('inc', 'fundraiser_commerce_cardonfile', 'includes/fundraiser_commerce_cardonfile.admin');
-  $context = _fundraiser_commerce_cardonfile_process_donations($limit);
+  $context = _fundraiser_commerce_cardonfile_update_donation_cardids($limit);
 
   if (!empty($context['progress']) && !empty($context['max'])) {
     return 'Processed ' . $context['progress'] . ' of ' . $context['max'] . ' donations.';

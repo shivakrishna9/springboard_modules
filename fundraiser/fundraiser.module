@@ -1889,6 +1889,9 @@ function fundraiser_donation_create($donation) {
     'created' => REQUEST_TIME,
     'changed' => REQUEST_TIME,
   );
+  if (!empty($donation->data['cardonfile']) && empty($donation_record['card_id'])) {
+    $donation_record['card_id'] = $donation->data['cardonfile'];
+  }
   drupal_alter('fundraiser_donation_record_create', $donation, $donation_record);
 
   if (is_string($donation->gateway)) {
