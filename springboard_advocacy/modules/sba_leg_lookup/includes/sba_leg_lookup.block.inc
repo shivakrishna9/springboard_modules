@@ -189,12 +189,19 @@ function sba_leg_lookup_legislator_lookup_form($form, &$form_state, $mb_delta) {
   // If form has been submitted and we have some legislators, show them.
   if (!empty($form_state['legislators'])) {
     $form['#attached']['js'][] = drupal_get_path('module', 'sba_leg_lookup') . '/js/sba-leg-lookup.js';
-    $form['submission'] = array(
-      '#markup' => theme('sba_leg_lookup_legislators', array(
-        'legislators' => $form_state['legislators'],
-        'delta' => $mb_delta,
-      )),
-    );
+    if ($form_state['legislators'] != 'no response') {
+      $form['submission'] = array(
+        '#markup' => theme('sba_leg_lookup_legislators', array(
+          'legislators' => $form_state['legislators'],
+          'delta' => $mb_delta,
+        )),
+      );
+    }
+    else {
+      $form['submission'] = array(
+        '#markup' => t('There was a problem looking up your address. Please check your address or try again later.'),
+      );
+    }
   }
   else {
     $form['sbp_address'] = array(
@@ -259,6 +266,7 @@ function sba_leg_lookup_legislator_lookup_form_validate($form, &$form_state) {
   }
 
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
+    form_set_value($form['sbp_zip'], $geo['zip'], $form_state);
     form_set_value($form['plus4'], $geo['plus4'], $form_state);
   }
   else {
@@ -278,6 +286,9 @@ function sba_leg_lookup_legislator_lookup_form_submit($form, &$form_state) {
   $response = $api_call->invokeClientMethod('getLegislators', $full_zip);
   if (isset($response->data) && $response->status_code == 200) {
     $form_state['legislators'] = sba_leg_lookup_sort_legislators(get_object_vars($response->data), $form_state['values']['mb_delta']);
+  }
+  else {
+    $form_state['legislators'] = 'no response';
   }
 
   $form_state['rebuild'] = TRUE;
