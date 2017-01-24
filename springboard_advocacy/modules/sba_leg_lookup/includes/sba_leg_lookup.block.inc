@@ -141,7 +141,7 @@ function sba_leg_lookup_legislator_process($legislator, $delta) {
   }
 
   if (!empty($leg_arr['addresses'])) {
-    ksort($leg_arr['addresses']);
+    krsort($leg_arr['addresses']);
   }
 
   if (!empty($legislator->email)) {
@@ -206,7 +206,8 @@ function sba_leg_lookup_legislator_lookup_form($form, &$form_state, $mb_delta) {
   else {
     $form['sbp_address'] = array(
       '#type' => 'textfield',
-      '#title' => t('Street'),
+      '#title' => t('Street Address'),
+      '#description' => t('Do not include apartment number or suite.'),
       '#required' => TRUE,
     );
 
