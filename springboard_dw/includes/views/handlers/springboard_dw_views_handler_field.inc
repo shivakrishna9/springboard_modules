@@ -47,8 +47,13 @@ class springboard_dw_views_handler_field extends views_handler_field
       $value = date('m/d/Y H:i', strtotime($value));
     }
 
+    // Remove status underscores:
+    elseif ($alias == 'status') {
+      $value = ucwords(str_replace('_', ' ', $value));
+    }
+
     // Format donation stats latest fetch value:
-    if ($alias == 'latest_fetch') {
+    elseif ($alias == 'latest_fetch') {
       // Round down to the nearest 15 minutes if the fetch was recent; otherwise, use the exact fetch time:
       if (time() - $value > (60 * 15)) {
         $sync_time = $value;
@@ -63,7 +68,7 @@ class springboard_dw_views_handler_field extends views_handler_field
     }
 
     // Replace transaction ID value with on-site link, if available:
-    if ($alias == 'transaction_id' || $alias == 'payment_link') {
+    elseif ($alias == 'transaction_id' || $alias == 'payment_link') {
       if (!is_numeric($value)) {
         $value = 'N/A';
       }
