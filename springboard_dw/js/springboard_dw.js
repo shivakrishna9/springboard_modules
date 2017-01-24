@@ -19,16 +19,6 @@ Drupal.behaviors.springboardDataWarehouseViews = {
       }
     });
 
-    // Expand the advanced filters field set if any of its values are populated:
-    $('.dw-advanced-filters .views-exposed-widget input.form-text').each(function () {
-      if ($(this).val() != '') {
-        $('#edit-advanced-filters').removeClass('collapsed');
-        $('#edit-advanced-filters .fieldset-wrapper').show();
-        
-        return false;
-      }
-    });
-
     // Attach help popup to the right of the submit button:
     var submitButton = $('#views-exposed-form-springboard-dw-donations-report-page .views-submit-button input');
     var donationsReportTable = $('.view-springboard-dw-donations-report table.views-table');

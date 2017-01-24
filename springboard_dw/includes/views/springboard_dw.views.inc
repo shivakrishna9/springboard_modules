@@ -322,7 +322,7 @@ function springboard_dw_form_views_exposed_form_alter(&$form, &$form_state) {
   // Display the advanced filters fieldset as expanded if any of its values are populated:
   $advanced_filters_classes = array('dw-advanced-filters', 'collapsible', 'collapsed');
   if (isset($_GET) && is_array($_GET)) {
-    foreach(array('first_name', 'last_name', 'gateway', 'amount') as $filter_key) {
+    foreach(array('first_name', 'last_name', 'gateway', 'amount', 'form_name') as $filter_key) {
       if (isset($_GET[$filter_key]) && !empty($_GET[$filter_key])) {
         $advanced_filters_classes = array('dw-advanced-filters', 'collapsible');
         break;
