@@ -231,7 +231,7 @@ function salesforce_ngoc_poll_batch_upload() {
       ':ngoc_sync_map_records' => count($ngoc_sync_map_records),
       ':changed_records' => count($changed_records)
     ),
-    WATCHDOG_NOTICE, l('Batch Upload Report', 'springboard/reports/integration-reports/batch-upload-item'));
+    WATCHDOG_NOTICE, l('Batch Upload Report', 'springboard/reports/integration-reports/batch-upload'));
 }
 
 /**
