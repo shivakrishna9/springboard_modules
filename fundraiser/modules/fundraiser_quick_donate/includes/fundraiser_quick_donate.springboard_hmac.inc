@@ -207,7 +207,7 @@ function fundraiser_quick_donate_form_has_gateway($nid, $gateway_id) {
   if ($gateways) {
     $gateways = unserialize($gateways);
     foreach ($gateways as $gateway) {
-      if ($gateway['id'] == $gateway_id) {
+      if (!empty($gateway['id']) && $gateway['id'] == $gateway_id) {
         return TRUE;
       }
     }
@@ -245,28 +245,12 @@ function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
   }
 
   $payload = _fundraiser_quick_donate_hmac_mapping($payload);
-  $goto_nid = _fundraiser_quick_donate_get_nid($payload);
-
-  // Make sure the user account still exists. If it doesn't this function will
-  // redirect to the node id provided.
-  _fundraiser_quick_donate_springboard_hmac_check_user($goto_nid, $payload);
+  $nid = _fundraiser_quick_donate_get_nid($payload);
 
   // If the payload didn't validate any number of things could have happened,
-  // therefore let's fallback to cookie data if available and prompt the user
-  // to login.
-  $cookie = springboard_cookie_get_cookie();
-  $nid = _fundraiser_quick_donate_get_nid($payload);
-  if (!empty($cookie['uid']) && $cookie['uid'] == $payload['uid']) {
-    drupal_goto('/user', array(
-      'query' => array(
-        'destination' => drupal_get_path_alias('node/' . $nid),
-      ),
-    ));
-  }
-  else {
-    // Otherwise, just take the user to the donation form.
-    drupal_goto('node/' . $nid);
-  }
+  // therefore let's fallback to the donation form.
+  //@TODO: Add a drupal_set_message() here to indicate an HMAC error is why this isn't the exact experience expected?
+  drupal_goto('node/' . $nid);
 }
 
 /**
@@ -275,6 +259,11 @@ function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
 function fundraiser_quick_donate_springboard_hmac_verify_payload($payload) {
   if ($payload['action'] != 'qd') {
     return;
+  }
+
+  // Require a non-logged-in user to match the Springboard cookie.
+  if ($failure = springboard_hmac_verify_user_cookie($payload)) {
+    return $failure;
   }
 
   $payload = _fundraiser_quick_donate_hmac_mapping($payload);
