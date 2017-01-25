@@ -143,6 +143,7 @@
     }
 
     this.setCurrentPaymentMethod = function(paymentMethod) {
+      $(document).trigger('braintree.methodChange', [paymentMethod]);
       if (parent.settings.currentPaymentMethod == paymentMethod && processed) {
         return this;
       }
@@ -466,7 +467,8 @@
               city: payload.details.billingAddress.city,
               country: payload.details.billingAddress.countryCode,
               state: payload.details.billingAddress.state,
-              zip: payload.details.billingAddress.postalCode
+              zip: payload.details.billingAddress.postalCode,
+              phone: payload.details.phone
             };
             autofilled = parent.autofill(address, autofill);
           }
@@ -532,7 +534,7 @@
           fieldsHaveBeenAutoFilled = true;
         }
       });
-
+      $(document).trigger('braintree.autoFilled', [this, obj, fieldsHaveBeenAutoFilled]);
       return fieldsHaveBeenAutoFilled;
     }
 
