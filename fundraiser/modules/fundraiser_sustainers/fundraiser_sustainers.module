@@ -4515,7 +4515,9 @@ function _fundraiser_sustainers_calculate_installments($donation) {
   $installments = 0;
   // Copy txn_id into the donation array to make it available inside the expire
   // callback. Needed for Braintree hosted fields sustainer series creation.
-  $donation->donation['txn_id'] = $donation->txn_id;
+  if (property_exists($donation->txn_id)) {
+    $donation->donation['txn_id'] = $donation->txn_id;
+  }
   if (isset($info['expire callback'])) {
     $expiration_func = $info['expire callback'];
     $expires = $expiration_func($donation->donation);
