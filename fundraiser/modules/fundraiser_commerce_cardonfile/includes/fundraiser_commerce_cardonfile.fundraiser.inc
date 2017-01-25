@@ -65,3 +65,19 @@ function fundraiser_commerce_cardonfile_fundraiser_commerce_sustainer_series_don
     $donation->data['cardonfile'] = $master->data['cardonfile'];
   }
 }
+
+/**
+ * Implements hook_fundraiser_commerce_update_billing_profile_id_alter().
+ *
+ * Tell fundraiser_commerce what profile_id to use.
+ */
+function fundraiser_commerce_cardonfile_fundraiser_commerce_update_billing_profile_id_alter($donation, &$profile_id) {
+  if (!empty($donation->data['cardonfile'])) {
+    $profile_id = db_query('SELECT commerce_cardonfile_profile_profile_id FROM {field_data_commerce_cardonfile_profile} WHERE entity_id = :card_id', array(
+      ':card_id' => $donation->data['cardonfile'],
+    ))->fetchField();
+    if (empty($profile_id)) {
+      $profile_id = -1;
+    }
+  }
+}

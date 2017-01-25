@@ -1704,34 +1704,64 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 
   // Update the billing information
   if (!empty($donation->update_billing)) {
-    // Update the customer profile with new info.
-    $found = commerce_customer_profile_load_multiple(array(), array('uid' => $user->uid));
-    $profile_id = -1;
-    foreach ($found as $id => $found) {
-      $profile_id = $id;
+    // If this is the first sustainer, update the billing information.
+    if (empty($donation->sustainer_update) || (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first))) {
+      $profile_id = -1;
+      // Let other modules tell us what profile_id to use.
+      drupal_alter('fundraiser_commerce_update_billing_profile_id', $donation, $profile_id);
+
+      if ($profile_id == -1) {
+        // Update the customer profile with new info.
+        $found = commerce_customer_profile_load_multiple(array(), array('uid' => $user->uid));
+        $profile_id = -1;
+        foreach ($found as $id => $found) {
+          $profile_id = $id;
+        }
+      }
+
+      $update_other_orders = FALSE;
+      if ($profile_id != -1) {
+        $profile = commerce_customer_profile_load($profile_id);
+        $update_other_orders = TRUE;
+      }
+      else {
+        $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
+      }
+      // Update profile with the billing information.
+      $field = field_info_field('commerce_customer_address');
+      $instance = field_info_instance('commerce_customer_profile', 'commerce_customer_address', 'billing');
+      $profile->data = addressfield_default_values($field, $instance);
+      $profile->data['country'] = $donation->donation['country'];
+      $profile->data['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
+      $profile->data['first_name'] = $donation->donation['first_name'];
+      $profile->data['last_name'] = $donation->donation['last_name'];
+      $profile->data['administrative_area'] = $donation->donation['state'];
+      $profile->data['thoroughfare'] = $donation->donation['address'];
+      $profile->data['premise'] = $donation->donation['address_line_2'];
+      $profile->data['locality'] = $donation->donation['city'];
+      $profile->data['postal_code'] = $donation->donation['zip'];
+      $profile->commerce_customer_address[LANGUAGE_NONE][0] = $profile->data;
+      commerce_customer_profile_save($profile);
+
+      $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
+
+      // Get other orders with the old profile_id and set them to the updated
+      // profile_id value.
+      if ($update_other_orders) {
+        $query = new EntityFieldQuery();
+        $query->entityCondition('entity_type', 'commerce_order')
+          ->fieldCondition('commerce_customer_billing', 'profile_id', $profile_id, '=');
+        $results = $query->execute();
+        if (!empty($results)) {
+          $entity_ids = array_keys($results['commerce_order']);
+          $entities = entity_load('commerce_order', $entity_ids);
+          foreach ($entities as $entity) {
+            $entity->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
+            entity_save('commerce_order', $entity);
+          }
+        }
+      }
     }
-    if ($profile_id != -1) {
-      $profile = commerce_customer_profile_load($profile_id);
-    }
-    else {
-      $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
-    }
-    // Update profile with the billing information.
-    $field = field_info_field('commerce_customer_address');
-    $instance = field_info_instance('commerce_customer_profile', 'commerce_customer_address', 'billing');
-    $profile->data = addressfield_default_values($field, $instance);
-    $profile->data['country'] = $donation->donation['country'];
-    $profile->data['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
-    $profile->data['first_name'] = $donation->donation['first_name'];
-    $profile->data['last_name'] = $donation->donation['last_name'];
-    $profile->data['administrative_area'] = $donation->donation['state'];
-    $profile->data['thoroughfare'] = $donation->donation['address'];
-    $profile->data['premise'] = $donation->donation['address_line_2'];
-    $profile->data['locality'] = $donation->donation['city'];
-    $profile->data['postal_code'] = $donation->donation['zip'];
-    $profile->commerce_customer_address[LANGUAGE_NONE][0] = $profile->data;
-    commerce_customer_profile_save($profile);
-    $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
   }
 
   // Update the payment information
