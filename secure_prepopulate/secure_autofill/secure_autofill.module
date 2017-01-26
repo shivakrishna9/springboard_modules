@@ -75,12 +75,31 @@ function secure_autofill_donation_amount_validate($form, &$form_state) {
     ($form['#node']->recurring_setting == 'always' && empty($recurring_amount))
     || (
       $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
-      && (is_array($recurring_selection) ? !empty($recurring_selection['recurs'])
-        : $recurring_selection == 'recurs') && empty($recurring_amount)
+      && (is_array($recurring_selection) ? $recurring_selection['recurs'] === 'recurs'
+        : $recurring_selection == 'recurs') && empty($recurring_amount))
+  ) {
+    // No recurring amount was selected with dual ask., throw error.
+    form_set_error('recurring_amount', t('You must select a recurring donation amount.'));
+  }
+  elseif (
+    ($form['#node']->recurring_setting == 'always' && empty($donation_amount))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && !$form['#node']->recurring_dual_ask_amounts
+      && (is_array($recurring_selection) ? $recurring_selection['recurs'] === 'recurs'
+        : $recurring_selection == 'recurs') && empty($donation_amount))
+  ) {
+    // No recurring amount was selected without dual ask, throw error.
+    form_set_error('amount', t('You must select a recurring donation amount.'));
+  }
+  elseif (
+    ($form['#node']->recurring_setting == 'never' && empty($donation_amount))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && (is_array($recurring_selection) ? $recurring_selection['recurs'] === 0
+        : $recurring_selection == 'NO_RECURR') && empty($donation_amount)
     )
   ) {
-    // No amount was selected, throw error.
-    form_set_error('recurring_amount', t('You must select a recurring donation amount.'));
+    // No amount was selected for one-time donation, throw error.
+    form_set_error('amount', t('You must select a donation amount.'));
   }
   elseif (
     ($form['#node']->recurring_setting == 'always' && (!is_numeric($recurring_amount) || $recurring_amount != 'other'))
@@ -90,26 +109,28 @@ function secure_autofill_donation_amount_validate($form, &$form_state) {
         : $recurring_selection == 'recurs') && (!is_numeric($recurring_amount) && $recurring_amount != 'other')
     )
     ) {
-    // No amount was selected, throw error.
+    // Bad amount format for recurring with dual ask.
     form_set_error('recurring_amount', t('You must provide a recurring donation amount in the correct format.'));
   }
   elseif (
-    ($form['#node']->recurring_setting == 'never' && empty($donation_amount))
+    ($form['#node']->recurring_setting == 'always' && (!is_numeric($donation_amount) || $donation_amount != 'other'))
     || (
-      $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
-      && (is_array($recurring_selection) ? $recurring_selection['recurs'] == 0
-        : $recurring_selection == 'NO_RECURR') && empty($donation_amount)
+      $form['#node']->recurring_setting == 'user_choice' && !$form['#node']->recurring_dual_ask_amounts
+      && (is_array($recurring_selection) ? !empty($recurring_selection['recurs'])
+        : $recurring_selection == 'recurs') && (!is_numeric($donation_amount) && $donation_amount != 'other')
     )
-  ) {
-    form_set_error('amount', t('You must select a donation amount.'));
+    ) {
+    // Bad amount format for recurring without dual ask.
+    form_set_error('recurring_amount', t('You must provide a recurring donation amount in the correct format.'));
   }
   elseif (
     ($form['#node']->recurring_setting == 'never' && (!is_numeric($donation_amount) || $donation_amount != 'other'))
     || (
-      $form['#node']->recurring_setting == 'user_choice' && (is_array($recurring_selection) ? $recurring_selection['recurs'] == 0
+      $form['#node']->recurring_setting == 'user_choice' && (is_array($recurring_selection) ? $recurring_selection['recurs'] === 0
         : $recurring_selection == 'NO_RECURR') && (!is_numeric($donation_amount) && $donation_amount != 'other')
     )
   ) {
+    // Bad amount format for one-time.
     form_set_error('amount', t('You must provide a donation amount in the correct format.'));
   }
 }
