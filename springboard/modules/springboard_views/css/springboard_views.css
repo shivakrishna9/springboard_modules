@@ -78,7 +78,7 @@
   content: '';
 }
 .view-sbv-donations a.views-data-export {
-  margin-top: -46px;
+  margin-top: -42px;
   position: absolute;
   right: 10px;
   top: inherit;
@@ -101,24 +101,35 @@ body.page-node-webform-results .view-sbv-donations a.views-data-export {
   margin-left: 4px;
 }
 body.page-admin #views-exposed-form-sbv-donations-page .views-exposed-form .views-reset-button {
-  float: right;
+  position: relative;
+  left: 45px;
 }
+body.page-admin #views-exposed-form-sbv-donations-page .views-exposed-form .views-submit-button {
+  position: relative;
+  left: -70px;
+}
+body.page-admin #views-exposed-form-sbv-donations-page .views-exposed-form #sb-db-donations-report-help {
+  position: relative;
+  left: 60px;
+}
+
 #views-exposed-form-sbv-donations-page-2 .views-exposed-form .views-reset-button {
   margin-top: -9px;
 }
-.view-sbv-donations table.views-table {
+body .view-sbv-donations table.views-table {
   background-color: #fff;
   border: none;
+  border-collapse: collapse;
 }
-.view-sbv-donations table.sticky-header {
+body .view-sbv-donations table.sticky-header {
   font-size: 10px;
   margin-left: -4px;
 }
-.view-sbv-donations table.sticky-header th {
+body .view-sbv-donations table.sticky-header th {
   padding-left: 0;
   padding-right: 0;
 }
-.view-sbv-donations table.sticky-header th.first {
+body .view-sbv-donations table.sticky-header th.first {
   padding-left: 5px;
 }
 @media (max-width: 1040px) {
@@ -126,12 +137,14 @@ body.page-admin #views-exposed-form-sbv-donations-page .views-exposed-form .view
     margin-left: -2px;
   }
 }
-.view-sbv-donations table th {
+body .view-sbv-donations table thead th {
+  border: none;
   font-size: 11px;
   line-height: 2em;
   padding: 3px 5px;
 }
-.view-sbv-donations table.views-table td {
+body .view-sbv-donations table.views-table tr td {
+  background-color: #fff;
   border: none;
   border-left: 1px dotted #d4d4c9;
   font-size: 11px;
@@ -172,21 +185,23 @@ body.page-admin .view-sbv-donations {
   padding: 8px 8px;
   margin-top: -10px;
 }
-@media (max-width: 769px) {
-  body.page-node .view-sbv-donations .view-filters {
-    zoom: 0.60;
-    -moz-transform: scale(0.60);
-  }
+body.page-admin .view-sbv-donations a.views-data-export {
+  margin-top: -37px;
 }
-@media (max-width: 884px) {
-  body.page-admin .view-sbv-donations .view-filters {
-    zoom: 0.60;
-    -moz-transform: scale(0.60);
-  }
+body.page-admin .view-sbv-donations a.views-data-export,
+.view-sbv-donations .view-filters {
+  zoom: 0.95;
+  -moz-transform: scale(0.95);
 }
-@media (max-width: 979px) {
-  body.page-node .view-sbv-donations .view-filters input.form-text {
-    width: 120px;
+@media (max-width: 1200px) {
+  body.page-admin .view-sbv-donations a.views-data-export,
+  .view-sbv-donations .view-filters {
+    zoom: 0.75;
+    -moz-transform: scale(0.75);
+  }
+  body.page-admin .view-sbv-donations a.views-data-export {
+    margin-top: -44px;
+    right: 10px;
   }
 }
 @media (max-width: 989px) {
@@ -196,24 +211,91 @@ body.page-admin .view-sbv-donations {
   body.page-admin .view-sbv-donations {
     padding: 0px 6px;
   }
-  body.page-admin .view-sbv-donations .views-table td {
-    padding: 1px 1px;
+  body.page-admin .view-sbv-donations table {
+    zoom: 0.90;
+    -moz-transform: scale(0.90);
   }
   body.page-admin .view-sbv-donations a.views-data-export {
     margin-left: 10px;
-    zoom: 0.65;
-    -moz-transform: scale(0.65);   
+    margin-top: -52px;
+    zoom: 0.60;
+    -moz-transform: scale(0.60);
   }
-}
-
-@media (max-width: 1200px) {
-  body.page-admin .view-sbv-donations a.views-data-export,
-  .view-sbv-donations .view-filters {
+  body.page-admin .view-sbv-donations .view-filters {
     zoom: 0.70;
     -moz-transform: scale(0.70);
   }
-  body.page-admin .view-sbv-donations a.views-data-export {
-    margin-top: -44px;
-    right: 10px;
+}
+@media (max-width: 979px) {
+  body.page-node .view-sbv-donations .view-filters input.form-text {
+    width: 120px;
   }
+}
+@media (max-width: 884px) {
+  body.page-admin .view-sbv-donations .view-filters {
+    zoom: 0.65;
+    -moz-transform: scale(0.65);
+  }
+  body.page-admin .view-sbv-donations table {
+    zoom: 0.75;
+    -moz-transform: scale(0.75);  
+  }
+}
+@media (max-width: 832px) {
+  body.page-admin .view-sbv-donations .view-filters {
+    zoom: 0.55;
+    -moz-transform: scale(0.55);
+  }
+  body.page-admin .view-sbv-donations table {
+    zoom: 0.70;
+    -moz-transform: scale(0.70);
+  }
+}
+@media (max-width: 800px) {
+  body.page-admin .view-sbv-donations table {
+    zoom: 0.60;
+    -moz-transform: scale(0.60);
+  } 
+}
+@media (max-width: 768px) {
+  body.page-admin .view-sbv-donations table {
+    zoom: 0.45;
+    -moz-transform: scale(0.45);
+  }
+  body.page-admin .view-sbv-donations table.views-table tr td {
+    font-size: 10px;
+    line-height: 1.25em;
+    padding: 2px 5px;
+  }
+  body.page-node .view-sbv-donations .view-filters {
+    zoom: 0.55;
+    -moz-transform: scale(0.55);
+  }
+  body.page-admin #views-exposed-form-sbv-donations-page .views-exposed-form .views-submit-button {
+    float: right;
+    left: 0;
+  }
+  body.page-admin #views-exposed-form-sbv-donations-page .views-exposed-form .views-submit-button input {
+    width: 42px;
+  }
+  body.page-admin #views-exposed-form-sbv-donations-page .views-exposed-form .views-reset-button,
+  body.page-admin #views-exposed-form-sbv-donations-page .views-exposed-form #sb-db-donations-report-help {
+    display: none;
+  }
+}
+@media (max-width: 732px) {
+  body.page-admin .view-sbv-donations .view-filters {
+    zoom: 0.45;
+    -moz-transform: scale(0.45);
+  }
+  body.page-admin .view-sbv-donations table {
+    zoom: 0.35;
+    -moz-transform: scale(0.35);
+  }
+}
+@media (max-width: 720px) {
+  body.page-admin .view-sbv-donations table {
+    zoom: 0.25;
+    -moz-transform: scale(0.25);
+  } 
 }
