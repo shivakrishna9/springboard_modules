@@ -43,11 +43,75 @@ function secure_autofill_js_callback_get_amounts($gs) {
 /**
  * Implements hook_form_alter().
  *
- * Add secure_autofill js to donation forms.
+ * Add secure_autofill js to donation forms, bypass amount validation.
  */
 function secure_autofill_form_alter(&$form, &$form_state, $form_id) {
   if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type) && arg(4) != 'edit') {
     $form['#attached']['js'][] = drupal_get_path('module', 'secure_autofill') . '/js/ask-amounts.js';
+    // Bypass amount field validation so we can inject our values.
+    if (isset($form['submitted']['donation']['amount'])) {
+      $form['submitted']['donation']['amount']['#webform_validated'] = TRUE;
+    }
+    if (isset($form['submitted']['donation']['recurring_amount'])) {
+      $form['submitted']['donation']['recurring_amount']['#webform_validated'] = TRUE;
+    }
+    // Add form validate handler to ensure only numeric and 'other' values can be entered into 'amount'.
+    $form['#validate'][] = "secure_autofill_donation_amount_validate";
+  }
+}
+
+/**
+ * Validate handler for amounts.
+ */
+function secure_autofill_donation_amount_validate($form, &$form_state) {
+  // Ensure that donation amount is set and numeric or 'other'.
+  // First, filter XSS and get our values from form_state.
+  $donation_amount = filter_xss($form_state['values']['submitted']['donation']['amount']);
+  $recurring_amount = filter_xss($form_state['values']['submitted']['donation']['recurring_amount']);
+  $recurring_selection = $form_state['values']['submitted']['donation']['recurs_monthly'];
+
+  // Ensure that amount is set for recurring and one-time donations.
+  if (
+    ($form['#node']->recurring_setting == 'always' && empty($recurring_amount))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
+      && (is_array($recurring_selection) ? !empty($recurring_selection['recurs'])
+        : $recurring_selection == 'recurs') && empty($recurring_amount)
+    )
+  ) {
+    // No amount was selected, throw error.
+    form_set_error('recurring_amount', t('You must select a recurring donation amount.'));
+  }
+  elseif (
+    ($form['#node']->recurring_setting == 'always' && (!is_numeric($recurring_amount) || $recurring_amount != 'other'))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
+      && (is_array($recurring_selection) ? !empty($recurring_selection['recurs'])
+        : $recurring_selection == 'recurs') && (!is_numeric($recurring_amount) || $recurring_amount != 'other')
+    )
+    ) {
+    // No amount was selected, throw error.
+    form_set_error('recurring_amount', t('You must provide a recurring donation amount in the correct format.'));
+  }
+  elseif (
+    ($form['#node']->recurring_setting == 'never' && empty($donation_amount))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
+      && (is_array($recurring_selection) ? $recurring_selection['recurs'] == 0
+        : $recurring_selection == 'NO_RECURR') && empty($donation_amount)
+    )
+  ) {
+    form_set_error('amount', t('You must select a donation amount.'));
+  }
+  elseif (
+    ($form['#node']->recurring_setting == 'never' && (!is_numeric($donation_amount) || $donation_amount != 'other'))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
+      && (is_array($recurring_selection) ? $recurring_selection['recurs'] == 0
+        : $recurring_selection == 'NO_RECURR') && (!is_numeric($donation_amount) || $donation_amount != 'other')
+    )
+  ) {
+    form_set_error('amount', t('You must provide a donation amount in the correct format.'));
   }
 }
 

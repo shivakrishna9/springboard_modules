@@ -8,8 +8,8 @@
   Drupal.behaviors.secureAutofillAskAmounts = {
     attach:function()
     {
-      // Any code here will be run on page load:
-      // get GS
+      // Get GS from URL.
+      // TODO check for js cookie first, if it's in place then use it rather than GS.
       var gs = getParameterByName('gs');
       if (typeof(gs) !== 'undefined') {
         // Post GS to 'get_amounts' callback, assemble request params and respond.
@@ -22,6 +22,7 @@
           if (data.response.code == 200) {
             // TODO remove
             console.log(data.content);
+            // TODO put data into js cookie
             // Parse amounts and defaults into their appropriate fields.
             // format like:
             // amounts: "11|22|33"
@@ -36,6 +37,7 @@
               if ($('#edit-submitted-donation-amount .form-item').last().children('input').val() == 'other') {
                 $('#edit-submitted-donation-amount .form-item').last().show();
               }
+
               // Next, iterate and process amounts.
               var amounts = data.content.amounts.split("|");
               for (var i = 0, len = amounts.length; i < len; i++) {
@@ -55,6 +57,7 @@
                 $(lastAmount).show();
               }
             }
+
             // Set 'default' amount.
             if (typeof(data.content.default) !== 'undefined') {
               // Get the default amount as returned and attempt to set it.
@@ -71,6 +74,7 @@
                 }
               }
             }
+
             // Set recurring ask amounts.
             if (typeof(data.content.recurring_amounts) !== 'undefined') {
               // Find and replace amount.
@@ -93,12 +97,12 @@
                 // Set element ID.
                 lastAmount.attr('id', "edit-submitted-donation-recurring-amount-" + i);
                 // Insert before last amount.
-                console.log(lastAmount);
                 $('#edit-submitted-donation-recurring-amount .form-item').last().before(lastAmount);
                 // Show the new amount.
                 $(lastAmount).show();
               }
             }
+
             // Set recurring default.
             // TODO this needs to work on change to recurring.
             if (typeof(data.content.recurring_default) !== 'undefined') {
@@ -116,11 +120,12 @@
                 }
               }
             }
+
+          // End data check.
           }
+        // End response handler.
         });
       }
-      // TODO add submit handler to rewrite selected amounts to 'other' field.
-
 
       // Helper function to get url params.
       function getParameterByName(name, url) {
