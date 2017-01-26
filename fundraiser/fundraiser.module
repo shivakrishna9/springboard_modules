@@ -3943,6 +3943,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   // defaults to TRUE and is only FALSE if the calling module will handle this
   // itself.
   if ($data['update billing']) {
+    $form['#donation']->update_billing = TRUE;
     $form['#validate'][] = 'fundraiser_update_billing_form_validate';
     $form['actions']['submit']['#submit'][] = 'fundraiser_update_billing_form_submit';
   }
