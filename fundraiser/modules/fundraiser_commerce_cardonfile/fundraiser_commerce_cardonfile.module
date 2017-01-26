@@ -104,9 +104,10 @@ function fundraiser_commerce_cardonfile_entity_delete($entity, $type) {
     return;
   }
 
-  // Get any donations associated with the card_id.
-  $donations = db_query('SELECT did FROM {fundraiser_donation} WHERE card_id = :card_id', array(
+  // Get any pending donations associated with the card_id.
+  $donations = db_query('SELECT did FROM {fundraiser_donation} WHERE card_id = :card_id AND status = :pending_status', array(
     ':card_id' => $entity->card_id,
+    ':pending_status' => 'pending_future_payment',
   ))->fetchAllAssoc('did', PDO::FETCH_ASSOC);
   $donations = array_keys($donations);
 

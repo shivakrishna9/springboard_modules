@@ -4619,9 +4619,10 @@ function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) 
  */
 function fundraiser_sustainers_fundraiser_commerce_cardonfile_deleted_card_donations_alter(&$donations) {
   foreach ($donations as $donation_id) {
-    $series = db_query('SELECT did FROM {fundraiser_sustainers} WHERE master_did = :did AND did NOT IN (:donations)', array(
+    $series = db_query('SELECT fs.did FROM {fundraiser_sustainers} fs LEFT JOIN {fundraiser_donation} fd ON fd.did = fs.did WHERE fs.master_did = :did AND fs.did NOT IN (:donations) AND fd.status = :pending_status', array(
       ':did' => $donation_id,
       ':donations' => $donations,
+      ':pending_status' => 'pending_future_payment',
     ))->fetchAllAssoc('did', PDO::FETCH_ASSOC);
     if (!empty($series)) {
       $series = array_keys($series);
