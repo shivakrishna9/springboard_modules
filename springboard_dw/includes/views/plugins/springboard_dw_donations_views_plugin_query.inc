@@ -59,6 +59,7 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
         if (empty($filter_value) || empty($filter_key) || in_array($filter_key, $filter_values_to_skip)) {
           continue;
         }
+        $filter_value = trim($filter_value);
 
         // Set filters expected by the data warehouse:
         switch ($filter_key) {
@@ -77,12 +78,36 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
           case 'last_name':
             $filter_key = 'lastNameLike';
             break;
-         
+          case 'gateway':
+            $filter_key = 'gatewayLike';
+            break;
         }
 
-        if ($filter_key == 'gateway') {
-          $params['gatewayLike'] = $filter_value;
-          continue;
+        // Alter gateway filter to replace submitted human-readable filter with machine name to match d/w data:
+        if ($filter_key == 'gatewayLike') {
+          unset($gateway_match);
+          $gateways = commerce_payment_methods();
+
+          // Look for exact matches:
+          foreach ($gateways as $gateway_machine => $gateway) {
+            if (isset($gateway['title']) && strtolower($filter_value) == strtolower($gateway['title'])) {
+              $gateway_match = $gateway_machine;
+              break;
+            }
+            elseif (isset($gateway['short_title']) && strtolower($filter_value) == strtolower($gateway['short_title'])) {
+              $gateway_match = $gateway_machine;
+              break;
+            }
+          }
+
+          if (isset($gateway_match)) {
+            $filter_value = $gateway_match;
+          }
+          // Try submitting the value, as is, with spaces and dashes replaced with % for a wildcard match:
+          elseif (!isset($gateway_match)) {
+            $filter_value = str_replace(array(' ', '-', '_'), '%', $filter_value);
+            $filter_value = str_replace('%%', '%', $filter_value);
+          }
         }
 
         $params[$filter_key] = $filter_value;
