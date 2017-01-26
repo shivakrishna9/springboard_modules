@@ -67,6 +67,16 @@ class springboard_dw_views_handler_field extends views_handler_field
       $value = format_interval(time() - $sync_time);
     }
 
+    // Link emails to user pages if available:
+    elseif ($alias == 'email') {
+     
+      $uid = db_query("SELECT uid FROM {users} WHERE mail = :email",
+        array(':email' => $value))->fetchField();
+      if ($uid) {
+        $value = l($value, 'user/' . $uid . '/edit');
+      }
+    }
+
     // Replace transaction ID value with on-site link, if available:
     elseif ($alias == 'transaction_id' || $alias == 'payment_link') {
       if (!is_numeric($value)) {
