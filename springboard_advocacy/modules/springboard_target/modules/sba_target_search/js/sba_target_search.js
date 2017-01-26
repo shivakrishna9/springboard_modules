@@ -1587,6 +1587,7 @@
             .replace(/%28/g, '(')
             .replace(/%29/g, ')')
             .replace(/%3A/g, ':')
+            .replace(/%2B/g, '+')
             .replace('District_name', 'District')
             .replace(/\}/g, '');
     };
@@ -1602,6 +1603,7 @@
           .replace(/%26/g, '&')
           .replace(/%29/g, ')')
           .replace(/%3A/g, ':')
+          .replace(/%2B/g, '+')
           .replace('Republicans', 'R')
           .replace('Democrats', 'D')
     };

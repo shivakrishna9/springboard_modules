@@ -70,19 +70,23 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
   function render_links($values) {
     $type = '';
     $path = '';
-    switch($values->class_name) {
-      case "Legislator":
-        $path = 'springboard/advocacy/targets/legislator';
-        $type = "legislator";
-        break;
-      case "group":
-        $path = 'springboard/advocacy/targets/custom-groups';
-        $type = "group";
-        break;
-      default:
-        $path = 'springboard/advocacy/targets/custom-targets';
-        $type = "target";
-        break;
+    if (isset($values->class_name)) {
+      switch ($values->class_name) {
+        case "Legislator":
+          $path = 'springboard/advocacy/targets/legislator';
+          $type = "legislator";
+          break;
+
+        case "group":
+          $path = 'springboard/advocacy/targets/custom-groups';
+          $type = "group";
+          break;
+
+        default:
+          $path = 'springboard/advocacy/targets/custom-targets';
+          $type = "target";
+          break;
+      }
     }
 
     $links  = array();
