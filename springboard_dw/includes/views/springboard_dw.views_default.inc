@@ -341,6 +341,7 @@ function springboard_dw_views_default_views() {
       'empty_column' => 0,
     ),
   );
+  $handler->display->display_options['style_options']['sticky'] = TRUE;
   /* Header: Global: Text area */
   $handler->display->display_options['header']['area']['id'] = 'area';
   $handler->display->display_options['header']['area']['table'] = 'views';
@@ -387,17 +388,21 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['fields']['first_name']['id'] = 'first_name';
   $handler->display->display_options['fields']['first_name']['table'] = 'sp_dw_donations_psudo';
   $handler->display->display_options['fields']['first_name']['field'] = 'first_name';
+  $handler->display->display_options['fields']['first_name']['exclude'] = TRUE;
   /* Field: Springboard DW Donations: Last Name */
   $handler->display->display_options['fields']['last_name']['id'] = 'last_name';
   $handler->display->display_options['fields']['last_name']['table'] = 'sp_dw_donations_psudo';
   $handler->display->display_options['fields']['last_name']['field'] = 'last_name';
+  $handler->display->display_options['fields']['last_name']['label'] = 'Name';
+  $handler->display->display_options['fields']['last_name']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['last_name']['alter']['text'] = '[first_name] [last_name]';
+  $handler->display->display_options['fields']['last_name']['alter']['trim_whitespace'] = TRUE;
   /* Field: Springboard DW Donations: Email Address */
   $handler->display->display_options['fields']['email']['id'] = 'email';
   $handler->display->display_options['fields']['email']['table'] = 'sp_dw_donations_psudo';
   $handler->display->display_options['fields']['email']['field'] = 'email';
   $handler->display->display_options['fields']['email']['label'] = 'Email';
-  $handler->display->display_options['fields']['email']['alter']['make_link'] = TRUE;
-  $handler->display->display_options['fields']['email']['alter']['path'] = 'admin/reports/data-warehouse/donations/[donation_id]';
+  $handler->display->display_options['fields']['email']['alter']['path'] = 'springboard/reports/dw/donations/[donation_id]';
   /* Field: Springboard DW Donations: Form Name */
   $handler->display->display_options['fields']['form_name']['id'] = 'form_name';
   $handler->display->display_options['fields']['form_name']['table'] = 'sp_dw_donations_psudo';
