@@ -149,6 +149,10 @@ body .view-springboard-dw-donations-report .view-content #sbv-export-download-ms
     zoom: 0.85;
     -moz-transform: scale(0.85);
   }
+  .view-springboard-dw-donations-report table {
+    zoom: 0.75;
+    -moz-transform: scale(0.75);
+  }
 }
 @media (max-width: 845px) {
   .view-springboard-dw-donations-report .view-filters {
@@ -176,11 +180,23 @@ body .view-springboard-dw-donations-report .view-content #sbv-export-download-ms
   #views-exposed-form-springboard-dw-donations-report-page .views-widget .control-group .form-text {
     width: 110px;
   }
+  .view-springboard-dw-donations-report table {
+    zoom: 0.70;
+    -moz-transform: scale(0.70);
+  }
 }
 @media (max-width: 739px) {
   .view-springboard-dw-donations-report .view-filters {
     zoom: 0.70;
     -moz-transform: scale(0.70);
+  }
+  .view-springboard-dw-donations-report table {
+    zoom: 0.55;
+    -moz-transform: scale(0.55);
+  }
+  .view-springboard-dw-donations-report table tr td {
+    line-height: 1.25em;
+    padding: 2px 4px;
   }
 }
 @media (max-width: 695px) {
