@@ -47,7 +47,10 @@ function secure_autofill_js_callback_get_amounts($gs) {
  */
 function secure_autofill_form_alter(&$form, &$form_state, $form_id) {
   if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type) && arg(4) != 'edit') {
+    // Attach ask amount handler.
     $form['#attached']['js'][] = drupal_get_path('module', 'secure_autofill') . '/js/ask-amounts.js';
+    // Attach jquery cookie.
+    $form['#attached']['library'][] = array('system', 'jquery.cookie');
     // Bypass amount field validation so we can inject our values.
     if (isset($form['submitted']['donation']['amount'])) {
       $form['submitted']['donation']['amount']['#webform_validated'] = TRUE;
@@ -55,8 +58,12 @@ function secure_autofill_form_alter(&$form, &$form_state, $form_id) {
     if (isset($form['submitted']['donation']['recurring_amount'])) {
       $form['submitted']['donation']['recurring_amount']['#webform_validated'] = TRUE;
     }
+
     // Add form validate handler to ensure only numeric and 'other' values can be entered into 'amount'.
     $form['#validate'][] = "secure_autofill_donation_amount_validate";
+
+    // Add the submit handler.
+    $form['#submit'][] = 'secure_autofill_submit';
   }
 }
 
@@ -222,4 +229,31 @@ function _secure_autofill_pkcs5_unpad($text) {
     return FALSE;
   }
   return str_pad($text, 0, -1 * $pad);
+}
+
+/**
+ * Submit handler for forms that have been prepopulated.
+ */
+function secure_autofill_submit(&$form, &$form_state) {
+  $node = $form['#node'];
+  secure_autofill_clear_cookies($node->nid);
+}
+
+/**
+ * Helper function, Clears the gs/af cookies.
+ *
+ * @param $nid
+ *   The id of the node who's prepopulated data should be cleared.
+ */
+function secure_autofill_clear_cookies($nid) {
+  // Unset secure prepopulate hash.
+  if (isset($_COOKIE['af-'. $nid])) {
+    unset($_COOKIE['af-'. $nid]);
+    setcookie('af-'. $nid, '', time() - 3600, '/'); // empty value and old timestamp
+  }
+  // Unset gift string hash.
+  if (isset($_COOKIE['gs-'. $nid])) {
+    unset($_COOKIE['gs-'. $nid]);
+    setcookie('gs-'. $nid, '', time() - 3600, '/'); // empty value and old timestamp
+  }
 }

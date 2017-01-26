@@ -1,5 +1,3 @@
-
-
 (function($, Drupal)
 {
   /**
@@ -8,9 +6,22 @@
   Drupal.behaviors.secureAutofillAskAmounts = {
     attach:function()
     {
-      // Get GS from URL.
-      // TODO check for js cookie first, if it's in place then use it rather than GS.
-      var gs = getParameterByName('gs');
+      // Check for js cookie first, if it's in place then use it rather than GS.
+      // Cookie is based on nid.
+      var nid = getCurrentNodeId();
+      if (nid) {
+        var gsCookie = $.cookie("gs-" + nid);
+      }
+      if (!gsCookie) {
+        // Get GS from URL if it wasn't in our cookie.
+        var gs = getParameterByName('gs');
+      }
+      else {
+        // TODO show welcome message with link to 'not me'
+        var gs = gsCookie;
+      }
+
+      // Decrypt whichever value we chose to use above.
       if (typeof(gs) !== 'undefined') {
         // Post GS to 'get_amounts' callback, assemble request params and respond.
         $.post( "/js/secure_autofill/get_amounts", {
@@ -20,15 +31,7 @@
         }).done(function(data) {
           // If response code is successful, take action.
           if (data.response.code == 200) {
-            // TODO remove
-            console.log(data.content);
-            // TODO put data into js cookie
             // Parse amounts and defaults into their appropriate fields.
-            // format like:
-            // amounts: "11|22|33"
-            // default: "11"
-            // recurring_amounts: "17|19|59"
-            // recurring_default: "17"
             if (typeof(data.content.amounts) !== 'undefined') {
               // Find and replace amount.
               // First, hide all regular options from the form.
@@ -51,7 +54,6 @@
                 // Set element ID.
                 lastAmount.attr('id', "edit-submitted-donation-amount-" + i);
                 // Insert before last amount.
-                console.log(lastAmount);
                 $('#edit-submitted-donation-amount .form-item').last().before(lastAmount);
                 // Show the new amount.
                 $(lastAmount).show();
@@ -121,6 +123,12 @@
               }
             }
 
+            if (nid && !gsCookie) {
+              // Set GS cookie if it wasn't before.
+              // This cookie will expire at end of session.
+              $.cookie("gs-" + nid, gs, { path: '/' });
+            }
+
           // End data check.
           }
         // End response handler.
@@ -138,6 +146,20 @@
         if (!results) return null;
         if (!results[2]) return '';
         return decodeURIComponent(results[2].replace(/\+/g, " "));
+      }
+
+      // Helper function to get node id.
+      function getCurrentNodeId() {
+        var $body = $('body.page-node');
+        if ( ! $body.length )
+          return false;
+        var bodyClasses = $body.attr('class').split(/\s+/);
+        for ( i in bodyClasses ) {
+          var c = bodyClasses[i];
+          if ( c.length > 10 && c.substring(0, 10) === "page-node-" )
+            return parseInt(c.substring(10), 10);
+        }
+        return false;
       }
     }
   };
