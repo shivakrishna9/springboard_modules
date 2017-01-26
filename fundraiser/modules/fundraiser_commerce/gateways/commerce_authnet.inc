@@ -221,7 +221,9 @@ function commerce_authnet_fundraiser_commerce_update($donation, $card_data = NUL
     }
   }
   if ($action == 'update') {
-    $card_data->card_number = $cardonfile_fields['card_number'];
+    if (!empty($cardonfile_fields['card_number'])) {
+      $card_data->card_number = $cardonfile_fields['card_number'];
+    }
     $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
     $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];
 
