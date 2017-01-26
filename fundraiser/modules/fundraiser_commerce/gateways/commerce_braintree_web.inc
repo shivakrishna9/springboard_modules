@@ -293,6 +293,11 @@ function commerce_braintree_web_fundraiser_commerce_update($donation, $card_data
   // Update the billing address.
   $result = db_query('SELECT customer_id, address_id FROM {braintree_vault_addresses} WHERE payment_method_token = :pmt', array(':pmt' => $card_data->remote_id))->fetchAll();
   $result = array_shift($result);
+
+  if (empty($result)) {
+    return;
+  }
+
   $customer_id = $result->customer_id;
   $address_id = $result->address_id;
 
