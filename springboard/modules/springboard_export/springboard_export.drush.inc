@@ -211,6 +211,13 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   $s3_pre_signed_urls = array();
   if (!$debug) {
     $s3_pre_signed_urls = _springboard_export_drush_export_aws_files_upload($file_paths);
+
+    // Send the success email alert:
+    if (!empty($s3_pre_signed_uls)) {
+      $presigned_url = array_values($s3_pre_signed_uls)[0];
+      global $user;
+      springboard_dw_csv_export_completed_notification($presigned_url, array($user->mail));
+    }
   }
 
   $duration = (time() - $start) . 's';
