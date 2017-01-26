@@ -92,7 +92,7 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['fields']['first_submission_date']['alter']['alter_text'] = TRUE;
   $handler->display->display_options['fields']['first_submission_date']['alter']['text'] = 'First submission received [first_submission_date]';
   $handler->display->display_options['fields']['first_submission_date']['alter']['make_link'] = TRUE;
-  $handler->display->display_options['fields']['first_submission_date']['alter']['path'] = 'admin/reports/springboard-dw/donations/[first_donation_id]';
+  $handler->display->display_options['fields']['first_submission_date']['alter']['path'] = '/springboard/reports/dw/donations/[first_donation_id]';
   $handler->display->display_options['fields']['first_submission_date']['element_label_colon'] = FALSE;
   /* Field: Springboard DW Donation Stats: Latest Donation Date */
   $handler->display->display_options['fields']['latest_submission_date']['id'] = 'latest_submission_date';
@@ -102,7 +102,7 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['fields']['latest_submission_date']['alter']['alter_text'] = TRUE;
   $handler->display->display_options['fields']['latest_submission_date']['alter']['text'] = 'Latest submission received [latest_submission_date]';
   $handler->display->display_options['fields']['latest_submission_date']['alter']['make_link'] = TRUE;
-  $handler->display->display_options['fields']['latest_submission_date']['alter']['path'] = 'admin/reports/springboard-dw/donations/[latest_donation_id]';
+  $handler->display->display_options['fields']['latest_submission_date']['alter']['path'] = 'springboard/reports/dw/donations/[latest_donation_id]';
   $handler->display->display_options['fields']['latest_submission_date']['element_label_colon'] = FALSE;
   /* Field: Springboard DW Donation Stats: Latest fetch */
   $handler->display->display_options['fields']['latest_fetch']['id'] = 'latest_fetch';
@@ -127,7 +127,6 @@ function springboard_dw_views_default_views() {
   $handler->display->display_options['arguments']['donation_id']['summary']['number_of_records'] = '0';
   $handler->display->display_options['arguments']['donation_id']['summary']['format'] = 'default_summary';
   $handler->display->display_options['arguments']['donation_id']['summary_options']['items_per_page'] = '25';
-
   /* Display: Block */
   $handler = $view->new_display('block', 'Block', 'block_1');
   $views[$view->name] = $view;
