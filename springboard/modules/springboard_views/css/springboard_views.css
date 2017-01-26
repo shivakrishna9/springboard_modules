@@ -189,15 +189,19 @@ body.page-admin .view-sbv-donations a.views-data-export {
   margin-top: -37px;
 }
 body.page-admin .view-sbv-donations a.views-data-export,
-.view-sbv-donations .view-filters {
+body.page-admin .view-sbv-donations .view-filters {
   zoom: 0.95;
   -moz-transform: scale(0.95);
 }
 @media (max-width: 1200px) {
   body.page-admin .view-sbv-donations a.views-data-export,
-  .view-sbv-donations .view-filters {
+  body.page-admin .view-sbv-donations .view-filters {
     zoom: 0.75;
     -moz-transform: scale(0.75);
+  }
+  body.page-node .view-sbv-donations .view-filters {
+    zoom: 0.80;
+    -moz-transform: scale(0.80);
   }
   body.page-admin .view-sbv-donations a.views-data-export {
     margin-top: -44px;
@@ -229,6 +233,10 @@ body.page-admin .view-sbv-donations a.views-data-export,
 @media (max-width: 979px) {
   body.page-node .view-sbv-donations .view-filters input.form-text {
     width: 120px;
+  }
+  body.page-node .view-sbv-donations .view-filters {
+    zoom: 0.70;
+    -moz-transform: scale(0.70);
   }
 }
 @media (max-width: 884px) {
@@ -268,8 +276,8 @@ body.page-admin .view-sbv-donations a.views-data-export,
     padding: 2px 5px;
   }
   body.page-node .view-sbv-donations .view-filters {
-    zoom: 0.55;
-    -moz-transform: scale(0.55);
+    zoom: 0.65;
+    -moz-transform: scale(0.65);
   }
   body.page-admin #views-exposed-form-sbv-donations-page .views-exposed-form .views-submit-button {
     float: right;
@@ -284,6 +292,10 @@ body.page-admin .view-sbv-donations a.views-data-export,
   }
 }
 @media (max-width: 732px) {
+  body.page-node .view-sbv-donations .view-filters {
+    zoom: 0.60;
+    -moz-transform: scale(0.60);
+  }
   body.page-admin .view-sbv-donations .view-filters {
     zoom: 0.45;
     -moz-transform: scale(0.45);
@@ -298,4 +310,19 @@ body.page-admin .view-sbv-donations a.views-data-export,
     zoom: 0.25;
     -moz-transform: scale(0.25);
   } 
+  body.page-node .view-sbv-donations .view-filters {
+    zoom: 0.55;
+    -moz-transform: scale(0.55);
+  }
+}
+@media (max-width: 670px) {
+  body.page-node .view-sbv-donations table {
+    zoom: 0.45;
+    -moz-transform: scale(0.45);
+  }
+  body.page-node .view-sbv-donations table.views-table tr td {
+    font-size: 10px;
+    line-height: 1.25em;
+    padding: 2px 5px;
+  }
 }
