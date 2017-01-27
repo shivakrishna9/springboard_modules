@@ -12,9 +12,13 @@
  */
 function secure_autofill_js_info() {
   $callbacks['get_amounts'] = array(
-      'methods' => array('POST', 'GET'),
+      'methods' => array('POST'),
       'token' => FALSE,
     );
+  $callbacks['get_values'] = array(
+    'methods' => array('POST'),
+    'token' => FALSE,
+  );
   return $callbacks;
 }
 
@@ -42,6 +46,29 @@ function secure_autofill_js_callback_get_amounts($gs) {
 }
 
 /**
+ * Implements MODULE_js_callback_CALLBACK().
+ *
+ * Callback for decrypting a secure prepopulate string.
+ */
+function secure_autofill_js_callback_get_values($af) {
+  $json = array();
+
+  // Ensure that the gift string variable was provided.
+  if (empty($af)) {
+    drupal_set_message(t('You must provide a query string.'), 'error');
+    $json['content'] = NULL;
+  }
+  else {
+    // Decrypt af
+    // TODO check for expiration as appropriate.
+    $raw_qs = secure_autofill_decrypt($af);
+    $json['content'] = secure_autofill_parse_qs($raw_qs);
+  }
+
+  return $json;
+}
+
+/**
  * Implements hook_form_alter().
  *
  * Add secure_autofill js to donation forms, bypass amount validation.
@@ -49,7 +76,7 @@ function secure_autofill_js_callback_get_amounts($gs) {
 function secure_autofill_form_alter(&$form, &$form_state, $form_id) {
   if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type) && arg(4) != 'edit') {
     // Attach ask amount handler.
-    $form['#attached']['js'][] = drupal_get_path('module', 'secure_autofill') . '/js/ask-amounts.js';
+    $form['#attached']['js'][] = drupal_get_path('module', 'secure_autofill') . '/js/secure-autofill.js';
     // Attach jquery cookie.
     $form['#attached']['library'][] = array('system', 'jquery.cookie');
     // Bypass amount field validation so we can inject our values.

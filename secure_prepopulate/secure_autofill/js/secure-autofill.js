@@ -3,7 +3,7 @@
   /**
   * Drupal behavior.
   */
-  Drupal.behaviors.secureAutofillAskAmounts = {
+  Drupal.behaviors.secureAutofill = {
     attach:function()
     {
       // Check for js cookie first, if it's in place then use it rather than GS.
@@ -133,6 +133,62 @@
         // End response handler.
         });
       }
+
+      // Handle secure prepopulate querystring.
+      // TODO develop this functionality.
+      // Check for js cookie first, if it's in place then use it rather than af.
+      // Cookie is based on nid.
+      if (nid) {
+        var afCookie = $.cookie("af-" + nid);
+      }
+      if (!afCookie) {
+        // Get af from URL if it wasn't in our cookie.
+        var af = getParameterByName('af');
+      }
+      else {
+        // TODO show welcome message with link to 'not me'
+        var af = afCookie;
+      }
+
+      // Decrypt whichever value we chose to use above.
+      if (typeof(af) !== 'undefined') {
+        // Post af to 'get_amounts' callback, assemble request params and respond.
+        $.post( "/js/secure_autofill/get_values", {
+          js_callback: "get_values",
+          js_module: "secure_autofill",
+          af: af
+        }).done(function(data) {
+          // If response code is successful, take action.
+          if (data.response.code == 200) {
+            // Iterate through returned object and populate appropriate fields.
+            for (var key in data.content) {
+              if (data.content.hasOwnProperty(key)) {
+                console.log(key, data.content[key]);
+                // TODO special processing for email
+                // Email is keyed as "email", but appears on donation forms as "mail".
+                if (key === "email") {
+                  $("input[name*='mail']").val(data.content[key]);
+                }
+                else {
+                  // Populate input fields matching key with value returned from callback.
+                  $("input[name*='" + key + "']").val(data.content[key]);
+                  // TODO handle select fields, radios, and dates.
+                }
+              }
+            }
+
+            if (nid && !afCookie) {
+              // Set af cookie if it wasn't before.
+              // This cookie will expire at end of session.
+              $.cookie("af-" + nid, af, { path: '/' });
+            }
+
+          // End data check.
+          }
+        // End response handler.
+        });
+      }
+
 
       // Helper function to get url params.
       function getParameterByName(name, url) {
