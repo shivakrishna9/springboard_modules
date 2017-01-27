@@ -59,8 +59,9 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
         if (empty($filter_value) || empty($filter_key) || in_array($filter_key, $filter_values_to_skip)) {
           continue;
         }
-        $filter_value = trim($filter_value);
-
+        if (is_string($filter_value)) {
+          $filter_value = trim($filter_value);
+        }
         // Set filters expected by the data warehouse:
         switch ($filter_key) {
           case 'form_name':
