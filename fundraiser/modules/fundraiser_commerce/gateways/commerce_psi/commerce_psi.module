@@ -53,6 +53,7 @@ function _commerce_psi_default_settings() {
       'market_source' => '',
       'send_mail' => '',
     ),
+    'cardonfile' => FALSE,
   );
 }
 
@@ -91,6 +92,13 @@ function _commerce_psi_settings_form($settings) {
     '#value_callback' => '_commerce_psi_encrypt_settings_password',
     '#required' => TRUE,
   );
+  if (module_exists('commerce_cardonfile')) {
+    $form['cardonfile'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable Card on File functionality with this payment method.'),
+      '#default_value' => $settings['cardonfile'],
+    );
+  }
   $form['custom_fields'] = array(
     '#type' => 'fieldset',
     '#title' => t('Custom Fields'),
