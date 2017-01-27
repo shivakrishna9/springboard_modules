@@ -48,9 +48,14 @@
                 var lastAmount = $('#edit-submitted-donation-amount .form-item').last().clone(true);
                 // Set amount value.
                 $(lastAmount).children('input').val(amounts[i]);
-                // Set amount label.
-                // TODO use appropriate currency.
-                $(lastAmount).children('label').text('$' + amounts[i]);
+                // Set amount label, use appropriate currency.
+                if (Drupal.settings.fundraiser.currency.symbol) {
+                  var symbol = Drupal.settings.fundraiser.currency.symbol;
+                }
+                else {
+                  var symbol = "$";
+                }
+                $(lastAmount).children('label').text(symbol + amounts[i]);
                 // Set element ID.
                 lastAmount.attr('id', "edit-submitted-donation-amount-" + i);
                 // Insert before last amount.
@@ -93,9 +98,14 @@
                 var lastAmount = $('#edit-submitted-donation-recurring-amount .form-item').last().clone(true);
                 // Set amount value.
                 $(lastAmount).children('input').val(recurring_amounts[i]);
-                // Set amount label.
-                // TODO use appropriate currency.
-                $(lastAmount).children('label').text('$' + recurring_amounts[i]);
+                // Set amount label, use appropriate currency.
+                if (Drupal.settings.fundraiser.currency.symbol) {
+                  var symbol = Drupal.settings.fundraiser.currency.symbol;
+                }
+                else {
+                  var symbol = "$";
+                }
+                $(lastAmount).children('label').text(symbol + recurring_amounts[i]);
                 // Set element ID.
                 lastAmount.attr('id', "edit-submitted-donation-recurring-amount-" + i);
                 // Insert before last amount.
@@ -164,7 +174,6 @@
             for (var key in data.content) {
               if (data.content.hasOwnProperty(key)) {
                 console.log(key, data.content[key]);
-                // TODO special processing for email
                 // Email is keyed as "email", but appears on donation forms as "mail".
                 if (key === "email") {
                   $("input[name*='mail']").val(data.content[key]);

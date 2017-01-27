@@ -8,6 +8,21 @@
  */
 
 /**
+ * Implements hook_menu().
+ */
+function secure_autofill_menu() {
+  $items = array();
+  // Callback for clearing gs/af cookies.
+  $items['secure-autofill/not-me/%'] = array(
+    'title' => 'Not me',
+    'page callback' => 'secure_autofill_clear',
+    'page arguments' => array(2),
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+}
+
+/**
  * Implements hook_js_info().
  */
 function secure_autofill_js_info() {
@@ -265,6 +280,17 @@ function _secure_autofill_pkcs5_unpad($text) {
 function secure_autofill_submit(&$form, &$form_state) {
   $node = $form['#node'];
   secure_autofill_clear_cookies($node->nid);
+}
+
+/**
+ * Callback for clearing node specific prepopulate values.
+ *
+ * @param $nid
+ * The nid of the node who's prepopulate data should be cleared.
+ */
+function secure_autofill_clear($nid) {
+  secure_autofill_clear_cookies($nid);
+  drupal_goto('node/' . $nid);
 }
 
 /**
