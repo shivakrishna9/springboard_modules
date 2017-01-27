@@ -1,4 +1,4 @@
-name = Secure Autofille
+name = Secure Autofill
 description = Uses an encrypted url string to pre-populate form fields without bootstrapping Drupal.
 core = 7.x
 package = Webform Extra
