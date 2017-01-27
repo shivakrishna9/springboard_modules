@@ -226,6 +226,9 @@ function springboard_export_form_views_exposed_form_alter(&$form, &$form_state) 
     return;
   }
 
+  global $user;
+  $recipient = $user->mail;
+
   // Add JS and CSS to the node-specific action results tab:
   if ($form['#id'] == 'views-exposed-form-sba-action-submissions-page-1') {
     drupal_add_css('//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css', array('type' => 'external'));
@@ -255,7 +258,10 @@ function springboard_export_form_views_exposed_form_alter(&$form, &$form_state) 
     // Attached CSS and jQuery related to the exposed filters:
     $form['#attached']['js'][] = array(
       'type' => 'setting',
-      'data' => array('sbExposedFilters' => $view_data),
+      'data' => array(
+        'sbExposedFilters' => $view_data,
+        'sbRecipient' => $recipient,
+      ),
     );
   } // End actions export
   elseif ($form['#id'] == 'views-exposed-form-sbv-donations-page' || $form['#id'] == 'views-exposed-form-sbv-donations-page-2') {
@@ -276,6 +282,7 @@ function springboard_export_form_views_exposed_form_alter(&$form, &$form_state) 
       'data' => array(
         'sbViewDataOrder' => $order,
         'sbViewDataSort' => $sort,
+        'sbRecipient' => $recipient,
       ),
     );
     
@@ -323,6 +330,10 @@ function _springboard_export_queue_data_export() {
       }
     }
   }
+  if (isset($_POST['recipient'])) {
+    $recipient = $_POST['recipient'];
+  }
+
   if (isset($data['source_view'])) {
     unset($data['source_view']);
   }
@@ -355,15 +366,18 @@ function _springboard_export_queue_data_export() {
   }
   watchdog('springboard_export', 'CSV export request: ' . json_encode($data));
 
-  global $user;
-  $recipients = variable_get('springboard_export_recipients', array());
-  if (isset($user->mail) && !empty($user->mail)) {
-    $recipients[] = $user->mail;
+  if (!isset($recipient)){
+    global $user;
+    if (isset($user->mail) && !empty($user->mail)) {
+      $recipient = $user->mail;
+    }
   }
+
+  $data['recipient'] = $recipient;
 
   // Queue the data export job:
   $success = TRUE;
-  $success = springboard_dw_csv_export_insert('Drupal', $data, $recipients);
+  $success = springboard_dw_csv_export_insert('Drupal', $data, $recipient);
 
   // Return status to jQuery:
   drupal_json_output(array('status' => $success ? 'success' : 'fail'));

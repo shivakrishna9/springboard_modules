@@ -156,9 +156,9 @@ function springboard_dw_csv_export($item) {
 /** Insert a new item into the Springboard data warehouse CSV export queue.
  * @param $type
  * @param $filters
- * @param $recipients
+ * @param $recipient
  */
-function springboard_dw_csv_export_insert($type, $filters, $recipients) {
+function springboard_dw_csv_export_insert($type, $filters, $recipient) {
 
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_csv_export");
@@ -167,7 +167,7 @@ function springboard_dw_csv_export_insert($type, $filters, $recipients) {
   $export_item = array();
   $export_item['queue_type'] = $type;
   $export_item['export_filters'] = $filters;
-  $export_item['recipients'] = $recipients;
+  $export_item['recipient'] = $recipient;
 
   // Create the queue item.
   $queue_item_created = $queue->createItem($export_item);
@@ -180,7 +180,15 @@ function springboard_dw_csv_export_insert($type, $filters, $recipients) {
 }
 
 function springboard_dw_csv_export_completed_notification($download_url,
-                                                          $recipients) {
+                                                          $recipient) {
+  // Use the user/1 email if a recipient is not provided or is invalid:
+  if (!is_string($recipient) || strpos($recipient, '@') === FALSE) {
+    $user = user_load(1);
+    if (isset($user->mail)) {
+      $recipient = $user->mail; 
+    }
+  }
+
   // Define the API endpoint for the notification.
   $api_endpoint = '/reports/email';
   $full_endpoint = springboard_dw_api_endpoint($api_endpoint);
@@ -191,7 +199,7 @@ function springboard_dw_csv_export_completed_notification($download_url,
   // Construct the payload for the API call.
   $api_payload = [
     'emailAuthenticationToken' => $authentication_token,
-    'recipient_address'        => $recipients,
+    'recipient_address'        => $recipient,
     'download_url'             => $download_url,
   ];
 

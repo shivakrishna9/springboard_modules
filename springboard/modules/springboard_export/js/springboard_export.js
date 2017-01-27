@@ -34,6 +34,7 @@
             dataType: 'json',
             data: {
               'export_params' : Drupal.settings.sbExposedFilters,
+              'recipient' : Drupal.settings.sbRecipient
             },
             context: document.body,
             success: function(data) {
