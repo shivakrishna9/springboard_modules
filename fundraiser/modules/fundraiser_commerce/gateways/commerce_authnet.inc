@@ -308,7 +308,7 @@ function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($fo
   // Extract the Customer Profile and Payment Profile IDs from the remote_id.
   list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data->remote_id);
 
-  if ($form_state['values']['credit_card']['number'] != $form['credit_card']['number']['#default_value']) {
+  if (!empty($form['credit_card']['number']['#default_value']) && $form_state['values']['credit_card']['number'] != $form['credit_card']['number']['#default_value']) {
     $number = $form_state['values']['credit_card']['number'];
   }
   else {
