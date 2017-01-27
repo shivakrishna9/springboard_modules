@@ -120,48 +120,48 @@ function secure_prepopulate_permission() {
 /**
  * Implements hook_init().
  */
-// function secure_prepopulate_init() {
+function secure_prepopulate_init() {
 
-//   // Check for the presence of the af query string parameter and we're on a node page.
-//   if (isset($_GET['af']) && arg(0) == 'node' && is_numeric(arg(1))) {
-//     $af = $_GET['af'];
-//     $nid = arg(1);
-//     // Use the full query string for hash expiration.
-//     $qs = !empty($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : 'q=node/' . $nid . '&af=' . $af;
-//     // First, check to see if the query string has already been used.
-//     if (!secure_prepopulate_is_expired($qs)) {
-//       // Run af param through decryption routine.
-//       if ($fields = secure_prepopulate_decrypt_qs($af)) {
-//         // check for synonyms and set extra fields if found.
-//         $synonyms = secure_prepopulate_load_synonyms();
-//         if (count($synonyms)) {
-//           $synonym_keys = array_keys($synonyms);
-//           $field_keys = array_keys($fields);
-//           foreach ($field_keys as $field_key) {
-//             if (in_array($field_key, $synonym_keys) && !empty($synonyms[$field_key])) {
-//               foreach ($synonyms[$field_key] as $synonym) {
-//                 $fields[$synonym] = $fields[$field_key];
-//               }
-//             }
-//           }
-//         }
-//         // TODO: replace with default synonym?
-//         if (isset($fields['email']) && !isset($fields['mail'])) {
-//           $fields['mail'] = $fields['email'];
-//         }
-//         if (isset($fields['mail']) && !isset($fields['email'])) {
-//           $fields['email'] = $fields['mail'];
-//         }
-//         $_SESSION['secure_prepopulate_values'][$nid] = $fields; // Coder: This is ok.
-//         if (isset($fields['uid'])) {
-//           secure_prepopulate_login_user($fields['uid']);
-//         }
-//         // Expire the query string.
-//         secure_prepopulate_expire($qs);
-//       }
-//     }
-//   }
-// }
+  // Check for the presence of the af query string parameter and we're on a node page.
+  if (isset($_GET['af']) && arg(0) == 'node' && is_numeric(arg(1))) {
+    $af = $_GET['af'];
+    $nid = arg(1);
+    // Use the full query string for hash expiration.
+    $qs = !empty($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : 'q=node/' . $nid . '&af=' . $af;
+    // First, check to see if the query string has already been used.
+    if (!secure_prepopulate_is_expired($qs)) {
+      // Run af param through decryption routine.
+      if ($fields = secure_prepopulate_decrypt_qs($af)) {
+        // check for synonyms and set extra fields if found.
+        $synonyms = secure_prepopulate_load_synonyms();
+        if (count($synonyms)) {
+          $synonym_keys = array_keys($synonyms);
+          $field_keys = array_keys($fields);
+          foreach ($field_keys as $field_key) {
+            if (in_array($field_key, $synonym_keys) && !empty($synonyms[$field_key])) {
+              foreach ($synonyms[$field_key] as $synonym) {
+                $fields[$synonym] = $fields[$field_key];
+              }
+            }
+          }
+        }
+        // TODO: replace with default synonym?
+        if (isset($fields['email']) && !isset($fields['mail'])) {
+          $fields['mail'] = $fields['email'];
+        }
+        if (isset($fields['mail']) && !isset($fields['email'])) {
+          $fields['email'] = $fields['mail'];
+        }
+        $_SESSION['secure_prepopulate_values'][$nid] = $fields; // Coder: This is ok.
+        if (isset($fields['uid'])) {
+          secure_prepopulate_login_user($fields['uid']);
+        }
+        // Expire the query string.
+        secure_prepopulate_expire($qs);
+      }
+    }
+  }
+}
 
 /**
  * Implements hook_theme().
@@ -181,22 +181,22 @@ function secure_prepopulate_theme() {
  *
  * Adds a welcome_back key to the node for themeing and output.
  */
-// function secure_prepopulate_node_view($node, $view_mode, $langcode) {
+function secure_prepopulate_node_view($node, $view_mode, $langcode) {
 
-//   // First check to see if there is any prepopulate values available.
-//   if (isset($_SESSION['secure_prepopulate_values']) && is_array($_SESSION['secure_prepopulate_values'])) { // Coder: This is ok.
-//     if ($view_mode == 'full' && !empty($node->webform)
-//       && array_key_exists($node->nid, $_SESSION['secure_prepopulate_values'])
-//       && !empty($_SESSION['secure_prepopulate_values'][$node->nid]['first_name'])  // Just in case the name is missing.
-//     ) { // Coder: This is ok.
-//       $node->content['welcome_back'] = array(
-//         '#markup' => theme(array('secure_prepopulate_welcome_message_' . $node->nid, 'secure_prepopulate_welcome_message'),
-//           array('values' => $_SESSION['secure_prepopulate_values'][$node->nid], 'nid' => $node->nid)), // Coder: This is ok.
-//         '#weight' => -1,
-//       );
-//     }
-//   }
-// }
+  // First check to see if there is any prepopulate values available.
+  if (isset($_SESSION['secure_prepopulate_values']) && is_array($_SESSION['secure_prepopulate_values'])) { // Coder: This is ok.
+    if ($view_mode == 'full' && !empty($node->webform)
+      && array_key_exists($node->nid, $_SESSION['secure_prepopulate_values'])
+      && !empty($_SESSION['secure_prepopulate_values'][$node->nid]['first_name'])  // Just in case the name is missing.
+    ) { // Coder: This is ok.
+      $node->content['welcome_back'] = array(
+        '#markup' => theme(array('secure_prepopulate_welcome_message_' . $node->nid, 'secure_prepopulate_welcome_message'),
+          array('values' => $_SESSION['secure_prepopulate_values'][$node->nid], 'nid' => $node->nid)), // Coder: This is ok.
+        '#weight' => -1,
+      );
+    }
+  }
+}
 
 /**
  * Implements hook_form_alter().
@@ -210,131 +210,131 @@ function secure_prepopulate_form_alter(&$form, &$form_state, $form_id) {
  *
  * Set the default values for fields targeted by the secure string.
  */
-// function secure_prepopulate_form_webform_client_form_alter(&$form, $form_state) {
-//   $node = $form['#node'];
+function secure_prepopulate_form_webform_client_form_alter(&$form, $form_state) {
+  $node = $form['#node'];
 
-//   // See if the user has any pre-popluate data for this node in their session.
-//   $prepopulate_data = isset($_SESSION['secure_prepopulate_values'][$node->nid]) ? $_SESSION['secure_prepopulate_values'][$node->nid] : NULL;
-//   $precedence = variable_get('secure_prepopulate_precedence', 'url');
+  // See if the user has any pre-popluate data for this node in their session.
+  $prepopulate_data = isset($_SESSION['secure_prepopulate_values'][$node->nid]) ? $_SESSION['secure_prepopulate_values'][$node->nid] : NULL;
+  $precedence = variable_get('secure_prepopulate_precedence', 'url');
 
-//   // Do nothing if there is no pre-populate data.
-//   if (
-//     empty($prepopulate_data)
-//     // Or do nothing if this user is logged in and the $precedence is not set to url.
-//     || (
-//       user_is_logged_in()
-//       && $precedence != 'url'
-//     )
-//   ) {
-//     return;
-//   }
+  // Do nothing if there is no pre-populate data.
+  if (
+    empty($prepopulate_data)
+    // Or do nothing if this user is logged in and the $precedence is not set to url.
+    || (
+      user_is_logged_in()
+      && $precedence != 'url'
+    )
+  ) {
+    return;
+  }
 
-//   // Add the submit handler.
-//   $form['#submit'][] = 'secure_prepopulate_submit';
+  // Add the submit handler.
+  $form['#submit'][] = 'secure_prepopulate_submit';
 
-//   // If we've already submitted the form skip do not set the pre-populate values.
-//   if (!empty($form_state['submitted'])) {
-//     return;
-//   }
-//   $components = $node->webform['components'];
-//   // Create an data structure that will tell us exactly where each webform component lives in the FAPI array.
-//   $component_hierarchy = _secure_prepopulate_parse_form($node->nid, $components);
+  // If we've already submitted the form skip do not set the pre-populate values.
+  if (!empty($form_state['submitted'])) {
+    return;
+  }
+  $components = $node->webform['components'];
+  // Create an data structure that will tell us exactly where each webform component lives in the FAPI array.
+  $component_hierarchy = _secure_prepopulate_parse_form($node->nid, $components);
 
-//   // Try to prepopulate any fields found in the prepopulate_data array.
-//   foreach ($prepopulate_data as $form_key => $value) {
-//     if (!isset($component_hierarchy[$form_key])) {
-//       continue;
-//     }
-//     $field = & _secure_prepopulate_find_field($form, $component_hierarchy[$form_key]);
-//     if ($field) {
-//       switch ($field['#type']) {
-//         case 'select':
-//           $valid = array_keys($field['#options']);
-//           if (in_array($value, $valid)) {
-//             $field['#default_value'] = $value;
-//           }
-//           break;
-//         case 'radios':
-//           if (array_key_exists($value, $field)) {
-//             $field[$value]['#default_value'] = $value;
-//           }
-//           break;
-//         case 'checkboxes':
-//           if (array_key_exists($value, $field)) {
-//             $field[$value]['#default_value'] = $value;
-//           }
-//           $value = array($value);
-//           break;
-//         case 'date':
-//           $timezone = $field['#webform_component']['extra']['timezone'] != 'user' ? NULL : 'user';
-//           $value = webform_date_array($value, 'date');
-//           $field['month']['#default_value'] = $value['month'];
-//           $field['year']['#default_value'] = $value['year'];
-//           $field['day']['#default_value'] = $value['day'];
-//           break;
-//         default:
-//           $field['#default_value'] = $value;
-//       }
-//     }
-//   }
+  // Try to prepopulate any fields found in the prepopulate_data array.
+  foreach ($prepopulate_data as $form_key => $value) {
+    if (!isset($component_hierarchy[$form_key])) {
+      continue;
+    }
+    $field = & _secure_prepopulate_find_field($form, $component_hierarchy[$form_key]);
+    if ($field) {
+      switch ($field['#type']) {
+        case 'select':
+          $valid = array_keys($field['#options']);
+          if (in_array($value, $valid)) {
+            $field['#default_value'] = $value;
+          }
+          break;
+        case 'radios':
+          if (array_key_exists($value, $field)) {
+            $field[$value]['#default_value'] = $value;
+          }
+          break;
+        case 'checkboxes':
+          if (array_key_exists($value, $field)) {
+            $field[$value]['#default_value'] = $value;
+          }
+          $value = array($value);
+          break;
+        case 'date':
+          $timezone = $field['#webform_component']['extra']['timezone'] != 'user' ? NULL : 'user';
+          $value = webform_date_array($value, 'date');
+          $field['month']['#default_value'] = $value['month'];
+          $field['year']['#default_value'] = $value['year'];
+          $field['day']['#default_value'] = $value['day'];
+          break;
+        default:
+          $field['#default_value'] = $value;
+      }
+    }
+  }
 
-//   // Clear out any other form fields that might be populated by another module.
-//   $dynamic_gift_string_field_ids = array('amount', 'other_amount', 'recurring_amount', 'recurring_other_amount', 'payment_method');
-//   foreach ($component_hierarchy as $form_key => $value) {
-//     if (!in_array($form_key, $dynamic_gift_string_field_ids)
-//       && !array_key_exists($form_key, $prepopulate_data)) { // the key is not in the prepopuldate data, so lets clear it out
-//       if ($field = & _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
-//         // set back to original default value by using the webform component definition
-//         if (isset($field['#type'])) {
-//           switch ($field['#type']) {
-//             case 'hidden':
-//               // If it's a hidden field, leave the values intact.
-//               continue;
-//             case 'date':
-//               if (drupal_strlen($field['#webform_component']['value']) > 0) {
-//                 $timezone = $field['#webform_component']['extra']['timezone'] != 'user' ? NULL : 'user';
-//                 $default_values = webform_date_array(webform_strtodate('c', $field['#webform_component']['value'], $timezone), 'date');
-//               }
-//               else {
-//                 $default_values = array(
-//                   'day' => NULL,
-//                   'month' => NULL,
-//                   'year' => NULL,
-//                 );
-//               }
-//               $field['month']['#default_value'] = $default_values['month'];
-//               $field['day']['#default_value'] = $default_values['day'];
-//               $field['year']['#default_value'] = $default_values['year'];
-//               break;
-//             default:
-//               if (!isset($field['#default_value'])) {
-//                 break;
-//               }
-//               if (strpos($field['#webform_component']['value'], '%get[') !== FALSE) {
-//                 // If the default value is %get[something], set the field to nothing.
-//                 $field['#default_value'] = NULL;
-//               }
-//               elseif (is_array($field['#default_value'])) {
-//                 $field['#default_value'] = array($field['#webform_component']['value']);
-//               }
-//               else {
-//                 $field['#default_value'] = $field['#webform_component']['value'];
-//               }
-//               break;
-//           }
-//         }
-//       }
-//     }
-//   }
-// }
+  // Clear out any other form fields that might be populated by another module.
+  $dynamic_gift_string_field_ids = array('amount', 'other_amount', 'recurring_amount', 'recurring_other_amount', 'payment_method');
+  foreach ($component_hierarchy as $form_key => $value) {
+    if (!in_array($form_key, $dynamic_gift_string_field_ids)
+      && !array_key_exists($form_key, $prepopulate_data)) { // the key is not in the prepopuldate data, so lets clear it out
+      if ($field = & _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
+        // set back to original default value by using the webform component definition
+        if (isset($field['#type'])) {
+          switch ($field['#type']) {
+            case 'hidden':
+              // If it's a hidden field, leave the values intact.
+              continue;
+            case 'date':
+              if (drupal_strlen($field['#webform_component']['value']) > 0) {
+                $timezone = $field['#webform_component']['extra']['timezone'] != 'user' ? NULL : 'user';
+                $default_values = webform_date_array(webform_strtodate('c', $field['#webform_component']['value'], $timezone), 'date');
+              }
+              else {
+                $default_values = array(
+                  'day' => NULL,
+                  'month' => NULL,
+                  'year' => NULL,
+                );
+              }
+              $field['month']['#default_value'] = $default_values['month'];
+              $field['day']['#default_value'] = $default_values['day'];
+              $field['year']['#default_value'] = $default_values['year'];
+              break;
+            default:
+              if (!isset($field['#default_value'])) {
+                break;
+              }
+              if (strpos($field['#webform_component']['value'], '%get[') !== FALSE) {
+                // If the default value is %get[something], set the field to nothing.
+                $field['#default_value'] = NULL;
+              }
+              elseif (is_array($field['#default_value'])) {
+                $field['#default_value'] = array($field['#webform_component']['value']);
+              }
+              else {
+                $field['#default_value'] = $field['#webform_component']['value'];
+              }
+              break;
+          }
+        }
+      }
+    }
+  }
+}
 
 /**
  * Submit handler for forms that have been prepopulated.
  */
-// function secure_prepopulate_submit(&$form, &$form_state) {
-//   $node = $form['#node'];
-//   secure_prepopulate_clear_session($node->nid);
-// }
+function secure_prepopulate_submit(&$form, &$form_state) {
+  $node = $form['#node'];
+  secure_prepopulate_clear_session($node->nid);
+}
 
 /**
  * Decrypts query string paramaters.

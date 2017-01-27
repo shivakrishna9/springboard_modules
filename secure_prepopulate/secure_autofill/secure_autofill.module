@@ -8,10 +8,54 @@
  */
 
 /**
+ * Implements hook_implements_alter().
+ */
+function secure_autofill_module_implements_alter(&$implementations, $hook) {
+  // We need these hooks to run last.
+  $hooks = array(
+    'form_alter',
+    'form_webform_client_form_alter',
+  );
+
+  if (in_array($hook, $hooks) && isset($implementations['secure_autofill'])) {
+    $group = $implementations['secure_autofill'];
+    unset($implementations['secure_autofill']);
+    $implementations['secure_autofill'] = $group;
+  }
+}
+
+/**
  * Implements hook_menu().
  */
 function secure_autofill_menu() {
   $items = array();
+  $items['admin/config/system/secure-autofill'] = array(
+    'title' => 'Secure Autofill',
+    'description' => 'Secure Autofill settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_autofill_admin_settings'),
+    'access arguments' => array('administer secure autofill'),
+    'file' => 'secure_autofill.admin.inc',
+  );
+  $items['admin/config/system/secure-autofill/settings'] = array(
+    'title' => 'Secure Autofill',
+    'description' => 'Secure Autofill settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_autofill_admin_settings'),
+    'access arguments' => array('administer secure autofill'),
+    'file' => 'secure_autofill.admin.inc',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+  );
+  $items['admin/config/system/secure-autofill/token_generator'] = array(
+    'title' => 'Token Generator',
+    'description' => 'Generate query string tokens for testing or use',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_autofill_token_generator'),
+    'access arguments' => array('administer secure autofill'),
+    'file' => 'secure_autofill.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
   // Callback for clearing gs/af cookies.
   $items['secure-autofill/not-me/%'] = array(
     'title' => 'Not me',
@@ -20,6 +64,7 @@ function secure_autofill_menu() {
     'type' => MENU_CALLBACK,
     'access callback' => TRUE,
   );
+  return $items;
 }
 
 /**
@@ -187,9 +232,9 @@ function secure_autofill_donation_amount_validate($form, &$form_state) {
 
 function secure_autofill_decrypt($cipher) {
   // The 128 bit key to use to decrypt the string.
-  $key = secure_autofill_variable_get('secure_prepopulate_key', NULL);
+  $key = secure_autofill_variable_get('secure_autofill_key', NULL);
   // The initialization vector to use to decrypt the string.
-  $iv = secure_autofill_variable_get('secure_prepopulate_iv', NULL);
+  $iv = secure_autofill_variable_get('secure_autofill_iv', NULL);
   if (!$key || !$iv) {
     drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
     watchdog('Secure Autofill', 'Cannot perform decryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
@@ -267,6 +312,7 @@ function _secure_autofill_pkcs5_pad($text, $blocksize) {
  *   The text to unpad.
  */
 function _secure_autofill_pkcs5_unpad($text) {
+  // Mcrypt adds bad characters at the end of the string. Remove them.
   $pad = ord($text{strlen($text) -1});
   if ($pad > strlen($text)) {
     return FALSE;
@@ -310,4 +356,16 @@ function secure_autofill_clear_cookies($nid) {
     unset($_COOKIE['gs-'. $nid]);
     setcookie('gs-'. $nid, '', time() - 3600, '/'); // empty value and old timestamp
   }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function secure_autofill_permission() {
+  return array(
+    'administer secure autofill' => array(
+      'title' => t('Administer Secure Autofill'),
+      'description' => t('Administer Secure Autofill settings.'),
+    ),
+  );
 }

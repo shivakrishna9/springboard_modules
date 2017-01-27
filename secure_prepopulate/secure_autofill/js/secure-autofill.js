@@ -9,6 +9,7 @@
       // Check for js cookie first, if it's in place then use it rather than GS.
       // Cookie is based on nid.
       var nid = getCurrentNodeId();
+      var showWelcome = false;
       if (nid) {
         var gsCookie = $.cookie("gs-" + nid);
       }
@@ -17,7 +18,8 @@
         var gs = getParameterByName('gs');
       }
       else {
-        // TODO show welcome message with link to 'not me'
+        // Flag to show welcome message with link to 'not me'.
+        showWelcome = true;
         var gs = gsCookie;
       }
 
@@ -156,7 +158,8 @@
         var af = getParameterByName('af');
       }
       else {
-        // TODO show welcome message with link to 'not me'
+        // Show welcome message with link to 'not me'
+        showWelcome = true;
         var af = afCookie;
       }
 
