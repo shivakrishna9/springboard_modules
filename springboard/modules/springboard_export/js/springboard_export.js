@@ -19,7 +19,7 @@
     // Add AJAX CSV Download queue behavior:
       $(document).ready(function() {
         
-        var downloadButton = $('#sb-queue-csv-download');
+        var downloadButton = $('.view-sbv-donations #sb-queue-csv-download');
         downloadButton.before('<span id="sbv-export-download-msg"></span>');
         downloadButton.click(function (e) {
           $('#sbv-export-download-msg').text('Working...');

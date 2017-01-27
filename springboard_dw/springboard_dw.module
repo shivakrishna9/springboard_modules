@@ -2164,13 +2164,25 @@ function _springboard_dw_export_queue_data_export() {
 
   watchdog('springboard_dw', 'CSV export request: ' . json_encode($data));
 
-  $recipients = array(
-    'josh.estep@jacksonriver.com',
-  );
+  if (isset($_POST['recipient'])) {
+    $recipient = $_POST['recipient'];
+  }
+  else {
+    global $user;
+    if (isset($user->mail)) {
+      $recipient = $user->mail;
+    }
+    else {
+      $user = user_load(1);
+      if (isset($user->mail)) {
+        $recipient = $user->mail;
+      }
+    }
+  }
 
   // Queue the data export job:
   $success = TRUE;
-  $success = springboard_dw_csv_export_insert('DW', $data, $recipients);
+  $success = springboard_dw_csv_export_insert('DW', $data, $recipient);
 
   // Return status to jQuery:
 
