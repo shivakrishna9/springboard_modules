@@ -531,10 +531,12 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
   // on available methods. Methods are defined within the associated active
   // gateways.
   foreach ($donation->donation['payment_fields'] as $payment_method => $payment_fields) {
-    foreach ($payment_fields as $key => $value) {
-      if (isset($map->field_map['salesforce_donation_map'][$key])) {
-        $sf_field = $map->field_map['salesforce_donation_map'][$key];
-        $fields[$sf_field] = $value;
+    if (is_array($payment_fields)) {
+      foreach ($payment_fields as $key => $value) {
+        if (isset($map->field_map['salesforce_donation_map'][$key])) {
+          $sf_field = $map->field_map['salesforce_donation_map'][$key];
+          $fields[$sf_field] = $value;
+        }
       }
     }
   }
@@ -883,4 +885,44 @@ function salesforce_donation_entity_update($entity, $type) {
       salesforce_genmap_send_object_to_queue('salesforce_donation', $op, $donation->node, $donation->did, $donation, 'donation');
     }
   }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function salesforce_donation_form_commerce_order_ui_order_form_alter(&$form, $form_state) {
+  // Add a re-queue checkbox to the form:
+  $form['sb_requeue'] = array(
+    '#title' => t('Re-queue this order'),
+    '#type' => 'checkbox',
+    '#weight' => isset($form['commerce_line_items']['#weight']) ? $form['commerce_line_items']['#weight'] : -100,
+  );
+
+  $form['actions']['submit']['#submit'][] = '_salesforce_donation_form_commerce_order_ui_order_form_alter_submit';
+}
+
+/**
+ * Sumbit handler to re-queue donation after order is modified from admin page.
+ *
+ * @see salesforce_donation_form_commerce_order_ui_order_form_alter()
+ */
+function _salesforce_donation_form_commerce_order_ui_order_form_alter_submit($form, &$form_state) {
+  if (!isset($form_state['commerce_order']->order_id) || !isset($form_state['values']['sb_requeue']) || $form_state['values']['sb_requeue'] !== 1) {
+    return;
+  }
+
+  $order_id = $form_state['commerce_order']->order_id;
+
+  // Remove the associated salesforce_sync_map record so orders previously deleted from Salesforce can be re-queued
+  // with a new Salesforce ID rather than the old ID which no longer exists in Salesforce:
+  $rmid = db_query("SELECT rmid FROM {salesforce_sync_map} WHERE drupal_id = :order_id AND delta = 'donation'", array(':order_id' => $order_id))
+    ->fetchField();
+  if ($rmid) {
+    entity_delete('salesforce_sync_map', $rmid);
+  }
+
+  // Re-queue the donation:
+  $donation = fundraiser_donation_get_donation($order_id);
+  salesforce_donation_fundraiser_donation_success($donation);
+  drupal_set_message('This order has been re-queued.');
 }

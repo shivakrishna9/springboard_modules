@@ -169,9 +169,7 @@ function springboard_p2p_springboard_admin_admin_menu_items_alter(&$items) {
 /**
  * Implements hook_theme().
  */
-function springboard_p2p_theme($existing, $type, $theme) {
-  $path = drupal_get_path('module', 'springboard_p2p');
-
+function springboard_p2p_theme($existing, $type, $theme, $path) {
   $templates = array(
     'springboard_p2p_admin_settings' => array(
       'render element' => 'form',
@@ -180,7 +178,7 @@ function springboard_p2p_theme($existing, $type, $theme) {
     ),
     'springboard_p2p_dashboard' => array(
       'variables' => array('views' => array()),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-p2p-dashboard',
+      'template' => '/templates/springboard-p2p-dashboard',
     ),
   );
 
@@ -1190,7 +1188,8 @@ function springboard_p2p_format_progress($progress, $type, $include_units = TRUE
 
     case 'amount':
       if ($include_units) {
-        $output .= '$ ';
+        // Set the currency symbol prefix, excluding a space separator for page springboard/p2p:
+        $output .= '$' . (current_path() == 'admin/springboard/p2p' ? '' : ' ');
       }
       $output .= number_format($progress['amount'], 2);
       break;
@@ -1284,7 +1283,7 @@ function _springboard_p2p_fboauth_image($variables) {
   $link['attributes']['rel'] = 'nofollow';
   $attributes = isset($link['attributes']) ? drupal_attributes($link['attributes']) : '';
   $src = '/' . $mod_path . '/images/fb-connect.png';
-  return '<a ' . $attributes . ' href="' . $url . '"><img class="fb-image" title ="Login with Facebook" src="' . $src . '" alt="Login with Facebook" /></a>';
+  return '<a ' . $attributes . ' href="' . $url . '"><img class="fb-image" title="Login with Facebook" src="' . $src . '" alt="Login with Facebook" /></a>';
 
 }
 
@@ -2022,6 +2021,10 @@ function springboard_p2p_webform_client_form_submit($form, &$form_state) {
       $action['donor_name'] = $sbp_first_name['#value'] . ' ' . $sbp_last_name['#value'];
     }
 
+    if (module_exists('strip_utf8mb4')) {
+      // Filter the comment textarea of any emoticons.
+      $form_state['values']['springboard_p2p_personal_campaign_action']['comment'] = $action['comment'] = _strip_utf8mb4_for_text_fields($action['comment'], variable_get('strip_utf8mb4_replace_string', '--'));
+    }
 
     springboard_p2p_save_personal_campaign_action($action);
 

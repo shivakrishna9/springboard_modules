@@ -361,7 +361,7 @@ function springboard_p2p_personal_campaign_webform_confirmations_token_replace_a
  * Implements hook_email_wrappers_token_set_alter().
  */
 function springboard_p2p_personal_campaign_email_wrappers_token_set_alter(&$token_set, $message) {
-  // Not all email wrapper messages come with a submission.
+  // Not all email template messages come with a submission.
   if (!isset($message['params']['submission'])) {
     return;
   }

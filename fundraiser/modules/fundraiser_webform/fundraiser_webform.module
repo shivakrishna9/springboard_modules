@@ -98,9 +98,6 @@ function fundraiser_webform_theme($existing, $type, $theme, $path) {
       'render element' => 'form',
       'file' => 'components/payment_method.inc',
     ),
-    'fundraiser_webform_field_element_wrapper' => array(
-      'render element' => 'element',
-    ),
   );
 }
 
@@ -249,50 +246,6 @@ function fundraiser_webform_webform_submission_presave($node, &$submission) {
       $submission->data[$result->cid] = array('value' => array(0 => NULL));
     }
   }
-}
-
-/**
- * Implements hook_webform_component_render_alter().
- *
- * Adds an additional wrapper function around webform elements.
- */
-function fundraiser_webform_webform_component_render_alter(&$element, $component) {
-  // Only action on donation forms.
-  $node = node_load($component['nid']);
-  if (!fundraiser_is_donation_type($node->type)) {
-    return;
-  }
-
-  // Do not add the wrapper to these component types.
-  $no_wrapper = array(
-    'fieldset',
-    'hidden',
-    'payment_method',
-    'payment_fields',
-  );
-
-  if (!in_array($component['type'], $no_wrapper)) {
-    if (!isset($element['#theme_wrappers'])) {
-      $element['#theme_wrappers'] = array();
-    }
-
-    $element['#theme_wrappers'][] = 'fundraiser_webform_field_element_wrapper';
-  }
-}
-
-/**
- * Theme wrapper function to add common classes to webform elements.
- */
-function theme_fundraiser_webform_field_element_wrapper(&$variables) {
-  // Get the component form key for this field.
-  $key = $variables['element']['#webform_component']['form_key'];
-  $class = 'fundraiser-' . drupal_clean_css_identifier($key) . '-element';
-
-  // Add this class between the hardcoded webform classes.
-  $webform_classes = 'form-item webform-component';
-  $output = str_replace($webform_classes, $webform_classes . ' ' . $class, $variables['element']['#children']);
-
-  return $output;
 }
 
 /**

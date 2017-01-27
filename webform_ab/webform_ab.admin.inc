@@ -151,9 +151,16 @@ function webform_ab_test_webforms($node) {
   $rows = array();
   if (!empty($node->included_webforms) && is_array($node->included_webforms)) {
     foreach ($node->included_webforms as $webform_nid => $webform_details) {
+      $webform_node = node_load($webform_nid);
+      if ($internal_name = _webform_ab_get_internal_name($webform_details['webform_nid'])) {
+        $title = $internal_name;
+      }
+      else {
+        $title = $webform_details['title'];
+      }
       $removal_link = l(t('remove from test'), 'node/' . $node->nid . '/webforms/remove/' . $webform_nid);
       $rows[] = array(
-        $webform_details['title'],
+        l($title, 'node/' . $webform_nid),
         $status_labels[$webform_details['status']],
         l(t('view'), 'node/' . $webform_nid) . ' ' .
         l(t('edit'), 'node/' . $webform_nid . '/edit') . ' ' .
@@ -229,7 +236,7 @@ function webform_ab_webform_list_add($form, &$form_state, $node) {
       $disabled_descr = t('There are no more webforms available to be added to this Multivariate test.');
     }
     else {
-      $disabled_descr = t('Webforms cannot be added or removed because testing has started.');
+      $disabled_descr = t('Webforms cannot be added or removed because testing has started. Click "Reset Data" to add or remove tests.');
     }
     $form['add_form_id']['#description'] = $disabled_descr;
   }
@@ -394,24 +401,37 @@ function _webform_ab_get_internal_name($nid) {
 /**
  * Returns TRUE if any webform_ab tests are populated with data.
  *
- * @param $test__node
+ * @param object $test_node
  *   Node Object of the a/b test node.
+ *
+ * @return bool
+ *   TRUE or FALSE whether testing ahs started.
  *
  */
 function _webform_ab_has_testing_started($test_node) {
+
+  $hits = db_query('SELECT COUNT(hit_id) as hits FROM {webform_ab_hits} WHERE test_nid = :test_nid ', array(':test_nid' => $test_node->nid))->fetchField();
+
+  if (!$hits) {
+    // Test hasn't started yet.
+    return;
+  }
+
   $enabled_win_conditions = array();
   $enabled_win_conditions_query = db_query("SELECT plugin_key FROM {webform_ab_win_conditions} " .
     "WHERE test_nid = :webform_ab_nid", array(':webform_ab_nid' => $test_node->nid));
   foreach ($enabled_win_conditions_query as $condition_data) {
     $enabled_win_conditions[] = $condition_data->plugin_key;;
   }
-
   $win_conditions = _webform_ab_get_win_condition_plugins();
   foreach ($win_conditions as $plugin_key => $plugin) {
+
     if (!in_array($plugin_key, $enabled_win_conditions)) {
       continue;
     }
+
     if ($has_ab_test_started_function = ctools_plugin_get_function($plugin, 'current value')) {
+
       foreach ($test_node->included_webforms as $webform_nid => $data) {
         if (function_exists($has_ab_test_started_function)) {
           if ($has_ab_test_started_function($webform_nid, array(), $test_node)) {

@@ -1,8 +1,6 @@
-console.log('f')
-
 Drupal.behaviors.fundraiserGatewayBehavior = {
 
-attach: function(context, settings) { (function($) {
+  attach: function(context, settings) { (function($) {
     // Payment selection triggered changes.
     function paymentImages() {
       var gateway = $(this).val();
@@ -11,20 +9,23 @@ attach: function(context, settings) { (function($) {
       var labelImg = Drupal.settings.fundraiser[gateway].selected_image;
       // Automatically change submit button text when payment gateway selected.
       if (typeof(text) !== "undefined") {
+        var oldText = $("#edit-submit").val().toUpperCase();
         $("#edit-submit").val(text);
         var fsm = $(".fundraiser_submit_message");
-        var fsmHtml = fsm.html().replace('SUBMIT', text.toUpperCase());
-        fsm.html(fsmHtml);
+        if (fsm.length > 0) {
+          var fsmHtml = fsm.html().replace(oldText, text.toUpperCase());
+          fsm.html(fsmHtml);
+        }
       }
       $('label[for='+paymentId+'] img').attr('src', labelImg);
       $("input[name='submitted[payment_information][payment_method]']").each(function(gateway) {
         if (!$(this).is(":checked")) {
-          var gateway = $(this).val();
+          gateway = $(this).val();
           var paymentId = this.id;
           var labelImg = Drupal.settings.fundraiser[gateway].unselected_image;
           $('label[for='+paymentId+'] img').attr('src', labelImg);
         }
-      })
+      });
     }
 
     // Change payment method image on hover
@@ -68,9 +69,11 @@ attach: function(context, settings) { (function($) {
         // Change payment option image based on payment selection and hover.
         $('input[class*="fundraiser-payment-methods"]').change(paymentImages);
       }
-    } catch(e) {}
+    } catch (e) {
+      console.log(e);
+    }
     // Show payment option "selected" images when rolling over.
     $('img[id*="payment-option-img"]').hover(hoverInImage, hoverOutImage);
 
   })(jQuery); }
-}
+};
