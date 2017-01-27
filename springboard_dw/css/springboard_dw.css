@@ -22,9 +22,7 @@ body .view-springboard-dw-donations-report .view-content a#sb-queue-csv-download
   text-shadow: none;
 }
 body .view-springboard-dw-donations-report .view-content #sbv-export-download-msg {
-  margin-top: -20px;
-  position: absolute;
-  right: 0;
+  float: right;
 }
 
 .view-springboard-dw-donations-report .view-header p {
