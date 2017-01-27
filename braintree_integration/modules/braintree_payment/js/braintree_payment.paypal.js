@@ -1,7 +1,4 @@
 (function($) {
-  var BraintreePaypalCompact = function(settings) {
-    //console.log(settings);
-  }
 
   Drupal.behaviors.braintreePaypal = {
     attach: function(context, settings) {
@@ -14,6 +11,10 @@
           populatePhone(payLoad);
           if (verifyPaypalFields(payLoad)) {
             btInstance.$form.submit();
+          }
+          else {
+            // Missing required fields, expose them.
+            compactPaypal(false);
           }
         }
       });

@@ -474,6 +474,8 @@
           }
 
           $.data(parent.$form[0], 'events')['submit'] = parent.callbacks;
+          
+          $(document).trigger('braintree.autoFilled', [parent, address, autofilled]);
 
           // Auto-submit the form if no fields were auto-filled from the values
           // in the payload object.
@@ -534,7 +536,6 @@
           fieldsHaveBeenAutoFilled = true;
         }
       });
-      $(document).trigger('braintree.autoFilled', [this, obj, fieldsHaveBeenAutoFilled]);
       return fieldsHaveBeenAutoFilled;
     }
 
