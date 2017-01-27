@@ -33,6 +33,7 @@ function secure_autofill_js_callback_get_amounts($gs) {
   }
   else {
     // Decrypt gs per dynamic gift strings.
+    // TODO check for expiration as appropriate.
     $raw_qs = secure_autofill_decrypt($gs);
     $json['content'] = secure_autofill_parse_qs($raw_qs);
   }
@@ -228,7 +229,7 @@ function _secure_autofill_pkcs5_unpad($text) {
   if ($pad > strlen($text)) {
     return FALSE;
   }
-  return str_pad($text, 0, -1 * $pad);
+  return substr($text, 0, -1 * $pad);
 }
 
 /**

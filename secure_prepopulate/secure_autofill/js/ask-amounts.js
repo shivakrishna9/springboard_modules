@@ -106,7 +106,6 @@
             }
 
             // Set recurring default.
-            // TODO this needs to work on change to recurring.
             if (typeof(data.content.recurring_default) !== 'undefined') {
               // Get the recurring_default amount as returned and attempt to set it.
               var amounts = $('#edit-submitted-donation-recurring-amount .form-item input');
