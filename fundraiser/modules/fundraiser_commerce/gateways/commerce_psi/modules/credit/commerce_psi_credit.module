@@ -75,6 +75,7 @@ function commerce_psi_credit_submit_form($payment_method, $pane_values = array()
  * Payment method callback: checkout form submission.
  */
 function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  dpm($pane_values);
   dpm($payment_method);
   // Determine the credit card type if possible for use in later code.
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
@@ -184,7 +185,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
     $success = FALSE;
   }
 
-  $transaction->status  = $success ? COMMERCE_PAYMENT_STATUS_SUCCESS : COMMERCE_PAYMENT_STATUS_FAILURE;
+  $transaction->status = $success ? COMMERCE_PAYMENT_STATUS_SUCCESS : COMMERCE_PAYMENT_STATUS_FAILURE;
   $transaction->remote_status = $response->Approved;
 
   // Build the response message.
@@ -199,6 +200,20 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   if ($success) {
     $transaction->message .= '; Authorization code: !auth_code';
     $transaction->message_variables['!auth_code'] = $response->AuthorizationCode;
+
+    $remote_id = (string) $response->Token;
+    // Save the card.
+    $card = commerce_cardonfile_new();
+    $card->uid = $order->uid;
+    $card->payment_method = $payment_method['method_id'];
+    $card->instance_id = $payment_method['instance_id'];
+    $card->remote_id = $remote_id;
+    $card->card_type = $pretty_card_type;
+    $card->card_name = !empty($card_data->card_name) ? $card_data->card_name : '';
+    $card->card_number = $pane_values['credit_card']['number'];
+    $card->card_exp_month = $pane_values['credit_card']['exp_month'];
+    $card->card_exp_year = $pane_values['credit_card']['exp_year'];
+    $card->status = 1;
   }
 
   // Save the transaction information.

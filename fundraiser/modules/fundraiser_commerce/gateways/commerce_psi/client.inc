@@ -26,7 +26,7 @@ class PsiClient {
     try {
       $this->soapclient = new SoapClient($this->wsdl);
     }
-    catch (Exception $ex) {
+    catch (SoapFault $ex) {
       watchdog('commerce_psi', 'Payment Services wsdl is not available.',
         array(),
         WATCHDOG_ERROR);
