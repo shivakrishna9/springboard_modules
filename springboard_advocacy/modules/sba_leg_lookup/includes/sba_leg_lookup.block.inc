@@ -207,7 +207,7 @@ function sba_leg_lookup_legislator_lookup_form($form, &$form_state, $mb_delta) {
     $form['sbp_address'] = array(
       '#type' => 'textfield',
       '#title' => t('Street Address'),
-      '#description' => t('Do not include apartment number or suite.'),
+      '#description' => t('Do not include apartment or suite numbers.'),
       '#required' => TRUE,
     );
 
