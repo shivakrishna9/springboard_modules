@@ -214,16 +214,16 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
   }
 
   // Upload each file to S3 and return the pre-signed S3 URL.
-  $s3_pre_signed_urls = array();
   if (!$debug) {
     $s3_pre_signed_urls = _springboard_export_drush_export_aws_files_upload($file_paths);
-
-    // Send the success email alert:
-    if (!empty($s3_pre_signed_uls)) {
-      $presigned_url = array_values($s3_pre_signed_uls)[0];
-      springboard_dw_csv_export_completed_notification($presigned_url, isset($recipient) ? $recipient : $user->mail);
-    }
   }
+  else {
+    $s3_pre_signed_urls = array('https://google.com'); // Google is used in place of an S3 URL for testing purposes.
+  }
+
+  // Send the success email alert:
+  $s3_pre_signed_urls = is_array($s3_pre_signed_urls) ? $s3_pre_signed_urls : array();
+  springboard_dw_csv_export_completed_notification($s3_pre_signed_urls, isset($recipient) ? $recipient : $user->mail);
 
   $duration = (time() - $start) . 's';
   $export_summary = array(
