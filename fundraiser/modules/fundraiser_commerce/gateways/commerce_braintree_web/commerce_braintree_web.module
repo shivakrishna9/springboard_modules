@@ -606,7 +606,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   }
   else {
     form_set_error('braintree', t('An unknown error occurred. Please try again or contact us for help.'));
-    watchdog('commerce_braintree_web', 'Niether paymentMethodToken nor paymentMethodNonce available when trying to process order:<br/> <pre>@print_r</pre>', array('@print_r' => var_export($order, TRUE)), WATCHDOG_ERROR, NULL);
+    watchdog('commerce_braintree_web', 'Neither paymentMethodToken nor paymentMethodNonce available when trying to process order:<br/> <pre>@print_r</pre>', array('@print_r' => var_export($order, TRUE)), WATCHDOG_ERROR, NULL);
     return FALSE;
   }
 

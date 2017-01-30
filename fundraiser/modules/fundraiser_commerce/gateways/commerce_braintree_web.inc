@@ -405,7 +405,9 @@ function commerce_braintree_web_fundraiser_commerce_update($donation, $card_data
     module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
     $card_type = commerce_payment_validate_credit_card_type($context['result']->paymentMethod->bin, array_keys(commerce_payment_credit_card_types()));
     $all_types = commerce_payment_credit_card_types();
-    $card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : 'card';
+    // If the card type isn't found, use the card type from the response object
+    // if it's set.
+    $card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : !empty($context['result']->paymentMethod->cardType) ? $context['result']->paymentMethod->cardType : 'card';
 
     // Update cardonfile entity.
     $card_data->payment_method = $payment_method['method_id'];
@@ -416,6 +418,21 @@ function commerce_braintree_web_fundraiser_commerce_update($donation, $card_data
     $card_data->card_exp_month = $context['result']->paymentMethod->expirationMonth;
     $card_data->card_exp_year = $context['result']->paymentMethod->expirationYear;
     $card_data->status = 1;
+
+    // Update {braintree_vault_payment_methods} record.
+    db_merge('braintree_vault_payment_methods')
+    ->key(array(
+      'payment_method_token' => $context['result']->paymentMethod->token,
+      'card_id' => $card_data->card_id,
+    ))
+    ->fields(array(
+      'uid' => $card_data->uid,
+      'customer_id' => $context['result']->paymentMethod->customerId,
+      'payment_method_token' => $context['result']->paymentMethod->token,
+      'card_id' => $card_data->card_id,
+      'unique_identifier' => $context['result']->paymentMethod->uniqueNumberIdentifier,
+    ))
+    ->execute();
 
     // Save and log the creation of the new card on file.
     commerce_cardonfile_save($card_data);

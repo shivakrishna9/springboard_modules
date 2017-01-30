@@ -595,7 +595,7 @@ function braintree_vault_add_payment_method_record($data) {
   }
 
   db_merge('braintree_vault_payment_methods')
-    ->key(array('uid' => $data['uid']))
+    ->key(array('unique_identifier' => $data['unique_identifier']))
     ->fields(array(
       'uid' => $data['uid'],
       'customer_id' => $data['customer_id'],
@@ -659,7 +659,8 @@ function braintree_vault_commerce_braintree_web_submit_customer_alter(&$sale_dat
   }
 
   // Look for the user's address ID.
-  $address_id = db_query('SELECT address_id FROM {braintree_vault_addresses} bva LEFT JOIN {field_data_commerce_customer_address} fdcca ON bva.profile_id = fdcca.entity_id WHERE commerce_customer_address_country = :ccac AND commerce_customer_address_administrative_area = :ccaaa AND commerce_customer_address_locality = :ccal AND commerce_customer_address_postal_code = :ccapc AND commerce_customer_address_thoroughfare = :ccat AND commerce_customer_address_first_name = :ccafn AND commerce_customer_address_last_name = :ccaln', array(
+  $address_id = db_query('SELECT address_id FROM {braintree_vault_addresses} bva LEFT JOIN {field_data_commerce_customer_address} fdcca ON bva.profile_id = fdcca.entity_id WHERE customer_id = :customer_id AND commerce_customer_address_country = :ccac AND commerce_customer_address_administrative_area = :ccaaa AND commerce_customer_address_locality = :ccal AND commerce_customer_address_postal_code = :ccapc AND commerce_customer_address_thoroughfare = :ccat AND commerce_customer_address_first_name = :ccafn AND commerce_customer_address_last_name = :ccaln', array(
+      ':customer_id' => $sale_data['customerId'],
       ':ccac' => $sale_data['billing']['countryCodeAlpha2'],
       ':ccaaa' => $sale_data['billing']['region'],
       ':ccal' => $sale_data['billing']['locality'],

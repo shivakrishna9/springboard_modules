@@ -97,7 +97,7 @@ function braintree_vault_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('uid'),
+    'primary key' => array('card_id'),
     'indexes' => array(
       'customer_id' => array('customer_id'),
       'uid' => array('uid'),
@@ -245,7 +245,7 @@ function braintree_vault_update_7001() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('uid'),
+    'primary key' => array('card_id'),
     'indexes' => array(
       'customer_id' => array('customer_id'),
       'uid' => array('uid'),
