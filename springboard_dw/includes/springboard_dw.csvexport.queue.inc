@@ -179,7 +179,7 @@ function springboard_dw_csv_export_insert($type, $filters, $recipient) {
   return $queue_item_created;
 }
 
-function springboard_dw_csv_export_completed_notification($download_url,
+function springboard_dw_csv_export_completed_notification($download_urls,
                                                           $recipient) {
   // Use the user/1 email if a recipient is not provided or is invalid:
   if (!is_string($recipient) || strpos($recipient, '@') === FALSE) {
@@ -200,7 +200,7 @@ function springboard_dw_csv_export_completed_notification($download_url,
   $api_payload = [
     'emailAuthenticationToken' => $authentication_token,
     'recipient_address'        => $recipient,
-    'download_url'             => $download_url,
+    'download_url'             => $download_urls,
   ];
 
   // Instantiate an API client instance.
