@@ -80,6 +80,8 @@ function springboard_export_drush_export_action_submissions_csv() {
  *   Defines how to alter the query for this view based on drush filtering and sorting.
  */
 function _springboard_export_drush_export_view_data_csv($view_id, $export_display_id, $filename_descr, $drush_field_map) {
+  require_once "sites/all/libraries/springboard_composer/vendor/autoload.php";
+
   // Drush may have a low default memory_limit; change that to 1.5GB:
   ini_set('memory_limit', '1536M');
 
@@ -240,19 +242,9 @@ function _springboard_export_drush_export_view_data_csv($view_id, $export_displa
 
   watchdog('springboard_export', 'CSV export result: ' . print_r($export_summary, 1));
 
-  if ($debug) {
-    $export_summary['file_gen_disabled'] = 1;
-    echo "\n\n";
-    print_r($export_summary);
-    echo "\n\n";
-  }
-
   // Return the job summary.
   echo json_encode($export_summary);
 
-  if ($debug) {
-    echo "\n\n";
-  }
 }
 
 
@@ -360,9 +352,6 @@ function _springboard_export_drush_export_aws_files_upload($file_paths) {
       // Do the S3 upload.
       $result = $uploader->upload();
 
-      // Debug the completed upload.
-      _springboard_export_drush_export_guard_debug_output($debug, "Upload complete: {$result['ObjectURL']}\n");
-
       // Track the upload success.
       $s3_uploaded_files[] = $path;
 
@@ -407,15 +396,4 @@ function _springboard_export_drush_export_aws_files_upload($file_paths) {
   }
 
   return $s3_pre_signed_urls;
-}
-
-/**
- * Only output debug information if the debug flag is set for the CSV processing.
- *
- * @param $output
- */
-function _springboard_export_drush_export_guard_debug_output($debug_flag, $output) {
-  if ($debug_flag) {
-    drush_print_r($output);
-  }
 }
