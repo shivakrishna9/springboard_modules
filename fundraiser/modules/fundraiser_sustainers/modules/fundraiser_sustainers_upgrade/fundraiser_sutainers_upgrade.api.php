@@ -20,11 +20,11 @@
  * @param $master_did
  *   The donation id of the master (original) donation.
  *
- * @param $amount
- *   The amount that future donations are upgraded to.
+ * @param $upgrade_form_values
+ *   Flattened array of submitted webform component values.
  *
  */
-function hook_fundraiser_sustainers_upgrade_success($master_did, $amount) {
+function hook_fundraiser_sustainers_upgrade_success($master_did, $upgrade_form_values) {
 
 }
 

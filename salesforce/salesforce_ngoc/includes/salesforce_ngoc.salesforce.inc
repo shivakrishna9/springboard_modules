@@ -94,6 +94,17 @@ function salesforce_ngoc_salesforce_mapping_map_fields_alter(&$fields, $context)
 }
 
 /**
+ * Implements hook_salesforce_queue_create_item_alter()
+ */
+function salesforce_ngoc_salesforce_queue_create_item_alter(&$item) {
+  if ($item['object_type'] == 'Sustainers_Upgrade__c') {
+    // Add a token for the contact. The user's id is mapped, so we should be
+    // able to pluck it from the object.
+    $item['sobject']->fields['Contact__c'] = sprintf('[Contact:user:%d]', $item['sobject']->fields['User_ID__c']);
+  }
+}
+
+/**
  * Implements hook_salesforce_sync_save_map_alter().
  */
 function salesforce_ngoc_salesforce_sync_save_map_alter($record) {

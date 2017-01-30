@@ -533,6 +533,10 @@ function fundraiser_sustainers_upgrade_before_webform_submit($form, $form_state)
       $_SESSION[$form['#node']->nid . '_stop_mail'] = TRUE;
     }
     _fundraiser_sustainers_donation_amount_form_update_donations($donation->recurring->master_did, $payload_decimal, $formatted_amount, 'Sustainers Upgrade Module');
+    // Notify other modules of upgrade success.
+    $submitted = $form_state['values']['submitted'];
+    $upgrade_form_values = _fundraiser_webform_submission_flatten($form['#node']->nid, $submitted);
+    module_invoke_all('fundraiser_sustainers_upgrade_success', $donation->recurring->master_did, $upgrade_form_values);
   }
 }
 
@@ -544,7 +548,6 @@ function fundraiser_sustainers_upgrade_before_webform_submit($form, $form_state)
  * Fires after webform's submit hook.
  */
 function fundraiser_sustainers_upgrade_after_webform_submit($form, $form_state) {
-
   springboard_hmac_save($_SESSION['springboard_hmac']['hmac']);
   $status = $form_state['values']['status'];
   $node = $form['#node'];

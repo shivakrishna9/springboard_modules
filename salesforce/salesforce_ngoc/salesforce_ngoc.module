@@ -7,13 +7,15 @@
 
 define('SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE', 'Home');
 // define('SALESFORCE_NGOC_DEFAULT_PAYMENT_METHOD_TYPE', 'Third Party Charge');
-define('SALESFORCE_NGOC_DEFAULT_RECORD_TYPE', 'Donation');
+define('SALESFORCE_NGOC_DEFAULT_RECORD_TYPE', 'Pledge');
 define('SALESFORCE_NGOC_DEFAULT_FREQUENCY', 'One Payment');
 define('SALESFORCE_NGOC_DEFAULT_POLL_RECORD_LIMIT', 2000);
 
 require_once 'includes/salesforce_ngoc.polling.inc';
 require_once 'includes/salesforce_ngoc.salesforce.inc';
 require_once 'includes/salesforce_ngoc.sync_map.inc';
+require_once 'includes/salesforce_ngoc.fundraiser_sustainers.inc';
+
 
 /**
  * Implements hook_cron().
