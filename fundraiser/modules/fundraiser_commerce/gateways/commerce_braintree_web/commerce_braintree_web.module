@@ -142,7 +142,7 @@ function commerce_braintree_web_cardonfile_delete($form, &$form_state, $payment_
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function commerce_braintree_web_form_fundraiser_update_billing_form_alter(&$form, &$form_state, $form_id) {
+function commerce_braintree_web_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'fundraiser_update_billing_form' || (!empty($form['#node']->type) && fundraiser_is_donation_type($form['#node']->type))) {
     global $user;
 
