@@ -457,6 +457,9 @@ function fundraiser_node_update($node) {
   // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
     _fundraiser_update_fundraiser($node);
+
+    // Update recurring/non-recurring other components' descriptions on node save, if needed:
+    _fundraiser_update_other_amount_component_descr($node);
   }
 }
 
@@ -1088,7 +1091,7 @@ function fundraiser_fundraiser_field_info() {
     '#type' => 'textfield',
     '#required' => 0,
     '#extra' => array(
-      'description' => t('Minimum payment $ @min.', array('@min' => number_format(variable_get('fundraiser_default_minimum', 10.00), 2))),
+      'description' => '',
       'width' => 10,
       'field_prefix' => '$',
     ),
@@ -1224,8 +1227,6 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
 
   // If donation amounts don't exist, use amount as is.
   if (empty($fundraiser->donation_amounts) || !is_array($fundraiser->donation_amounts)) {
-    // Show the minimum amount when only displaying an amount text box.
-    $field['#extra']['description'] = 'Minimum payment ' . $currency_symbol . number_format($fundraiser->minimum_donation_amount, 2) . '.';
     return $field;
   }
   // Else we want a select field.
@@ -1292,9 +1293,17 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
   if (!$fundraiser->show_other_amount) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
-  // Update the min with fundraiser's min.
-  $field['#extra']['description'] = $field['#node_extra_settings']['description'] =
-    'Minimum payment [currency-symbol]' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
+
+  // Set default descriptions:
+  if (isset($field['#create_callback'])) {
+    // Is it recurring or not:
+    if ($field['#create_callback'] == '_fundraiser_other_amount_field_create') {
+      $field['#extra']['description'] = 'Minimum payment [currency-symbol][min-donation-amount].';
+    }
+    elseif ($field['#create_callback'] == '_fundraiser_sustainers_other_amount_field_create') {
+      $field['#extra']['description'] = 'Minimum payment [currency-symbol][min-recurring-donation-amount].';
+    }
+  }
 
   // Return the field to be created.
   return $field;
@@ -1318,6 +1327,14 @@ function _fundraiser_other_amount_field_display($form, $form_state, $field) {
   // Replace the currency-symbol token.
   if (isset($field['#description'])) {
     $field['#description'] = str_replace('[currency-symbol]', $currency['symbol'], $field['#description']);
+  }
+
+  // Replace the minimum donation amount token for recurring and non-recurring amounts:
+  if (isset($field['#description']) && isset($form['#node']->nid)) {
+    $min_donation_amount = _fundraiser_get_min_donation_amount($form['#node']->nid);
+    $min_recurring_donation_amount = _fundraiser_get_min_recurring_donation_amount($form['#node']->nid);
+    $field['#description'] = str_replace('[min-donation-amount]', $min_donation_amount, $field['#description']);
+    $field['#description'] = str_replace('[min-recurring-donation-amount]', $min_recurring_donation_amount, $field['#description']);
   }
 
   return $field;
@@ -4159,4 +4176,145 @@ function fundraiser_donation_get_donations_by_uid($uid, $limit = 0, $order_by = 
  */
 function fundraiser_donation_get_newest_donation_by_uid($uid) {
   return fundraiser_donation_get_donations_by_uid($uid, 1);
+}
+
+/**
+ * Helper function to alter other_amount and recurring_other_amount component description
+ * text to replace string literal values for currency token and min. payment amount
+ * with corresponding tokens. 
+ *
+ * If the minimum amount has changed on node_update BUT the old description wasn't
+ * able to be updated to contain both the currency symbol token AND the min amount token
+ * then replace the whole description with its default value, which now contains tokens.
+ * 
+ * @param $node
+ *   The node object.
+ */
+function _fundraiser_update_other_amount_component_descr($node) {
+  if (!isset($node->webform['components'])) {
+    return;
+  }
+  foreach ($node->webform['components'] as $cid => $component) {
+    if (!isset($component['extra']['description'])
+      || ($component['form_key'] != 'recurring_other_amount' && $component['form_key'] != 'other_amount')) {
+      continue;
+    }
+    $form_key = $component['form_key'];
+    $currency = fundraiser_get_currency_from_node($node);
+    $currency_symbol = isset($currency['symbol']) ? $currency['symbol'] : '$';
+    $current_descr = $component['extra']['description'];
+
+    // Gather information about current and previous values:
+    $currency = fundraiser_get_currency_from_node($node);
+    $currency_symbol = isset($currency['symbol']) ? $currency['symbol'] : '$';
+    if ($form_key == 'other_amount') {
+      $previous_min_amount = isset($node->original->minimum_donation_amount) ? $node->original->minimum_donation_amount : '';
+      $current_min_amount = isset($node->minimum_donation_amount) ? $node->minimum_donation_amount : ''; 
+      $min_amount_token = '[min-donation-amount]';
+    }
+    elseif ($form_key == 'recurring_other_amount') {
+      $previous_min_amount = isset($node->original->recurring_minimum_donation_amount) ? $node->original->recurring_minimum_donation_amount : '';
+      $current_min_amount = isset($node->recurring_minimum_donation_amount) ? $node->recurring_minimum_donation_amount : '';
+      $min_amount_token = '[min-recurring-donation-amount]';
+    }
+
+    // If the current description is empty and the min-value hasn't changed, maintain the empty description:
+    if ($current_descr == '' && ($current_min_amount - $previous_min_amount == 0)) {
+      _fundraiser_update_webform_component_descr($node->nid, $cid, '');
+      continue;
+    }
+
+    // If the current description already contains tokens for both currency symbol and default amount
+    // then it is already correct and no further changes are needed:
+    if (strpos($current_descr, '[currency-symbol]') !== FALSE && strpos($current_descr, $min_amount_token) !== FALSE) {
+      continue;
+    }
+
+    // Replace literals with tokens, as long as they are next to each other or a corresponding token;
+    // the goal is to replace literals with tokens while avoiding potential edge cases where a standalone
+    // string literal might legitimately need to remain:
+    $string_literal_targets = array(
+      $currency_symbol . $current_min_amount,
+      '[currency-symbol]' . $current_min_amount,
+      $currency_symbol . $previous_min_amount,
+      '[currency-symbol]' . $previous_min_amount,      
+      $currency_symbol . $min_amount_token,
+    );
+    $replacement = '[currency-symbol]' . $min_amount_token;
+    $descr_was_updated = FALSE;
+    foreach ($string_literal_targets as $target) {
+      if (strpos($current_descr, $target) !== FALSE) {
+        $new_descr = str_replace($target, $replacement, $current_descr);
+        _fundraiser_update_webform_component_descr($node->nid, $cid, $new_descr);
+        $descr_was_updated = TRUE;
+        break;
+      }
+    }
+
+    // If the minimum amount value has changed BUT the currency and min amount tokens
+    // are still not present then replace the whole description with its default value:
+    if (!$descr_was_updated && $current_min_amount != $previous_min_amount) {
+      $default_descr = 'Minimum payment [currency-symbol]' . $min_amount_token . '.';
+      _fundraiser_update_webform_component_descr($node->nid, $cid, $default_descr);
+      continue;
+    }
+  }
+}
+
+
+/**
+ * Helper function which returns minimum donation amount for a given node.
+ *
+ * @param $nid
+ *   The target node's ID
+ */
+function _fundraiser_get_min_donation_amount($nid) {
+  $min_donation_amount = db_query("SELECT minimum_donation_amount FROM {fundraiser} WHERE nid = :nid", array(':nid' => $nid))
+    ->fetchField();
+  if (!$min_donation_amount) {
+    $min_donation_amount = '10.00';
+  }
+  return number_format($min_donation_amount, 2);
+}
+
+/**
+ * Helper function which returns minimum recurring donation amount for a given node.
+ *
+ * @param $nid
+ *   The target node's ID
+ */
+function _fundraiser_get_min_recurring_donation_amount($nid) {
+  if (db_table_exists('fundraiser_sustainers_nodes')) {
+    $min_donation_amount = db_query("SELECT minimum_donation_amount FROM {fundraiser_sustainers_nodes} WHERE nid = :nid", array(':nid' => $nid))
+      ->fetchField();
+  }
+  if (!isset($min_donation_amount) || !$min_donation_amount) {
+    $min_donation_amount = '5.00';
+  }
+  return number_format($min_donation_amount, 2);
+}
+
+/**
+ * Helper function which updates the min donation amount or min recurring donation amount.
+ *
+ * @param $nid
+ *   The target node ID.
+ * @param $cid
+ *   The target webform component ID.
+ * @param $new_descr
+ *   The new description text for this component.
+ */
+function _fundraiser_update_webform_component_descr($nid, $cid, $new_descr) {
+  $extra = db_query("SELECT extra FROM {webform_component} WHERE nid = :nid AND cid = :cid",
+    array(':nid' => $nid, ':cid' => $cid))
+    ->fetchField();
+  if ($extra != FALSE) {
+    $extra_data = unserialize($extra);
+    $extra_data['description'] = $new_descr;
+      db_update('webform_component')
+        ->fields(array('extra' => serialize($extra_data)))
+        ->condition('nid', $nid, '=')
+        ->condition('cid', $cid, '=')
+        ->execute();
+  }
 }
