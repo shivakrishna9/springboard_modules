@@ -140,9 +140,9 @@ function commerce_braintree_web_cardonfile_delete($form, &$form_state, $payment_
 }
 
 /**
- * Implements hook_form_alter().
+ * Implements hook_form_FORM_ID_alter().
  */
-function commerce_braintree_web_form_alter(&$form, &$form_state, $form_id) {
+function commerce_braintree_web_form_fundraiser_update_billing_form_alter(&$form, &$form_state, $form_id) {
   global $user;
 
   $is_credit = isset($form['#node']->gateways['credit']['id']) && strstr($form['#node']->gateways['credit']['id'], 'braintree_hostedfields');
