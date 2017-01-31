@@ -594,8 +594,12 @@ function braintree_vault_add_payment_method_record($data) {
     }
   }
 
+  // Update {braintree_vault_payment_methods} record.
   db_merge('braintree_vault_payment_methods')
-    ->key(array('unique_identifier' => $data['unique_identifier']))
+    ->key(array(
+      'payment_method_token' => $data['payment_method_token'],
+      'card_id' => $data['card_id'],
+    ))
     ->fields(array(
       'uid' => $data['uid'],
       'customer_id' => $data['customer_id'],

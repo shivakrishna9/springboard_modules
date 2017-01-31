@@ -526,7 +526,7 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
  */
 function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
   // If the gateway isn't set up to use cardonfile, return early.
-  if (empty($form['#donation']->gateway['gateway_details']['settings']['cardonfile'])) {
+  if (empty($form['#donation']->gateway['gateway_details']['cardonfile']) && empty($form['#donation']->gateway['gateway_details']['settings']['cardonfile'])) {
     return;
   }
 
@@ -540,7 +540,7 @@ function _fundraiser_quick_donate_set_new_qd_cof(&$form, &$form_state) {
 
   // If the card number is different, don't do anything, and let the other
   // submission handler handle this.
-  if ($values['cardonfile']['old_card']->card_number != $card->card_number) {
+  if (empty($values['cardonfile']['old_card']) || $values['cardonfile']['old_card']->card_number != $card->card_number) {
     return;
   }
 

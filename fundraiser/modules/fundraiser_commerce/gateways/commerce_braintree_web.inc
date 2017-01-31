@@ -291,7 +291,7 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
  */
 function commerce_braintree_web_fundraiser_commerce_update($donation, $card_data = NULL) {
   // Update the billing address.
-  $result = db_query('SELECT customer_id, address_id FROM {braintree_vault_addresses} WHERE payment_method_token = :pmt', array(':pmt' => $card_data->remote_id))->fetchAll();
+  $result = db_query('SELECT customer_id, address_id, profile_id FROM {braintree_vault_addresses} WHERE payment_method_token = :pmt', array(':pmt' => $card_data->remote_id))->fetchAll();
   $result = array_shift($result);
 
   if (empty($result)) {
@@ -300,6 +300,7 @@ function commerce_braintree_web_fundraiser_commerce_update($donation, $card_data
 
   $customer_id = $result->customer_id;
   $address_id = $result->address_id;
+  $profile_id = $result->profile_id;
 
   $submission_data = $donation->submission_data;
   $donation_data = $donation->donation;
@@ -343,7 +344,7 @@ function commerce_braintree_web_fundraiser_commerce_update($donation, $card_data
 
   // If the addresses don't match call the API to update.
   if ($address_change) {
-    braintree_vault_address_update($customer_id, $address_id, $address_data, $donation->gateway['gateway_details']['settings']);
+    $result = braintree_vault_address_update($customer_id, $address_id, $address_data, $donation->gateway['gateway_details']['settings']);
 
     $options['billingAddressId'] = $address_id;
 
@@ -415,24 +416,50 @@ function commerce_braintree_web_fundraiser_commerce_update($donation, $card_data
     $card_data->card_type = $card_type;
     $card_data->card_name = !empty($context['result']->paymentMethod->cardholderName) ? $context['result']->paymentMethod->cardholderName : $context['result']->paymentMethod->billingAddress->firstName . ' ' . $context['result']->paymentMethod->billingAddress->lastName;
     $card_data->card_number = $context['result']->paymentMethod->last4;
+    $exp_month_different = $context['result']->paymentMethod->expirationMonth != $card_data->card_exp_month;
     $card_data->card_exp_month = $context['result']->paymentMethod->expirationMonth;
+    $exp_year_different = $context['result']->paymentMethod->expirationYear != $card_data->card_exp_year;
     $card_data->card_exp_year = $context['result']->paymentMethod->expirationYear;
     $card_data->status = 1;
 
     // Update {braintree_vault_payment_methods} record.
     db_merge('braintree_vault_payment_methods')
-    ->key(array(
-      'payment_method_token' => $context['result']->paymentMethod->token,
-      'card_id' => $card_data->card_id,
-    ))
-    ->fields(array(
-      'uid' => $card_data->uid,
-      'customer_id' => $context['result']->paymentMethod->customerId,
-      'payment_method_token' => $context['result']->paymentMethod->token,
-      'card_id' => $card_data->card_id,
-      'unique_identifier' => $context['result']->paymentMethod->uniqueNumberIdentifier,
-    ))
-    ->execute();
+      ->key(array(
+        'payment_method_token' => $context['result']->paymentMethod->token,
+        'card_id' => $card_data->card_id,
+      ))
+      ->fields(array(
+        'uid' => $card_data->uid,
+        'customer_id' => $context['result']->paymentMethod->customerId,
+        'payment_method_token' => $context['result']->paymentMethod->token,
+        'card_id' => $card_data->card_id,
+        'unique_identifier' => $context['result']->paymentMethod->uniqueNumberIdentifier,
+      ))
+      ->execute();
+
+    db_merge('braintree_vault_addresses')
+      ->key(array(
+        'customer_id' => $context['result']->paymentMethod->customerId,
+        'address_id' => $address_id,
+      ))
+      ->fields(array(
+        'customer_id' => $context['result']->paymentMethod->customerId,
+        'address_id' => $address_id,
+        'payment_method_token' => $context['result']->paymentMethod->token,
+        'uid' => $card_data->uid,
+        'profile_id' => $profile_id,
+      ))
+      ->execute();
+
+    // Check if the expiration date changed. If it has and this is a recurring
+    // series, we need to add the submission handler from the
+    // fundraiser_sustainers module to the submission handler array.
+    if (empty($donation->update_from_sustainer) && module_exists('fundraiser_sustainers') && property_exists($donation, 'recurring')) {
+      if ($exp_month_different || $exp_year_different) {
+        $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did);
+        fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $donation->submission_data);
+      }
+    }
 
     // Save and log the creation of the new card on file.
     commerce_cardonfile_save($card_data);

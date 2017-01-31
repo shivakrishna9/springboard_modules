@@ -2896,6 +2896,8 @@ function fundraiser_sustainers_update_billing_info_in_series($donations, $submis
 
     $donation->sustainer_update_first = $sustainer_update_first;
 
+    $donation->update_from_sustainer = TRUE;
+
     // Save each donation.
     fundraiser_donation_update($donation);
 
