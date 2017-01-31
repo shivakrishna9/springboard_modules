@@ -3831,7 +3831,7 @@ function _fundraiser_sustainers_update_recurring($donation) {
  */
 function _fundraiser_sustainers_delete_recurring($did) {
   $original = _fundraiser_sustainers_get_recurring_by_did($did);
-  db_delete('fundraiser_sustainers')->condition('did', $did)->execute();
+  db_delete('fundraiser_sustainers')->condition('master_did', $did)->execute();
 
   $log_record = array(
     'did' => $did,
@@ -4543,27 +4543,41 @@ function _fundraiser_sustainers_calculate_installments($donation) {
  *   The QD field record.
  */
 function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
-  $data = db_query('SELECT fd.*, fs.master_did, fss.* FROM {fundraiser_donation} fd, {fundraiser_sustainers} fs LEFT JOIN {fundraiser_sustainers_series} fss ON fss.did = fs.master_did WHERE fd.status = :status AND fd.card_id = :card_id AND fd.did = fs.did GROUP BY fs.master_did', array(
+  // Select donations that have the associated card_id value, and key the
+  // results by `did` (important).
+  $data = db_query('SELECT fd.*, fs.*, fss.* FROM {fundraiser_donation} fd, {fundraiser_sustainers} fs, {fundraiser_sustainers_series} fss WHERE fd.did = fs.did AND fd.card_id = :card_id AND fs.master_did = fss.did GROUP BY fd.sid', array(
     ':card_id' => $card_id,
-    ':status' => 'pending_future_payment',
-  ))->fetchAll();
+  ))->fetchAllAssoc('did', PDO::FETCH_ASSOC);
 
+  // If no donations have the associated card_id, return early.
   if (empty($data)) {
     return array();
   }
 
   foreach ($data as $key => $row) {
-    $query = db_query('SELECT * FROM {fundraiser_donation} fd WHERE fd.sid = :sid AND fd.status = :status ORDER BY fd.did LIMIT 1', array(
-      ':sid' => $row->sid,
+    // For each donation found, select the first future, non-processed donation
+    // that has the same submission and card IDs.
+    $query = db_query('SELECT * FROM {fundraiser_donation} WHERE sid = :sid AND status = :status AND card_id = :card_id ORDER BY did LIMIT 1', array(
+      ':sid' => $row['sid'],
       ':status' => 'pending_future_payment',
+      ':card_id' => $card_id,
     ))->fetchAssoc();
 
     if (empty($query)) {
+      // If no results, unset this result and continue.
       unset($data[$key]);
       continue;
     }
-
-    $data[$key] = array_merge((array) $data[$key], $query);
+    elseif ($key !== $query['did']) {
+      // Ensure the did matches the key did. If it doesn't move the result to a
+      // new element with the correct keyed did and unset this one.
+      $data[$query['did']] = array_merge($row, $query);
+      unset($data[$key]);
+      continue;
+    }
+    else {
+      $data[$key] = array_merge($row, $query);
+    }
   }
 
   return $data;
@@ -4594,4 +4608,25 @@ function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) 
   }
 
   return $used_by;
+}
+
+/**
+ * Implements hook_fundraiser_commerce_cardonfile_deleted_card_donations_alter().
+ *
+ * For each donation in the array of donations to be deleted, determine if a
+ * series is connected with it, and if so, add the rest of the donations in the
+ * series to the array of donations to be deleted.
+ */
+function fundraiser_sustainers_fundraiser_commerce_cardonfile_deleted_card_donations_alter(&$donations) {
+  foreach ($donations as $donation_id) {
+    $series = db_query('SELECT fs.did FROM {fundraiser_sustainers} fs LEFT JOIN {fundraiser_donation} fd ON fd.did = fs.did WHERE fs.master_did = :did AND fs.did NOT IN (:donations) AND fd.status = :pending_status', array(
+      ':did' => $donation_id,
+      ':donations' => $donations,
+      ':pending_status' => 'pending_future_payment',
+    ))->fetchAllAssoc('did', PDO::FETCH_ASSOC);
+    if (!empty($series)) {
+      $series = array_keys($series);
+      $donations = array_merge($donations, $series);
+    }
+  }
 }

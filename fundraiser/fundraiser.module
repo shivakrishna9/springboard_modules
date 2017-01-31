@@ -2127,6 +2127,8 @@ function fundraiser_donation_cancel($donation) {
   // the fundraiser_donation table's status will be correct when it is updated.
   module_invoke_all('fundraiser_donation_cancel', $donation);
 
+  $donation->cancelled = TRUE;
+
   // Finally, save changes to the donation, updating this donation's status in the
   // fundraiser_donation table to reflect the status set within the commerce_order table:
   fundraiser_donation_update($donation, FALSE);
@@ -2137,7 +2139,15 @@ function fundraiser_donation_cancel($donation) {
  * Generally, not called, but it does happen.
  */
 function fundraiser_donation_delete($donation) {
-  // Make a log entry
+  if (is_numeric($donation)) {
+    $donation = fundraiser_donation_get_donation($donation);
+  }
+
+  // Set a 'deleted' flag so other modules know that this donation is going to
+  // be deleted.
+  $donation->deleted = TRUE;
+
+  // Make a log entry.
   watchdog('fundraiser', 'Donation @id was deleted.',
     array('@id' => $donation->did), WATCHDOG_DEBUG, NULL);
   // Show gateay message if appropriate.
