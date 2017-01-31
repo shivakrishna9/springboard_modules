@@ -81,13 +81,6 @@ function fundraiser_commerce_cardonfile_views_default_views_alter(&$views) {
   $handler->display->display_options['fields']['card_exp']['field'] = 'card_exp';
   $handler->display->display_options['fields']['card_exp']['label'] = 'Expires';
   $handler->display->display_options['fields']['card_exp']['element_default_classes'] = FALSE;
-  /* Field: Commerce Card on File: Card name */
-  $handler->display->display_options['fields']['card_name']['id'] = 'card_name';
-  $handler->display->display_options['fields']['card_name']['table'] = 'commerce_cardonfile';
-  $handler->display->display_options['fields']['card_name']['field'] = 'card_name';
-  $handler->display->display_options['fields']['card_name']['label'] = '';
-  $handler->display->display_options['fields']['card_name']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['card_name']['element_default_classes'] = FALSE;
   /* Field: Commerce Card on File: Billing Profile */
   $handler->display->display_options['fields']['commerce_cardonfile_profile']['id'] = 'commerce_cardonfile_profile';
   $handler->display->display_options['fields']['commerce_cardonfile_profile']['table'] = 'field_data_commerce_cardonfile_profile';
