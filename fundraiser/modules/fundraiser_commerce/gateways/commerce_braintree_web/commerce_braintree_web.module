@@ -143,39 +143,42 @@ function commerce_braintree_web_cardonfile_delete($form, &$form_state, $payment_
  * Implements hook_form_FORM_ID_alter().
  */
 function commerce_braintree_web_form_fundraiser_update_billing_form_alter(&$form, &$form_state, $form_id) {
-  global $user;
+  if ($form_id == 'fundraiser_update_billing_form' || (!empty($form['#node']->type) && fundraiser_is_donation_type($form['#node']->type))) {
+    global $user;
 
-  $is_credit = isset($form['#node']->gateways['credit']['id']) && strstr($form['#node']->gateways['credit']['id'], 'braintree_hostedfields');
-  $is_paypal = isset($form['#node']->gateways['paypal']['id']) && strstr($form['#node']->gateways['paypal']['id'], 'braintree_paypal');
-  $is_applepay = isset($form['#node']->gateways['applepay']['id']) && strstr($form['#node']->gateways['applepay']['id'], 'braintree_applepay');
-  $gateway_is_braintree = isset($form['#donation']->gateway['gateway_details']['module']) && $form['#donation']->gateway['gateway_details']['module'] == 'commerce_braintree_web';
+    $is_credit = isset($form['#node']->gateways['credit']['id']) && strstr($form['#node']->gateways['credit']['id'], 'braintree_hostedfields');
+    $is_paypal = isset($form['#node']->gateways['paypal']['id']) && strstr($form['#node']->gateways['paypal']['id'], 'braintree_paypal');
+    $is_applepay = isset($form['#node']->gateways['applepay']['id']) && strstr($form['#node']->gateways['applepay']['id'], 'braintree_applepay');
+    $gateway_is_braintree = isset($form['#donation']->gateway['gateway_details']['module']) && $form['#donation']->gateway['gateway_details']['module'] == 'commerce_braintree_web';
 
-  // Use form alter to make sure the external javsacript is always loaded.
-  // Attaching in the payment method submit form isn't consistent.
-  // Only continue when we're using braintree_hostedfields, braintree_paypal, or
-  // when we're on the "Edit Donation Set" tab and Braintree is the gateway.
-  if (!$is_credit && !$is_paypal && !$is_applepay && !$gateway_is_braintree) {
-    return;
-  }
+    // Use form alter to make sure the external javsacript is always loaded.
+    // Attaching in the payment method submit form isn't consistent.
+    // Only continue when we're using braintree_hostedfields, braintree_paypal,
+    // or when we're on the "Edit Donation Set" tab and Braintree is the
+    // gateway.
+    if (!$is_credit && !$is_paypal && !$is_applepay && !$gateway_is_braintree) {
+      return;
+    }
 
-  // Add an anchor to jump to payment section when reload page.
-  $form['commerce_payment']['payment_anchor'] = array(
-    '#markup' => '<a name="payment-section"></a>',
-    '#weight' => -10,
-  );
+    // Add an anchor to jump to payment section when reload page.
+    $form['commerce_payment']['payment_anchor'] = array(
+      '#markup' => '<a name="payment-section"></a>',
+      '#weight' => -10,
+    );
 
-  // Add form ID here for payment method change event.
-  $js_settings = array();
-  $js_settings['formId'] = str_replace('_', '-', $form_id);
+    // Add form ID here for payment method change event.
+    $js_settings = array();
+    $js_settings['formId'] = str_replace('_', '-', $form_id);
 
-  $form['#attached']['js'][] = array(
-    'data' => array('braintree' => $js_settings),
-    'type' => 'setting',
-  );
+    $form['#attached']['js'][] = array(
+      'data' => array('braintree' => $js_settings),
+      'type' => 'setting',
+    );
 
-  // Set anchor for page reload.
-  if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#value'] == 'Reload') {
-    $form['#action'] = url(current_path(), array('fragment' => 'payment-section'));
+    // Set anchor for page reload.
+    if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#value'] == 'Reload') {
+      $form['#action'] = url(current_path(), array('fragment' => 'payment-section'));
+    }
   }
 }
 
@@ -554,6 +557,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   }
 
   drupal_alter('commerce_braintree_web_submit_customer', $sale_data);
+  dpm($sale_data);
 
   $new_payment_method = array(
     'customerId' => $customer['id'],

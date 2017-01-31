@@ -43,92 +43,90 @@ function braintree_payment_library() {
  *   The payment method configuration.
  */
 function braintree_form_elements($payment_type, $config, $billing_update = FALSE) {
-  if ($form_id == 'fundraiser_update_billing_form' || (!empty($form['#node']->type) && fundraiser_is_donation_type($form['#node']->type))) {
-    global $user;
-    $js_settings = array();
-    if ($billing_update) {
-      $js_settings['billing_update_type'] = $payment_type;
-    }
-
-    $form = array();
-    $form_processed = &drupal_static(__FUNCTION__);
-
-    $payment_method_instance = commerce_payment_method_instance_load($config['id']);
-    braintree_initialize($payment_method_instance['settings']);
-
-    if (empty($form_processed)) {
-      $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
-
-      $form['braintree'] = array(
-        '#type' => 'container',
-        '#id' => 'payment-details',
-      );
-      $form['braintree']['new'] = array(
-        '#type' => 'container',
-        '#attributes' => array(
-          'class' => array('braintree-payment-form'),
-        ),
-        '#prefix' => '<div id="braintree-payment-form-outer">',
-        '#suffix' => '</div>',
-      );
-
-      $form['errors'] = array(
-        '#type' => 'hidden',
-        '#parents' => array('braintree', 'errors'),
-      );
-
-      // Add Kount fraud protection.
-      $kount_env = NULL;
-      // Get payment rule settings.
-      $braintree_settings = variable_get('braintree_settings', array());
-      if (!empty($braintree_settings['environment'])) {
-        $js_settings['dataCollector']['kount']['environment'] = $braintree_settings['environment'];
-      }
-
-      $form['#validate'][] = '_braintree_payment_form_validate';
-
-      $token = NULL;
-      $arguments = array();
-      // Try to generate a Braintree token.
-      try {
-        $token = Braintree_ClientToken::generate($arguments);
-        $js_settings['clientToken'] = $token;
-      }
-      catch (Exception $e) {
-        $error_message = braintree_report_error($e);
-        $message = t('Braintree token generation failed: @message. Please check Braintree gateway configuration.', array('@message' => $error_message));
-        drupal_set_message($message, 'error');
-        return;
-      }
-
-      $form_processed = TRUE;
-    }
-
-    $context = array(
-      'form' => &$form,
-      'form_state' => &$form_state,
-      'payment_method_instance' => &$payment_method_instance,
-      'js_settings' => &$js_settings,
-    );
-    $hooks = array(
-      sprintf('braintree_payment_form__%s_', $payment_type),
-      'braintree_payment_form',
-    );
-    foreach ($hooks as $hook) {
-      drupal_alter($hook, $context);
-    }
-
-    $form['nonce'] = array(
-      '#type' => 'hidden',
-      '#name' => 'payment_method_nonce',
-    );
-
-    $js_settings['storeName'] = variable_get('site_name');
-    $form['#attached']['js'][] = array(
-      'data' => array('braintree' => $js_settings),
-      'type' => 'setting',
-    );
+  global $user;
+  $js_settings = array();
+  if ($billing_update) {
+    $js_settings['billing_update_type'] = $payment_type;
   }
+
+  $form = array();
+  $form_processed = &drupal_static(__FUNCTION__);
+
+  $payment_method_instance = commerce_payment_method_instance_load($config['id']);
+  braintree_initialize($payment_method_instance['settings']);
+
+  if (empty($form_processed)) {
+    $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
+
+    $form['braintree'] = array(
+      '#type' => 'container',
+      '#id' => 'payment-details',
+    );
+    $form['braintree']['new'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array('braintree-payment-form'),
+      ),
+      '#prefix' => '<div id="braintree-payment-form-outer">',
+      '#suffix' => '</div>',
+    );
+
+    $form['errors'] = array(
+      '#type' => 'hidden',
+      '#parents' => array('braintree', 'errors'),
+    );
+
+    // Add Kount fraud protection.
+    $kount_env = NULL;
+    // Get payment rule settings.
+    $braintree_settings = variable_get('braintree_settings', array());
+    if (!empty($braintree_settings['environment'])) {
+      $js_settings['dataCollector']['kount']['environment'] = $braintree_settings['environment'];
+    }
+
+    $form['#validate'][] = '_braintree_payment_form_validate';
+
+    $token = NULL;
+    $arguments = array();
+    // Try to generate a Braintree token.
+    try {
+      $token = Braintree_ClientToken::generate($arguments);
+      $js_settings['clientToken'] = $token;
+    }
+    catch (Exception $e) {
+      $error_message = braintree_report_error($e);
+      $message = t('Braintree token generation failed: @message. Please check Braintree gateway configuration.', array('@message' => $error_message));
+      drupal_set_message($message, 'error');
+      return;
+    }
+
+    $form_processed = TRUE;
+  }
+
+  $context = array(
+    'form' => &$form,
+    'form_state' => &$form_state,
+    'payment_method_instance' => &$payment_method_instance,
+    'js_settings' => &$js_settings,
+  );
+  $hooks = array(
+    sprintf('braintree_payment_form__%s_', $payment_type),
+    'braintree_payment_form',
+  );
+  foreach ($hooks as $hook) {
+    drupal_alter($hook, $context);
+  }
+
+  $form['nonce'] = array(
+    '#type' => 'hidden',
+    '#name' => 'payment_method_nonce',
+  );
+
+  $js_settings['storeName'] = variable_get('site_name');
+  $form['#attached']['js'][] = array(
+    'data' => array('braintree' => $js_settings),
+    'type' => 'setting',
+  );
 
   return $form;
 }
