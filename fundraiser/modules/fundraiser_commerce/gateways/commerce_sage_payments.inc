@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Commerce based hook for commerce_sage_payments
+ * Commerce based hook for commerce_sage_payments.
  */
 
 /**
@@ -10,7 +10,8 @@
  */
 function commerce_sage_payments_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
-    // Create the payment_method array with the commerce gateway method info name as the key
+    // Create the payment_method array with the commerce gateway method
+    // info name as the key.
     'payment_method' => array('commerce_sage_payments_cc' => 'credit', 'commerce_sage_payments_eft' => 'bank account'),
     'allow_recurring'     => array('credit', 'bank account'),
     'allow_refund'        => array('credit', 'bank account'),
@@ -27,9 +28,10 @@ function commerce_sage_payments_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
- * Returns the form fields for this method
+ * Returns the form fields for this method.
  */
 function commerce_sage_payments_fundraiser_commerce_submit_form($payment_method, $config = NULL) {
+  $form = array();
   if ($payment_method == 'credit') {
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
     $form = _fundraiser_commerce_credit_card_form();
@@ -37,7 +39,7 @@ function commerce_sage_payments_fundraiser_commerce_submit_form($payment_method,
   elseif ($payment_method == 'bank account') {
     $method_instance = commerce_payment_method_instance_load($config['id']);
     $form = commerce_sage_payments_eft_submit_form($method_instance);
-    // Set each field as not required
+    // Set each field as not required.
     foreach (element_children($form['bank_account']) as $field_name) {
       $form['bank_account'][$field_name]['#required'] = FALSE;
     }
@@ -49,7 +51,7 @@ function commerce_sage_payments_fundraiser_commerce_submit_form($payment_method,
 }
 
 /**
- * Convert values to ones that Fundraiser Commerce is looking for
+ * Convert values to ones that Fundraiser Commerce is looking for.
  */
 function commerce_sage_payments_fundraiser_commerce_cleanup($submission_fields) {
   if ($submission_fields['payment_method'] == 'credit') {
@@ -62,7 +64,7 @@ function commerce_sage_payments_fundraiser_commerce_cleanup($submission_fields) 
 }
 
 /**
- * Callback function, return the user entered expiration dates for this submission.
+ * Return the user entered expiration dates for this submission.
  */
 function commerce_sage_payments_fundraiser_commerce_expire($submission_fields) {
   if ($submission_fields['payment_method'] == 'bank account') {
@@ -71,7 +73,7 @@ function commerce_sage_payments_fundraiser_commerce_expire($submission_fields) {
       $exp_timestamp = strtotime('+' . $exp_month_count . ' months');
     }
     else {
-      // pretend expiration date for sustainers
+      // Pretend expiration date for sustainers.
       $exp_timestamp = strtotime('+24 months');
     }
     return array(
@@ -103,7 +105,7 @@ function commerce_sage_payments_fundraiser_commerce_scrub($submission_fields, $p
 }
 
 /**
- * Validate the submitted values with the commerce validate function
+ * Validate the submitted values with the commerce validate function.
  */
 function commerce_sage_payments_fundraiser_commerce_validate($submission_fields, $payment_fields, $payment_method) {
   // Pass the values to the validation scripts.
@@ -127,7 +129,7 @@ function commerce_sage_payments_fundraiser_commerce_validate($submission_fields,
 }
 
 /**
- * Submit the donation values to the Sage Payments charge handler
+ * Submit the donation values to the Sage Payments charge handler.
  */
 function commerce_sage_payments_fundraiser_commerce_charge($method_instance, $donation) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
@@ -138,19 +140,21 @@ function commerce_sage_payments_fundraiser_commerce_charge($method_instance, $do
   if (!isset($charge['recurs_monthly']) && isset($donation->donation['recurs_monthly'])) {
     $charge['recurs_monthly'] = $donation->donation['recurs_monthly'];
   }
+  // Not actually used anywhere in this system, so ignore it.
+  $pane_form = array();
 
-  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
-
-  // Add fundraiser commerce data to the pane values array
-  $pane_values =  _commerce_sage_fundraiser_pane_values($donation);
+  // Add fundraiser commerce data to the pane values array.
+  $pane_values = _commerce_sage_fundraiser_pane_values($donation);
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation, key($pane_values));
 
   // Execute call to Sage depending on what payment method we have.
+  $result = FALSE;
   switch ($donation->donation['payment_method']) {
-    case 'credit' :
+    case 'credit':
       $result = commerce_sage_payments_cc_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
       break;
-    case 'bank account' :
+
+    case 'bank account':
       $result = commerce_sage_payments_eft_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
       break;
   }
@@ -160,7 +164,7 @@ function commerce_sage_payments_fundraiser_commerce_charge($method_instance, $do
     $success = TRUE;
   }
 
-  // Perform post processing functions
+  // Perform post processing functions.
   _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
 
   return $success;
@@ -178,11 +182,13 @@ function commerce_sage_payments_fundraiser_commerce_charge($method_instance, $do
  *   The pane values, keyed by credit_card or echeck.
  */
 function _commerce_sage_fundraiser_pane_values($donation) {
+  $pane_values = array();
   switch ($donation->donation['payment_method']) {
-    case 'credit' :
+    case 'credit':
       $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
       break;
-    case 'bank account' :
+
+    case 'bank account':
       $pane_values['bank_account'] = $donation->donation['payment_fields']['bank account'];
       break;
   }
@@ -191,9 +197,10 @@ function _commerce_sage_fundraiser_pane_values($donation) {
 }
 
 /**
- * Card on file callback
+ * Card on file callback.
  *
- * We use a custom callback since we may need to update an existing vault profile
+ * We use a custom callback since we may need to update an
+ * existing vault profile.
  */
 function commerce_sage_payments_fundraiser_commerce_cardonfile($donation) {
   // Use standard function to setup the card on file fields.
