@@ -557,7 +557,6 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   }
 
   drupal_alter('commerce_braintree_web_submit_customer', $sale_data);
-  dpm($sale_data);
 
   $new_payment_method = array(
     'customerId' => $customer['id'],
