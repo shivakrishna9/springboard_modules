@@ -426,6 +426,17 @@ function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
       break;
   }
 
+  // Correct commerce message typo if present:
+  $error_messages = drupal_get_messages('error');
+  if (isset($error_messages['error']) && is_array($error_messages['error'])) {
+    foreach ($error_messages['error'] as $message) {
+      if ($message == 'The transaction must be setted before a credit can be issued. This usually takes 24 hours') {
+        $message = 'The transaction must be settled before a credit can be issued. This usually takes 24 hours';
+      }
+      drupal_set_message($message, 'error');
+    }
+  }
+
   // A response code of 1 indicates success AND $result will
   // be FALSE if commerce_authnet detects any problems:
   if ($response_code === '1' && $result !== FALSE) {
