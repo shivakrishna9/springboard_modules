@@ -1900,15 +1900,21 @@ function fundraiser_donation_create($donation) {
     'form_url' => $form_url,
     'created' => REQUEST_TIME,
     'changed' => REQUEST_TIME,
-    'card_id' => !empty($donation->data['cardonfile']) ? $donation->data['cardonfile'] : NULL,
   );
+  if (!empty($donation->data['cardonfile']) && empty($donation_record['card_id'])) {
+    $donation_record['card_id'] = $donation->data['cardonfile'];
+  }
+  drupal_alter('fundraiser_donation_record_create', $donation, $donation_record);
+
   if (is_string($donation->gateway)) {
     $donation_record['gateway'] = $donation->gateway;
   }
   elseif (is_array($donation->gateway) && isset($donation->gateway['id']) && !empty($donation->gateway['id'])) {
     $donation_record['gateway'] = $donation->gateway['id'];
   }
+
   _fundraiser_create_donation($donation_record);
+
   // Add a comment.
   global $user;
   $username = isset($user->name) ? $user->name : 'Anonymous';
@@ -1924,6 +1930,9 @@ function fundraiser_donation_create($donation) {
  * For example, in the course of updating a sustainers information.
  */
 function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
+  if (!function_exists('commerce_payment_validate_credit_card_type')) {
+    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  }
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_update', $donation);
   // The additional fields $donation->additional, ready to process.
@@ -1971,6 +1980,9 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->form_url) && !empty($donation->form_url)) {
     $donation_record['form_url'] = $donation->form_url;
   }
+
+  drupal_alter('fundraiser_donation_record_update', $donation, $donation_record);
+
   if (!empty($donation->data['cardonfile'])) {
     $donation_record['card_id'] = $donation->data['cardonfile'];
   }
@@ -3793,6 +3805,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   $defaults = array(
     'update billing' => TRUE,
     'update cardonfile' => TRUE,
+    'update payment' => TRUE,
     'calling module' => 'fundraiser',
     'donation' => NULL,
     'card' => NULL,
@@ -3855,29 +3868,31 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   }
 
   // CC info.
-  $form['payment_method'] = array(
-    '#type' => 'hidden',
-    '#value' => $data['donation']->donation['payment_method'],
-  );
-  $form['payment_fields'] = array(
-    '#type' => 'fieldset',
-    '#title' => 'Payment Information',
-    '#attributes' => array('id' => 'credit-card-info'),
-    '#tree' => TRUE,
-  );
-  $form['payment_fields'][$data['donation']->donation['payment_method']] = array(
-    '#type' => 'fieldset',
-    '#attributes' => array('id' => 'credit-card-info'),
-  );
+  if ($data['update payment']) {
+    $form['payment_method'] = array(
+      '#type' => 'hidden',
+      '#value' => $data['donation']->donation['payment_method'],
+    );
+    $form['payment_fields'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Payment Information',
+      '#attributes' => array('id' => 'credit-card-info'),
+      '#tree' => TRUE,
+    );
+    $form['payment_fields'][$data['donation']->donation['payment_method']] = array(
+      '#type' => 'fieldset',
+      '#attributes' => array('id' => 'credit-card-info'),
+    );
 
-  // Pull the gateway form from the donation gateway.
-  // Once set a gateway CANNOT be changed on a donation series.
-  // Check against the gateway config for a specific form to go with this
-  // payment gateway.
-  if (isset($data['donation']->gateway['form callback'])) {
-    $form_func = $data['donation']->gateway['form callback'];
-    if (function_exists($form_func)) {
-      $form['payment_fields'][$data['donation']->donation['payment_method']] += $form_func($data['donation']->donation['payment_method']);
+    // Pull the gateway form from the donation gateway.
+    // Once set a gateway CANNOT be changed on a donation series.
+    // Check against the gateway config for a specific form to go with this
+    // payment gateway.
+    if (isset($data['donation']->gateway['form callback'])) {
+      $form_func = $data['donation']->gateway['form callback'];
+      if (function_exists($form_func)) {
+        $form['payment_fields'][$data['donation']->donation['payment_method']] += $form_func($data['donation']->donation['payment_method']);
+      }
     }
   }
 
@@ -3899,7 +3914,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
 
   // If the "update cardonfile" element is non-empty, add the cardonfile
   // validation and submission handlers.
-  if ($data['update cardonfile']) {
+  if ($data['update payment'] && $data['update cardonfile'] && !empty($form['#donation']->gateway['gateway_details']['settings']['cardonfile'])) {
     $use_cardonfile = FALSE;
     if (!empty($data['card'])) {
       $use_cardonfile = TRUE;
@@ -3940,7 +3955,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   }
 
   // Set any payment information from the $data variable.
-  if (isset($data['payment_fields'])) {
+  if ($data['update payment'] && isset($data['payment_fields'])) {
     $form['payment_fields'] = array_replace_recursive($form['payment_fields'], $data['payment_fields']);
   }
 
@@ -3965,6 +3980,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   // defaults to TRUE and is only FALSE if the calling module will handle this
   // itself.
   if ($data['update billing']) {
+    $form['#donation']->update_billing = TRUE;
     $form['#validate'][] = 'fundraiser_update_billing_form_validate';
     $form['actions']['submit']['#submit'][] = 'fundraiser_update_billing_form_submit';
   }
@@ -3999,21 +4015,33 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
 function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate(&$form, &$form_state) {
   $input = $form_state['input'];
   $values = &$form_state['values'];
-
   $card = $form_state['card'];
+
   // Ensure card number and cvv are set if expiration is changed.
-  if ($card->card_exp_month != $values['payment_fields']['credit']['expiration_date']['card_expiration_month'] || $card->card_exp_year != $values['payment_fields']['credit']['expiration_date']['card_expiration_year']) {
-    if (empty($values['payment_fields']['credit']['card_number'])) {
-      form_set_error('payment_fields][credit][card_number', t('Please verify your card number to change the expiration date.'));
+  if (!empty($values['payment_fields']['credit']['expiration_date'])) {
+    if ($card->card_exp_month != $values['payment_fields']['credit']['expiration_date']['card_expiration_month'] || $card->card_exp_year != $values['payment_fields']['credit']['expiration_date']['card_expiration_year']) {
+      if (empty($values['payment_fields']['credit']['card_number'])) {
+        form_set_error('payment_fields][credit][card_number', t('Please verify your card number to change the expiration date.'));
+      }
+      if (empty($values['payment_fields']['credit']['card_cvv'])) {
+        form_set_error('payment_fields][credit][card_cvv', t('Please verify your card CVV to change the expiration date.'));
+      }
     }
-    if (empty($values['payment_fields']['credit']['card_cvv'])) {
-      form_set_error('payment_fields][credit][card_cvv', t('Please verify your card CVV to change the expiration date.'));
+    else {
+      $values['credit_card']['exp_month'] = $values['payment_fields']['credit']['card_expiration_month'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_month'] = sprintf('%02d', $input['payment_fields']['credit']['expiration_date']['card_expiration_month']);
+      $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'] = $values['payment_fields']['credit']['card_expiration_year'] = $input['payment_fields']['credit']['expiration_date']['card_expiration_year'];
     }
+  }
+  else {
+    // If the expiration_date array doens't exist, this might be a payment
+    // method that utilize nonces and validates using its own client-side
+    // implementation (Braintree). In that case, set a default value from the
+    // card so we can get past validation without any notices.
+    $values['credit_card']['exp_month'] = $card->card_exp_month;
+    $values['credit_card']['exp_year'] = $card->card_exp_year;
   }
 
   $values['credit_card']['owner'] = $input['first_name'] . ' ' . $input['last_name'];
-  $values['credit_card']['exp_month'] = $values['payment_fields']['credit']['card_expiration_month'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_month'] = sprintf('%02d', $input['payment_fields']['credit']['expiration_date']['card_expiration_month']);
-  $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'] = $values['payment_fields']['credit']['card_expiration_year'] = $input['payment_fields']['credit']['expiration_date']['card_expiration_year'];
 
   $form['credit_card']['number']['#default_value'] = $form_state['card']->card_number;
   if (!empty($values['payment_fields']['credit']['card_number'])) {
@@ -4023,7 +4051,10 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_val
     $_SESSION['card_number'] = $values['credit_card']['number'] = $values['payment_fields']['credit']['card_number'] = $form_state['card']->card_number;
   }
 
-  $form['credit_card']['code'] = $values['payment_fields']['credit']['card_cvv'];
+  if (!empty($values['payment_fields']['credit']['card_cvv'])) {
+    $form['credit_card']['code'] = $values['payment_fields']['credit']['card_cvv'];
+  }
+
   $values['credit_card']['cardonfile_instance_default'] = $form_state['card']->instance_default;
 }
 
@@ -4048,6 +4079,8 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($f
     $card->card_type = $form_state['values']['credit_card']['type'];
   }
   $card->instance_default = $form_state['values']['credit_card']['cardonfile_instance_default'];
+
+  $form_state['values']['cardonfile']['old_card'] = clone $card;
 
   // Invoke the payment method's card create/update callback.
   $payment_method = commerce_payment_method_instance_load($card->instance_id);
@@ -4077,7 +4110,6 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($f
 
       commerce_cardonfile_save($card_save);
       drupal_set_message($confirm_message);
-      $form_state['values']['cardonfile']['old_card'] = clone $card;
       $form_state['values']['cardonfile']['card'] = $card_save;
       $success = TRUE;
     }

@@ -2438,7 +2438,10 @@ function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustai
 
   // Add a validation hook which will move some of the form elements, needed for
   // commerce cardonfile.
-  $form['#validate'][] = '_fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate';
+  if ($data['update payment'] && $data['update cardonfile']) {
+    $form['#validate'][] = '_fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate';
+  }
+
   $form['#validate'][] = 'fundraiser_sustainers_update_billing_form_validate';
   $form['actions']['submit']['#submit'][] = 'fundraiser_sustainers_update_billing_form_submit';
 }
@@ -2892,6 +2895,8 @@ function fundraiser_sustainers_update_billing_info_in_series($donations, $submis
     }
 
     $donation->sustainer_update_first = $sustainer_update_first;
+
+    $donation->update_from_sustainer = TRUE;
 
     // Save each donation.
     fundraiser_donation_update($donation);
@@ -4556,11 +4561,13 @@ function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
 
   foreach ($data as $key => $row) {
     // For each donation found, select the first future, non-processed donation
-    // that has the same submission and card IDs.
-    $query = db_query('SELECT * FROM {fundraiser_donation} WHERE sid = :sid AND status = :status AND card_id = :card_id ORDER BY did LIMIT 1', array(
+    // that has the same submission and card IDs. Alternatively, determine if
+    // the next pending donation doesn't have a card_id set, and use that.
+    $query = db_query('SELECT * FROM {fundraiser_donation} WHERE (sid = :sid AND status = :pending_status AND card_id = :card_id) OR (sid = :sid AND did = :next_donation AND status = :pending_status AND card_id IS NULL) ORDER BY did LIMIT 1', array(
       ':sid' => $row['sid'],
-      ':status' => 'pending_future_payment',
+      ':pending_status' => 'pending_future_payment',
       ':card_id' => $card_id,
+      ':next_donation' => $key + 1,
     ))->fetchAssoc();
 
     if (empty($query)) {

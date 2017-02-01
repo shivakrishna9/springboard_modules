@@ -4,6 +4,43 @@
  * Module file for fundraiser_commerce_cardonfile.
  */
 
+require_once 'includes/fundraiser_commerce_cardonfile.fundraiser.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function fundraiser_commerce_cardonfile_menu() {
+  $items = array();
+
+  $items['admin/springboard/options/fundraiser/fundraiser_commerce_cardonfile'] = array(
+    'title' => 'Fundraiser Cardonfile Settings',
+    'description' => 'Settings for fundraiser cardonfile.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_commerce_cardonfile_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer fundraiser configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/fundraiser_commerce_cardonfile.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function fundraiser_commerce_cardonfile_springboard_admin_admin_menu_items_alter(&$items) {
+  // Settings > Settings > Sustainer Upsell.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_commerce_cardonfile'] = array(
+    'link_path' => 'admin/springboard/options/fundraiser/fundraiser_commerce_cardonfile',
+    'link_title' => 'Fundraiser Cardonfile Settings',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 0,
+  );
+}
+
 /**
  * Implements hook_views_api().
  */
