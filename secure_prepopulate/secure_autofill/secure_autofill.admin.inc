@@ -9,12 +9,14 @@
  */
 function secure_autofill_admin_settings($form, &$form_state) {
   $form = array();
+
   $form['secure_autofill_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Encryption key'),
     '#description' => t('To use 128 bit encryption enter a 16 character (128 bit) AES key. 256 bit encryption requires a 32 character key (256 bits).'),
     '#default_value' => variable_get('secure_autofill_key', ''),
   );
+
   $form['secure_autofill_iv'] = array(
     '#type' => 'textfield',
     '#title' => t('Initialization vector'),
@@ -22,6 +24,7 @@ function secure_autofill_admin_settings($form, &$form_state) {
       'that is typically required to be random or pseudorandom.'),
     '#default_value' => variable_get('secure_autofill_iv', ''),
   );
+
   $form['secure_autofill_precedence'] = array(
     '#type' => 'radios',
     '#title' => t('Pre-populate precedence'),
@@ -32,16 +35,34 @@ function secure_autofill_admin_settings($form, &$form_state) {
     ),
     '#default_value' => variable_get('secure_autofill_precedence', 'url'),
   );
+
+  $form['dynamic_gift_strings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Dynamic gift string settings'),
+    '#weight' => 0,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['dynamic_gift_strings']['secure_autofill_dynamic_gift_strings_never_expire'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Gift string never expires'),
+    '#default_value' => variable_get('secure_autofill_dynamic_gift_strings_never_expire', 1),
+    '#description' => t('Check this setting to allow the gift string to be used on multiple site visits.'),
+  );
+
   $form['secure_autofill_expiration_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Pre-populated token expiration settings'),
   );
+
   $form['secure_autofill_expiration_settings']['secure_autofill_toggle_expiration']= array(
     '#type' => 'checkbox',
     '#title' => t('Pre-populated tokens never expire'),
     '#description' => t('Check this setting to allow the pre-population token to be used on multiple site visits.'),
     '#default_value' => variable_get('secure_autofill_toggle_expiration', 0),
   );
+
   $form['secure_autofill_expiration_settings']['secure_autofill_expired_date_limit'] = array(
     '#type' => 'textfield',
     '#size' => 6,
@@ -57,6 +78,7 @@ function secure_autofill_admin_settings($form, &$form_state) {
       ),
     ),
   );
+
   return system_settings_form($form);
 }
 
@@ -186,7 +208,6 @@ function secure_autofill_token_generator($form, $form_state) {
   return $form;
 }
 
-
 function secure_autofill_token_generator_submit($form, $form_state) {
 
   if ($af = secure_autofill_generate_af_string($form_state['values'])) {
@@ -253,3 +274,200 @@ function secure_autofill_generate_gs_string($input) {
     return FALSE;
   }
 }
+
+/**
+ * Generate and display test URLs using tokens derived from test values set on the test generator form.
+ */
+function _secure_autofill_generate_test_urls($target_form_prefix) {
+  module_load_include('inc', 'secure_prepopulate', 'secure_prepopulate.admin');
+  $form_defaults = _secure_autofill_get_test_generator_defaults();
+  $sec_pop_vals = variable_get('sec_pop_test_gen_values', $form_defaults['secure_prepopulate']);
+  $dyn_gift_vals = variable_get('dyn_gift_test_gen_values', $form_defaults['dynamic_gift_strings']);
+  $urls = array();
+  $output = '';
+
+  // Define test URLs
+  $test_url_options = array();
+  $test_url_options[] = array(
+    'descr' => t('Secure Prepopulate section information + ask amounts with default + recurring amounts with default'),
+    'exclude_fields' => array());
+  $test_url_options[] = array(
+    'descr' => t('Secure Prepopulate section information + ask amounts with default + recurring amounts without default'),
+    'exclude_fields' => array('recurring_default'));
+  $test_url_options[] = array(
+    'descr' => t('Secure Prepopulate section information + ask amounts with default + no recurring amounts'),
+    'exclude_fields' => array('recurring_amounts', 'recurring_default'));
+  $test_url_options[] = array(
+    'descr' => t('Secure Prepopulate section information + ask amounts without default + recurring amounts with default'),
+    'exclude_fields' => array('default_amount'));
+  $test_url_options[] = array(
+    'descr' => t('Secure Prepopulate section information + ask amounts without default + recurring amounts without default'),
+    'exclude_fields' => array('default_amount', 'recurring_default'));
+  $test_url_options[] = array(
+    'descr' => t('Secure Prepopulate section information + ask amounts without default + no recurring amounts'),
+    'exclude_fields' => array('default_amount', 'recurring_amounts', 'recurring_default'));
+  $test_url_options[] = array(
+    'descr' => t('Secure Prepopulate section information + no ask amounts + recurring amounts with default'),
+    'exclude_fields' => array('amounts', 'default_amount'));
+  $test_url_options[] = array(
+    'descr' => t('Secure Prepopulate section information + no ask amounts + recurring amounts without default'),
+    'exclude_fields' => array('amounts', 'default_amount', 'recurring_default'));
+  $test_url_options[] = array(
+    'descr' => t('Secure Prepopulate section information only'),
+    'exclude_fields' => array('amounts', 'default_amount', 'recurring_amounts', 'recurring_default'));
+
+  // Generate the token for secure populate fields:
+  if ($af = secure_prepopulate_generate_af_string($sec_pop_vals)) {
+    $sec_pop_token = substr($af, 3);
+  }
+
+  // Generate the dynamic gift strings tokens for each test link, then render the link:
+  foreach ($test_url_options as $options) {
+    $test_options = $dyn_gift_vals;
+    foreach ($options['exclude_fields'] as $exclude_field) {
+      if (isset($test_options[$exclude_field])) {
+        unset($test_options[$exclude_field]);
+      }
+    }
+    if ($gs = secure_prepopulate_generate_gs_string($test_options)) {
+      $dyn_gift_token = substr($gs, 3);
+      $output .= '<a href="/' .  $target_form_prefix . '?gs=' . $dyn_gift_token . '&af=' . $sec_pop_token . '">' . $options['descr'] . '</a><br />';
+    }
+  }
+
+  return $output;
+}
+
+/**
+ * The Test URL generation form.
+ */
+function secure_autofill_test_url_generator_form($form, &$form_state) {
+  drupal_set_title('Secure Autofill Test Generator');
+  $form = array();
+
+  // Do not display the form if either the Encryption Key or Initialization vector are missing:
+  $encryption_key = variable_get('secure_autofill_key', '');
+  $init_vector = variable_get('secure_autofill_iv', '');
+  if (!$encryption_key || !$init_vector) {
+    $form['missing_fields'] = array(
+      '#type' => 'markup',
+      '#markup' => t('Please ensure both the Encryption Key and the Initialization Vector are set on the Secure Autofill settings page.'),
+    );
+    return $form;
+  }
+
+
+  $form_defaults = _secure_autofill_get_test_generator_defaults();
+  $target_form_prefix = variable_get('dync_gift_test_get_url_prefix', 'springboard/node/2');
+  // List the test URLs:
+  $form['test_urls'] = array(
+    '#title' => t('Test URLs:'),
+    '#type' => 'fieldset',
+    '#description' => _secure_autofill_generate_test_urls($target_form_prefix),
+  );
+
+  // Allow the secure prepopulate used in the test URLs to be changed:
+  $form['sec_pop_values'] = array(
+    '#title' => t('Secure-Autofill Test Values'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $sec_pop_vals = variable_get('sec_pop_test_gen_values', $form_defaults['secure_prepopulate']);
+  foreach ($sec_pop_vals as $form_key => $default_value) {
+    $form['sec_pop_values'][$form_key] = array(
+     '#title' => $form_key,
+     '#type' => 'textfield',
+     '#default_value' => $default_value,
+    );
+  }
+
+  // Allow the dynamic gift string values used in the test URLs to be changed:
+  $form['dyn_gift_values'] = array(
+    '#title' => t('Dynamic Gift String Test Values'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $dyn_gift_vals = variable_get('dyn_gift_test_gen_values', $form_defaults['dynamic_gift_strings']);
+  $dyn_gift_descrs = array(
+    'amounts' => t('Enter the ask amounts to be used as a comma-delimited; for example: 27,200,3000'),
+    'recurring_amounts' => t('Enter the recurring ask amounts to be used as a comma-delimited list; for example: 27,200,3000'),
+  );
+  foreach ($dyn_gift_vals as $form_key => $default_value) {
+    $form['dyn_gift_values'][$form_key] = array(
+      '#title' => $form_key,
+      '#type' => 'textfield',
+      '#default_value' => $default_value,
+    );
+    if (isset($dyn_gift_descrs[$form_key])) {
+      $form['dyn_gift_values'][$form_key]['#description'] = $dyn_gift_descrs[$form_key];
+    }
+  }
+
+  $form['test_url_prefix'] = array(
+    '#title' => 'Target form path',
+    '#type' => 'textfield',
+    '#default_value' => $target_form_prefix,
+    '#required' => TRUE,
+    '#description' => 'The path of the form to be tested; for example: springboard/node/2',
+  );
+
+  $form['submit'] = array(
+    '#value' => t('Update Test URLs'),
+    '#type' => 'submit',
+  );
+  return $form;
+}
+
+/**
+ * For submit function for the test url generator.
+ */
+function secure_autofill_test_url_generator_form_submit($form, &$form_state) {
+  $form_keys = _secure_autofill_get_test_generator_defaults();
+  $new_sec_pop_defaults = array();
+  foreach ($form_keys['secure_prepopulate'] as $key => $default_value) {
+    if (isset($form_state['values'][$key])) {
+      $new_sec_pop_defaults[$key] = $form_state['values'][$key];
+    }
+  }
+  variable_set('sec_pop_test_gen_values', $new_sec_pop_defaults);
+
+  $new_dyn_gift_defaults = array();
+  foreach ($form_keys['dynamic_gift_strings'] as $key => $default_value) {
+    if (isset($form_state['values'][$key])) {
+      $new_dyn_gift_defaults[$key] = $form_state['values'][$key];
+    }
+  }
+  variable_set('dyn_gift_test_gen_values', $new_dyn_gift_defaults);
+  variable_set('dync_gift_test_get_url_prefix', $form_state['values']['test_url_prefix']);
+
+  drupal_set_message('Test generator values have been updated.');
+}
+
+
+/**
+ * Helpful function to return the list of field + default values for the test url generator:
+ */
+function _secure_autofill_get_test_generator_defaults() {
+  return array(
+    'secure_prepopulate' => array(
+      'first_name' => 'Jane',
+      'last_name' => 'Public',
+      'email' => 'jane.q.public@example.com',
+      'address' => '123 Lois Lane',
+      'address_line_2' => 'Apt. 7',
+      'city' => 'New York',
+      'country' => 'US',
+      'state' => 'NY',
+      'zip' => '10005'
+    ),
+    'dynamic_gift_strings' => array(
+      'amounts' => '10,20,50,100,200,2000',
+      'default_amount' => '50',
+      'recurring_amounts' => '10,20,50,100,200,2000',
+      'recurring_default' => '20',
+    ),
+  );
+}
+

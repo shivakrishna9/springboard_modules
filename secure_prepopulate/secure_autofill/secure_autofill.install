@@ -1,0 +1,63 @@
+<?php
+/**
+ * @file
+ * Secure Autofill install/schema hooks.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function secure_autofill_requirements($phase) {
+  $severity = REQUIREMENT_ERROR;
+  $status = 'missing';
+  // Check for mcrypt extension.
+  if (extension_loaded("mcrypt")) {
+    $severity = REQUIREMENT_OK;
+    $status = 'installed';
+  }
+  $requirements = array(
+    array(
+      'title' => 'Secure Autofill',
+      'description' => t('Secure Autofill requires that PHP Mcrypt extension be installed on the web server.'),
+      'severity' => $severity,
+      'value' => 'PHP Mcrypt extension ' . $status,
+    ),
+  );
+  return $requirements;
+}
+
+/**
+ * Implements hook_schema().
+ */
+function secure_autofill_schema() {
+  $schema = array();
+  $schema['secure_autofill_expired'] = array(
+    'description' => 'Expired Autofill strings',
+    'fields' => array(
+      'hash' => array(
+        'description' => 'The hashed qs string',
+        'type' => 'varchar',
+        'length' => '40',
+        'not null' => FALSE,
+      ),
+      'expire_date' => array(
+        'description' => 'When it expired',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+    ),
+    'indexes' => array(
+      'hash' => array('hash'),
+      'expired' => array('expire_date'),
+    ),
+  );
+  return $schema;
+}
+
+/**
+ * Add indexes to tables.
+ */
+function secure_autofill_update_7001() {
+  db_add_index('secure_autofill_expired', 'hash', array('hash'));
+  db_add_index('secure_autofill_expired', 'expired', array('expire_date'));
+}

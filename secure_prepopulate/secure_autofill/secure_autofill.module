@@ -56,6 +56,15 @@ function secure_autofill_menu() {
     'file' => 'secure_autofill.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
+  $items['admin/config/system/secure-autofill/test-generator'] = array(
+    'title' => 'Test Generator',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_autofill_test_url_generator_form'),
+    'access arguments' => array('administer secure autofill'),
+    'file' => 'secure_autofill.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 9999,
+  );
   // Callback for clearing gs/af cookies.
   $items['secure-autofill/not-me/%'] = array(
     'title' => 'Not me',
@@ -98,6 +107,7 @@ function secure_autofill_js_callback_get_amounts($gs) {
   else {
     // Decrypt gs per dynamic gift strings.
     // TODO check for expiration as appropriate.
+    // TODO validate amounts as with _dynamic_gift_strings_parse_amounts. Throw watchdog.
     $raw_qs = secure_autofill_decrypt($gs);
     $json['content'] = secure_autofill_parse_qs($raw_qs);
   }
@@ -230,6 +240,47 @@ function secure_autofill_donation_amount_validate($form, &$form_state) {
   }
 }
 
+/**
+ * Encrypt an input string (128 bit AES) using the configured key and initialization vector.
+ *
+ * @param $input
+ *   The string to encrypt.
+ *
+ * @return string
+ *   The encrypted string.
+ */
+function secure_prepopulate_encrypt($input) {
+  // The 128 bit key to use to decrypt the string.
+  $key = secure_autofill_variable_get('secure_autofill_key', NULL);
+  // The initialization vector to use to decrypt the string.
+  $iv = secure_autofill_variable_get('secure_autofill_iv', NULL);
+  if (!$key || !$iv) {
+    drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+    watchdog('Secure Autofill', 'Cannot perform decryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+    return FALSE;
+  }
+  $kv = array('key' => $key, 'iv' => $iv);
+  $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+  $input = _secure_autofill_pkcs5_pad($input, $size);
+  $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
+  mcrypt_generic_init($descriptor, $kv['key'], $kv['iv']);
+  $cipher = mcrypt_generic($descriptor, $input);
+  mcrypt_generic_deinit($descriptor);
+  mcrypt_module_close($descriptor);
+  $cipher = base64_encode($cipher);
+  return $cipher;
+}
+
+
+/**
+ * Decrypt an input string (128 bit AES) using the configured key and initialization vector.
+ *
+ * @param $input
+ *   The string to decrypt.
+ *
+ * @return string
+ *   The decrypt string.
+ */
 function secure_autofill_decrypt($cipher) {
   // The 128 bit key to use to decrypt the string.
   $key = secure_autofill_variable_get('secure_autofill_key', NULL);
@@ -368,4 +419,16 @@ function secure_autofill_permission() {
       'description' => t('Administer Secure Autofill settings.'),
     ),
   );
+}
+
+/**
+ * Implements hook_cron().
+ */
+function secure_autofill_cron() {
+  // Cleanup the secure_prepopulate_expired table.
+  $max_days = variable_get('secure_autofill_expired_date_limit', 30);
+  $max_date = REQUEST_TIME - ($max_days * 24 * 60 * 60);
+  db_delete('secure_autofill_expired')
+    ->condition('expire_date', $max_date, '<')
+    ->execute();
 }

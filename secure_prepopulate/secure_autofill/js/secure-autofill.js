@@ -176,7 +176,6 @@
             // Iterate through returned object and populate appropriate fields.
             for (var key in data.content) {
               if (data.content.hasOwnProperty(key)) {
-                console.log(key, data.content[key]);
                 // Email is keyed as "email", but appears on donation forms as "mail".
                 if (key === "email") {
                   $("input[name*='mail']").val(data.content[key]);
@@ -184,7 +183,11 @@
                 else {
                   // Populate input fields matching key with value returned from callback.
                   $("input[name*='" + key + "']").val(data.content[key]);
-                  // TODO handle select fields, radios, and dates.
+                  // Populate selects.
+                  $("select[name*='" + key + "']").each(function(){
+                    $('option[value="' + data.content[key] + '"]', this).prop('selected', true);
+                  });
+                  // TODO handle select fields, radios, and checkboxes.
                 }
               }
             }
