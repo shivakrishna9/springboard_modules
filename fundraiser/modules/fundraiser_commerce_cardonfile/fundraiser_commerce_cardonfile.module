@@ -52,38 +52,6 @@ function fundraiser_commerce_cardonfile_views_api() {
 }
 
 /**
- * Implements hook_fundraiser_donation_post_create().
- */
-function fundraiser_commerce_cardonfile_fundraiser_donation_post_create($donation) {
-  fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donation);
-}
-
-/**
- * Implements hook_fundraiser_donation_post_update().
- *
- * This function will update the 'field_data_commerce_cardonfile_profile'
- * field's value to the correct billing profile ID when a donation is created
- * or updated.
- *
- * @todo This can be removed once the commerce_cardonfile module supports
- * billing addresses for individual cards.
- */
-function fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donation) {
-  if (empty($donation->data['cardonfile']) || empty($donation->did) || !empty($donation->deleted) || !empty($donation->cancelled)) {
-    return;
-  }
-
-  $card = commerce_cardonfile_load($donation->data['cardonfile']);
-  $card_wrapper = entity_metadata_wrapper('commerce_cardonfile', $card);
-
-  $order = commerce_order_load($donation->did);
-  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-
-  $card_wrapper->commerce_cardonfile_profile = $order_wrapper->commerce_customer_billing->value();
-  $card_wrapper->save();
-}
-
-/**
  * Implements hook_views_pre_render().
  *
  * Remove cards that have no used by entries; remove card name and billing
@@ -123,7 +91,7 @@ function fundraiser_commerce_cardonfile_views_pre_render(&$view) {
 
     // Unset the card name and billing profile label if the card name and name
     // on the billing profile is the same.
-    if (!empty($result->field_commerce_cardonfile_profile) && strpos($result->field_commerce_cardonfile_profile[0]['rendered']['#markup'], $result->commerce_cardonfile_card_name) !== FALSE) {
+    if (!empty($result->field_commerce_cardonfile_profile) && $result->field_commerce_cardonfile_profile[0]['rendered']['#markup'] == $result->commerce_cardonfile_card_name) {
       unset($view->field['card_name']);
       $view->field['commerce_cardonfile_profile']->options['label'] = '';
     }
