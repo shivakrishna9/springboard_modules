@@ -13,6 +13,7 @@ function page_wrappers_install() {
   // change the clone module's cloning method to save-edit cause that's the way we like it.
   variable_set('clone_method', 'save-edit');
   _page_wrappers_create_fields();
+  _page_wrappers_create_file_entities();
 }
 
 /**
@@ -159,102 +160,167 @@ function _page_wrappers_create_fields() {
         ),
       ),
     ),
+
     // css filefield
-    'css_filefield' => array(
-      'translatable' => '1',
-      'settings' => array(
-        'display_field' => 1,
-        'display_default' => 0,
-        'uri_scheme' => 'public',
-      ),
+    'css_file_entity' => array(
       'field_name' => 'page_wrappers_css',
-      'type' => 'file',
-      'active' => '1',
-      'locked' => '0',
-      'cardinality' => '-1',
-      '_instance' => array(
-        'label' => st('Upload a stylesheet'),
-        'widget' => array(
-          'weight' => '-4',
-          'type' => 'file_generic',
-          'active' => 1,
-          'settings' => array(
-            'progress_indicator' => 'throbber',
+      'active' => 1,
+      'cardinality' => -1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'indexes' => array(
+        'target_id' => array(
+          0 => 'target_id',
+        ),
+      ),
+      'locked' => 0,
+      'module' => 'entityreference',
+      'settings' => array(
+        'handler' => 'base',
+        'handler_settings' => array(
+          'behaviors' => array(
+            'views-select-list' => array(
+              'status' => 0,
+            ),
+          ),
+          'sort' => array(
+            'type' => 'none',
+          ),
+          'target_bundles' => array(
+            'page_wrappers_asset' => 'page_wrappers_asset',
           ),
         ),
-        'settings' => array(
-          'file_directory' => 'page_wrappers/styles',
-          'file_extensions' => 'css',
-          'max_filesize' => '2 MB',
-          'description_field' => 0,
-          'user_register_form' => FALSE,
-        ),
+        'target_type' => 'file',
+      ),
+      'translatable' => 0,
+      'type' => 'entityreference',
+      '_instance' => array(
+        'bundle' => 'page_wrapper',
+        'default_value_function' => '',
+        'deleted' => 0,
+        'description' => '',
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'file_default',
-            'settings' => array(),
-            'weight' => 0,
+            'module' => 'entityreference',
+            'settings' => array(
+              'link' => FALSE,
+            ),
+            'type' => 'entityreference_label',
+            'weight' => 2,
           ),
           'teaser' => array(
-            'type' => 'hidden',
             'label' => 'above',
             'settings' => array(),
+            'type' => 'hidden',
             'weight' => 0,
           ),
         ),
-        'required' => 0,
-        'description' => '',
-        'field_name' => 'page_wrappers_css',
         'entity_type' => 'node',
-        'bundle' => 'page_wrapper',
+        'field_name' => 'page_wrappers_css',
+        'label' => 'Upload a Stylesheet',
+        'required' => 0,
+        'settings' => array(
+          'behaviors' => array(
+            'prepopulate' => array(
+              'status' => 0,
+            ),
+          ),
+          'user_register_form' => FALSE,
+        ),
+        'widget' => array(
+          'active' => 1,
+          'module' => 'inline_entity_form',
+          'settings' => array(
+            'fields' => array(),
+            'type_settings' => array(),
+          ),
+          'type' => 'inline_entity_form',
+          'weight' => 31,
+        ),
       ),
     ),
+
     // javascript filefield
     'js_filefield' => array(
       'field_name' => 'page_wrappers_js',
-      'type' => 'file',
-      'active' => '1',
-      'locked' => '0',
-      'cardinality' => '-1',
-      '_instance' => array(
-        'label' => st('Upload a script'),
-        'widget' => array(
-          'weight' => '-4',
-          'type' => 'file_generic',
-          'active' => 1,
-          'settings' => array(
-            'progress_indicator' => 'throbber',
+      'active' => 1,
+      'cardinality' => -1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'indexes' => array(
+        'target_id' => array(
+          0 => 'target_id',
+        ),
+      ),
+      'locked' => 0,
+      'module' => 'entityreference',
+      'settings' => array(
+        'handler' => 'base',
+        'handler_settings' => array(
+          'behaviors' => array(
+            'views-select-list' => array(
+              'status' => 0,
+            ),
+          ),
+          'sort' => array(
+            'type' => 'none',
+          ),
+          'target_bundles' => array(
+            'page_wrappers_asset' => 'page_wrappers_asset',
           ),
         ),
-        'settings' => array(
-          'file_directory' => 'page_wrappers/scripts',
-          'file_extensions' => 'js',
-          'max_filesize' => '2 MB',
-          'description_field' => 0,
-          'user_register_form' => FALSE,
-        ),
+        'target_type' => 'file',
+      ),
+      'translatable' => 0,
+      'type' => 'entityreference',
+      '_instance' => array(
+        'bundle' => 'page_wrapper',
+        'default_value_function' => '',
+        'deleted' => 0,
+        'description' => '',
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'file_default',
-            'settings' => array(),
-            'weight' => 0,
+            'module' => 'entityreference',
+            'settings' => array(
+              'link' => FALSE,
+            ),
+            'type' => 'entityreference_label',
+            'weight' => 2,
           ),
           'teaser' => array(
-            'type' => 'hidden',
             'label' => 'above',
             'settings' => array(),
+            'type' => 'hidden',
             'weight' => 0,
           ),
         ),
-        'required' => 0,
-        'description' => '',
-        'field_name' => 'page_wrappers_js',
         'entity_type' => 'node',
-        'bundle' => 'page_wrapper',
+        'field_name' => 'page_wrappers_js',
+        'label' => 'Upload a Script',
+        'required' => 0,
+        'settings' => array(
+          'behaviors' => array(
+            'prepopulate' => array(
+              'status' => 0,
+            ),
+          ),
+          'user_register_form' => FALSE,
+        ),
+        'widget' => array(
+          'active' => 1,
+          'module' => 'inline_entity_form',
+          'settings' => array(
+            'fields' => array(),
+            'type_settings' => array(),
+          ),
+          'type' => 'inline_entity_form',
+          'weight' => 31,
+        ),
       ),
     ),
+
     // html template
     'html_template' => array(
       'field_name' => 'page_wrappers_html_template',
@@ -308,6 +374,122 @@ function _page_wrappers_delete_nodes() {
   $nids = page_wrappers_get_nodes();
   node_delete_multiple($nids);
   drupal_set_message(t('Page Wrappers have been deleted.'));
+}
+
+function _page_wrappers_create_file_entities() {
+
+
+  $file_type = new stdClass();
+  $file_type->disabled = FALSE; /* Edit this to true to make a default file_type disabled initially */
+  $file_type->api_version = 1;
+  $file_type->type = 'page_wrappers_asset';
+  $file_type->label = 'Page Wrappers Asset';
+  $file_type->description = '@TODO'; // @TODO
+  $file_type->mimetypes = array(
+    0 => 'application/x-javascript',
+    1 => 'text/css',
+  );
+
+  file_type_save($file_type);
+
+  $fields = array(
+    'pw_asset_description' => array(
+      'active' => 1,
+      'cardinality' => 1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'field_name' => 'field_pw_asset_description',
+      'foreign keys' => array(
+        'format' => array(
+          'columns' => array(
+            'format' => 'format',
+          ),
+          'table' => 'filter_format',
+        ),
+      ),
+      'indexes' => array(
+        'format' => array(
+          0 => 'format',
+        ),
+      ),
+      'locked' => 0,
+      'module' => 'text',
+      'settings' => array(),
+      'translatable' => 0,
+      'type' => 'text_long',
+      '_instance' => array(
+        'bundle' => 'page_wrappers_asset',
+        'default_value' => NULL,
+        'deleted' => 0,
+        'description' => '',
+        'display' => array(
+          'default' => array(
+            'label' => 'above',
+            'module' => 'text',
+            'settings' => array(),
+            'type' => 'text_default',
+            'weight' => 0,
+          ),
+          'preview' => array(
+            'label' => 'above',
+            'settings' => array(),
+            'type' => 'hidden',
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'label' => 'above',
+            'settings' => array(),
+            'type' => 'hidden',
+            'weight' => 0,
+          ),
+        ),
+        'entity_type' => 'file',
+        'field_name' => 'field_pw_asset_description',
+        'label' => 'Description',
+        'required' => 0,
+        'settings' => array(
+          'text_processing' => 0,
+          'user_register_form' => FALSE,
+        ),
+        'widget' => array(
+          'active' => 1,
+          'module' => 'text',
+          'settings' => array(
+            'rows' => 5,
+          ),
+          'type' => 'text_textarea',
+        ),
+      ),
+    ),
+  );
+  foreach ($fields as $key => $values) {
+    $instance = $values['_instance'];
+    unset($values['_instance']);
+
+    field_create_field($values);
+    field_create_instance($instance);
+  }
+}
+
+function _page_wrappers_delete_file_entity_fields() {
+  $fields = array(
+    'field_pw_asset_description',
+  );
+  foreach ($fields as $field_name) {
+    $field = field_info_instance('node', $field_name, 'page_wrappers_asset');
+    field_delete_instance($field);
+    $field = field_info_field($field_name);
+    field_delete_field($field);
+  }
+  drupal_set_message(t('Page Wrapper Asset fields deleted.'));
+}
+
+function _page_wrappers_delete_file_entities() {
+  // @TODO
+  //require_once 'page_wrappers.module';
+  //$nids = page_wrappers_get_nodes();
+  //node_delete_multiple($nids);
+  //drupal_set_message(t('Page Wrappers have been deleted.'));
 }
 
 /**
