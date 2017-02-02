@@ -72,7 +72,6 @@ function fundraiser_commerce_cardonfile_views_pre_render(&$view) {
 
     // Array of payment gateways used by cards that should not be displayed.
     $blacklist = array(
-      'braintree_hostedfields|commerce_payment_braintree_hostedfields',
       'commerce_psi_credit|commerce_payment_commerce_psi_credit',
     );
 
