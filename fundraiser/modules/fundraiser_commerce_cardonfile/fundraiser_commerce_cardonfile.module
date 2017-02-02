@@ -90,7 +90,7 @@ function fundraiser_commerce_cardonfile_views_pre_render(&$view) {
 
     // Unset the card name and billing profile label if the card name and name
     // on the billing profile is the same.
-    if (!empty($result->field_commerce_cardonfile_profile) && strpos($result->field_commerce_cardonfile_profile[0]['rendered']['#markup'], $result->commerce_cardonfile_card_name) !== FALSE) {
+    if (!empty($result->field_commerce_cardonfile_profile) && !empty($result->commerce_cardonfile_card_name) && strpos($result->field_commerce_cardonfile_profile[0]['rendered']['#markup'], $result->commerce_cardonfile_card_name) !== FALSE) {
       unset($view->field['card_name']);
       $view->field['commerce_cardonfile_profile']->options['label'] = '';
     }
