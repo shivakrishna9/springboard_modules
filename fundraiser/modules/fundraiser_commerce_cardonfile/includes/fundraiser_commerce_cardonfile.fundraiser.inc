@@ -28,7 +28,7 @@ function fundraiser_commerce_cardonfile_fundraiser_commerce_update_donation_resu
  */
 function fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donation) {
   $updated_donation = &drupal_static(__FUNCTION__, FALSE);
-  if (!variable_get('fundraiser_commerce_cardonfile_patch_cardonfile', TRUE) || empty($donation->data['cardonfile']) || empty($donation->did) || !empty($updated_donation)) {
+  if (!variable_get('fundraiser_commerce_cardonfile_patch_cardonfile', TRUE) || empty($donation->data['cardonfile']) || empty($donation->did) || !empty($updated_donation) || !empty($donation->cancelled)) {
     return;
   }
 
