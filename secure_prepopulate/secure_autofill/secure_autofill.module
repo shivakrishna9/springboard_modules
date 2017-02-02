@@ -249,7 +249,7 @@ function secure_autofill_donation_amount_validate($form, &$form_state) {
  * @return string
  *   The encrypted string.
  */
-function secure_prepopulate_encrypt($input) {
+function secure_autofill_encrypt($input) {
   // The 128 bit key to use to decrypt the string.
   $key = secure_autofill_variable_get('secure_autofill_key', NULL);
   // The initialization vector to use to decrypt the string.
@@ -386,6 +386,7 @@ function secure_autofill_submit(&$form, &$form_state) {
  * The nid of the node who's prepopulate data should be cleared.
  */
 function secure_autofill_clear($nid) {
+  drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
   secure_autofill_clear_cookies($nid);
   drupal_goto('node/' . $nid);
 }

@@ -10,6 +10,7 @@
       // Cookie is based on nid.
       var nid = getCurrentNodeId();
       var showWelcome = false;
+
       if (nid) {
         var gsCookie = $.cookie("gs-" + nid);
       }
@@ -18,8 +19,6 @@
         var gs = getParameterByName('gs');
       }
       else {
-        // Flag to show welcome message with link to 'not me'.
-        showWelcome = true;
         var gs = gsCookie;
       }
 
@@ -147,7 +146,6 @@
       }
 
       // Handle secure prepopulate querystring.
-      // TODO develop this functionality.
       // Check for js cookie first, if it's in place then use it rather than af.
       // Cookie is based on nid.
       if (nid) {
@@ -188,6 +186,15 @@
                     $('option[value="' + data.content[key] + '"]', this).prop('selected', true);
                   });
                   // TODO handle select fields, radios, and checkboxes.
+                }
+
+                // Use first name in welcome message
+                if (key === "first_name" && showWelcome === true && nid) {
+                  var firstName = data.content[key];
+                  var markup = "<div id='welcome-back'>";
+                  markup += "<span class='welcome-back-name'>Welcome back, <span class='welcome-back-name'>" + firstName + "</span>. ";
+                  markup += "Not " + firstName + "? <a href='https://" +  window.location.hostname + "/secure-autofill/not-me/" + nid + "'>Click here</span></div>";
+                  $('form.webform-client-form').before(markup);
                 }
               }
             }

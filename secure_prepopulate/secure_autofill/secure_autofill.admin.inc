@@ -166,40 +166,39 @@ function secure_autofill_token_generator($form, $form_state) {
     '#size' => 10,
   );
 
-  if (module_exists('dynamic_gift_strings')) {
-    $form['dynamic_gift_strings'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Dynamic Gift Strings Token'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
-    $form['dynamic_gift_strings']['amounts'] = array(
-      '#title' => t('Ask amounts'),
+  $form['dynamic_gift_strings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Dynamic Gift Strings Token'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['dynamic_gift_strings']['amounts'] = array(
+    '#title' => t('Ask amounts'),
+    '#type' => 'textfield',
+    '#description' => t('Enter the ask amounts you want to show here. Values should be comma-separated. Example: 27,47,97'),
+    '#size' => 50,
+  );
+  $form['dynamic_gift_strings']['default_amount'] = array(
+    '#title' => t('Default amount'),
+    '#type' => 'textfield',
+    '#description' => t('If you want one of the supplied amounts to be selected by default, enter that value here.'),
+    '#size' => 5,
+  );
+  if (module_exists('fundraiser_sustainers')) {
+    $form['dynamic_gift_strings']['recurring_amounts'] = array(
+      '#title' => t('Recurring ask amounts'),
       '#type' => 'textfield',
       '#description' => t('Enter the ask amounts you want to show here. Values should be comma-separated. Example: 27,47,97'),
       '#size' => 50,
     );
-    $form['dynamic_gift_strings']['default_amount'] = array(
-      '#title' => t('Default amount'),
+    $form['dynamic_gift_strings']['recurring_default'] = array(
+      '#title' => t('Recurring default amount'),
       '#type' => 'textfield',
       '#description' => t('If you want one of the supplied amounts to be selected by default, enter that value here.'),
       '#size' => 5,
     );
-    if (module_exists('fundraiser_sustainers')) {
-      $form['dynamic_gift_strings']['recurring_amounts'] = array(
-        '#title' => t('Recurring ask amounts'),
-        '#type' => 'textfield',
-        '#description' => t('Enter the ask amounts you want to show here. Values should be comma-separated. Example: 27,47,97'),
-        '#size' => 50,
-      );
-      $form['dynamic_gift_strings']['recurring_default'] = array(
-        '#title' => t('Recurring default amount'),
-        '#type' => 'textfield',
-        '#description' => t('If you want one of the supplied amounts to be selected by default, enter that value here.'),
-        '#size' => 5,
-      );
-    }
   }
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Generate token'),
@@ -209,16 +208,13 @@ function secure_autofill_token_generator($form, $form_state) {
 }
 
 function secure_autofill_token_generator_submit($form, $form_state) {
-
   if ($af = secure_autofill_generate_af_string($form_state['values'])) {
     drupal_set_message('af token generated:');
     drupal_set_message($af);
   }
-  if (module_exists('dynamic_gift_strings')) {
-    if ($gs = secure_autofill_generate_gs_string($form_state['values'])) {
-      drupal_set_message('gs token generated:');
-      drupal_set_message($gs);
-    }
+  if ($gs = secure_autofill_generate_gs_string($form_state['values'])) {
+    drupal_set_message('gs token generated:');
+    drupal_set_message($gs);
   }
 }
 
@@ -278,9 +274,7 @@ function secure_autofill_generate_gs_string($input) {
 /**
  * Generate and display test URLs using tokens derived from test values set on the test generator form.
  */
-function _secure_autofill_generate_test_urls($target_form_prefix) {
-  module_load_include('inc', 'secure_prepopulate', 'secure_prepopulate.admin');
-  $form_defaults = _secure_autofill_get_test_generator_defaults();
+function _secure_autofill_generate_test_urls($target_form_prefix) {  $form_defaults = _secure_autofill_get_test_generator_defaults();
   $sec_pop_vals = variable_get('sec_pop_test_gen_values', $form_defaults['secure_prepopulate']);
   $dyn_gift_vals = variable_get('dyn_gift_test_gen_values', $form_defaults['dynamic_gift_strings']);
   $urls = array();
@@ -317,7 +311,7 @@ function _secure_autofill_generate_test_urls($target_form_prefix) {
     'exclude_fields' => array('amounts', 'default_amount', 'recurring_amounts', 'recurring_default'));
 
   // Generate the token for secure populate fields:
-  if ($af = secure_prepopulate_generate_af_string($sec_pop_vals)) {
+  if ($af = secure_autofill_generate_af_string($sec_pop_vals)) {
     $sec_pop_token = substr($af, 3);
   }
 
@@ -329,7 +323,7 @@ function _secure_autofill_generate_test_urls($target_form_prefix) {
         unset($test_options[$exclude_field]);
       }
     }
-    if ($gs = secure_prepopulate_generate_gs_string($test_options)) {
+    if ($gs = secure_autofill_generate_gs_string($test_options)) {
       $dyn_gift_token = substr($gs, 3);
       $output .= '<a href="/' .  $target_form_prefix . '?gs=' . $dyn_gift_token . '&af=' . $sec_pop_token . '">' . $options['descr'] . '</a><br />';
     }
