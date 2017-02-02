@@ -660,14 +660,19 @@ function fundraiser_quick_donate_get_default_card($uid) {
  *
  * @param int $uid
  *   The user's uid.
- * @param int $card_id
- *   The card's id.
+ * @param object|int $card
+ *   The card object or the card's id.
  *
  * @throws \Exception
  */
-function fundraiser_quick_donate_opt_out_card($uid, $donation, $card_id) {
+function fundraiser_quick_donate_opt_out_card($uid, $donation, $card) {
   // See if the user currently has a default card.
   $default_card = fundraiser_quick_donate_get_default_card($uid);
+  if (is_numeric($card)) {
+    $card = commerce_cardonfile_load($card);
+  }
+  $card_id = $card->card_id;
+
   if ($default_card && $default_card == $card_id) {
     // Update the user, setting the opt-out date.
     $account = user_load($uid);
@@ -683,7 +688,6 @@ function fundraiser_quick_donate_opt_out_card($uid, $donation, $card_id) {
     );
 
     user_save($account);
-    $card = commerce_cardonfile_load($card_id);
     // Invoke quick donate opt-out hook.
     module_invoke_all('fundraiser_quick_donate_optout', $account, $donation, $card);
   }
@@ -712,7 +716,7 @@ function fundraiser_quick_donate_entity_presave($entity, $type) {
 function fundraiser_quick_donate_entity_delete($entity, $type) {
   if ($type == 'commerce_cardonfile') {
     $donation = fundraiser_donation_get_donations_by_uid($entity->uid, 1, 'DESC', NULL, $entity->card_id);
-    fundraiser_quick_donate_opt_out_card($entity->uid, $donation, $entity->card_id);
+    fundraiser_quick_donate_opt_out_card($entity->uid, $donation, $entity);
   }
 }
 
