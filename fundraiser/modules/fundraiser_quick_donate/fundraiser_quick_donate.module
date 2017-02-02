@@ -717,6 +717,7 @@ function fundraiser_quick_donate_entity_delete($entity, $type) {
   if ($type == 'commerce_cardonfile') {
     $donation = fundraiser_donation_get_donations_by_uid($entity->uid, 1, 'DESC', NULL, $entity->card_id);
     fundraiser_quick_donate_opt_out_card($entity->uid, $donation, $entity);
+    db_delete('fundraiser_quick_donate_cardonfile')->condition('card_id', $entity->card_id)->execute();
   }
 }
 
