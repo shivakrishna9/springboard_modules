@@ -2316,28 +2316,6 @@ function springboard_p2p_format_campaign_form_header($campaign) {
  * Adds customizations to the p2p webform.
  */
 function springboard_p2p_page_alter(&$page, $form) {
-  if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid']) && arg(0) == 'node' && is_numeric(arg(1)) && is_null(arg(2))) {
-    $personal_campaign_id = $_GET['p2p_pcid'];
-
-    $node = node_load(arg(1));
-    $type = $node->type;
-    $is_fundraiser_type = fundraiser_is_donation_type($type);
-    $is_webform_user_type = _webform_user_is_webform_user_node_type($type);
-    if ($is_fundraiser_type || $is_webform_user_type) {
-      $personal_campaign = node_load($personal_campaign_id);
-      if ($personal_campaign->type == 'p2p_personal_campaign') {
-
-        $campaign_id = $personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id'];
-        $campaign = node_load($campaign_id);
-        if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
-
-          // Place the banner in the springboard_frontend theme header region.
-          // @todo Review and remove this if needed.
-          // $page['page_top']['springboard_p2p_banner'] = springboard_p2p_format_campaign_form_header($campaign);
-        }
-      }
-    }
-  }
 
   // Not admin page.
   if (!path_is_admin(current_path())) {
