@@ -2454,6 +2454,11 @@ function fundraiser_sustainers_update_billing_form_validate($form, &$form_state)
   if (isset($form['#donation']->gateway)) {
     $form_state['values'] = fundraiser_sustainers_gateway_cleanup($form['#donation']->gateway, $form_state['values']);
   }
+
+  if (!empty($form_state['values']['payment_fields']['credit']['expiration_date'])) {
+    $form_state['values']['credit_card']['exp_month'] = $form_state['values']['payment_fields']['credit']['expiration_date']['card_expiration_month'];
+    $form_state['values']['credit_card']['exp_year'] = $form_state['values']['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+  }
 }
 
 /**
@@ -3517,7 +3522,9 @@ function fundraiser_sustainers_auto_cancel($donation) {
 function fundraiser_sustainers_billing_update_form($form, &$form_state, $donation) {
   // Make sure we have the master donation ID.
   $sustainers_record = _fundraiser_sustainers_get_recurring_by_did($donation->did);
-  if (empty($sustainers_record->master_did)) return false;
+  if (empty($sustainers_record->master_did)) {
+    return false;
+  }
 
   // Include some extra info to provide context.
   $form['series-info'] = array(
@@ -3563,9 +3570,11 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
       'donation' => $next_donation,
       'calling module' => 'fundraiser_sustainers',
       'update billing' => FALSE,
+      'update cardonfile' => FALSE,
     );
 
     if (!empty($cardonfile)) {
+      $data['card'] = $cardonfile;
       $data['payment_fields'] = array(
         'credit' => array(
           'expiration_date' => array(
