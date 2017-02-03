@@ -385,8 +385,6 @@ function _page_wrappers_delete_nodes() {
 }
 
 function _page_wrappers_create_file_entities() {
-
-
   $file_type = new stdClass();
   $file_type->disabled = FALSE; /* Edit this to true to make a default file_type disabled initially */
   $file_type->api_version = 1;
@@ -401,6 +399,76 @@ function _page_wrappers_create_file_entities() {
   file_type_save($file_type);
 
   $fields = array(
+    'pw_asset_title' => array(
+      'active' => 1,
+      'cardinality' => 1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'field_name' => 'field_pw_asset_title',
+      'foreign keys' => array(
+        'format' => array(
+          'columns' => array(
+            'format' => 'format',
+          ),
+          'table' => 'filter_format',
+        ),
+      ),
+      'indexes' => array(
+        'format' => array(
+          0 => 'format',
+        ),
+      ),
+      'locked' => 0,
+      'module' => 'text',
+      'settings' => array(
+        'max_length' => 255,
+      ),
+      'translatable' => 0,
+      'type' => 'text',
+      '_instance' => array(
+        'bundle' => 'page_wrappers_asset',
+        'default_value' => NULL,
+        'deleted' => 0,
+        'description' => 'Enter a title for this file that will make it easy to search for. If you leave this field blank, the name of the file you upload will be used.',
+        'display' => array(
+          'default' => array(
+            'label' => 'none',
+            'settings' => array(),
+            'type' => 'hidden',
+            'weight' => 1,
+          ),
+          'preview' => array(
+            'label' => 'none',
+            'settings' => array(),
+            'type' => 'hidden',
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'label' => 'none',
+            'settings' => array(),
+            'type' => 'hidden',
+            'weight' => 0,
+          ),
+        ),
+        'entity_type' => 'file',
+        'field_name' => 'field_pw_asset_title',
+        'label' => 'Title',
+        'required' => 0,
+        'settings' => array(
+          'text_processing' => 0,
+          'user_register_form' => FALSE,
+        ),
+        'widget' => array(
+          'active' => 1,
+          'module' => 'text',
+          'settings' => array(
+            'size' => 60,
+          ),
+          'type' => 'text_textfield',
+          'weight' => 0,
+        ),
+      ),
+    ),
     'pw_asset_description' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -429,23 +497,22 @@ function _page_wrappers_create_file_entities() {
         'bundle' => 'page_wrappers_asset',
         'default_value' => NULL,
         'deleted' => 0,
-        'description' => '',
+        'description' => 'Enter a description for this file that will help others to understand its purpose. You may also use this space to make notes about how to best use this file',
         'display' => array(
           'default' => array(
-            'label' => 'above',
-            'module' => 'text',
+            'label' => 'none',
             'settings' => array(),
-            'type' => 'text_default',
+            'type' => 'hidden',
             'weight' => 0,
           ),
           'preview' => array(
-            'label' => 'above',
+            'label' => 'none',
             'settings' => array(),
             'type' => 'hidden',
             'weight' => 0,
           ),
           'teaser' => array(
-            'label' => 'above',
+            'label' => 'none',
             'settings' => array(),
             'type' => 'hidden',
             'weight' => 0,
@@ -609,3 +676,11 @@ function page_wrappers_update_7003() {
   field_create_field($field);
   field_create_instance($field_instance);
 }
+
+/**
+ * @TODO - current out of scope is creating an update script to migrate the CSS/JS fields on page wrappers to the new
+ * data model.
+
+function page_wrappers_update_7004() {
+
+}*/
