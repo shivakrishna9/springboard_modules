@@ -1736,20 +1736,20 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
       break;
   }
 
-  if (strpos($form_id, 'webform_client_form_') !== FALSE && !empty($form['#node'])) {
+  if (!empty($form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'])) {
+    $personal_campaign_id = $form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'];
+  }
+  else {
+    $personal_campaign_id = springboard_p2p_get_personal_campaign_id_from_request();
+  }
+
+  if ($personal_campaign_id && strpos($form_id, 'webform_client_form_') !== FALSE && !empty($form['#node'])) {
     $type = $form['#node']->type;
 
     $is_fundraiser_type = fundraiser_is_donation_type($type);
     $is_webform_user_type = _webform_user_is_webform_user_node_type($type);
 
-    if (!empty($form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'])) {
-      $personal_campaign_id = $form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'];
-    }
-    else {
-      $personal_campaign_id = springboard_p2p_get_personal_campaign_id_from_request();
-    }
-
-    if (($is_fundraiser_type || $is_webform_user_type) && $personal_campaign_id) {
+    if ($is_fundraiser_type || $is_webform_user_type) {
 
       $personal_campaign = node_load($personal_campaign_id);
 
