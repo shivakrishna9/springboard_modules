@@ -1,5 +1,11 @@
 <?php
 
+// @TODO this could be an admin page if needed.
+define('PAGE_WRAPPERS_DIR', variable_get('file_public_path', conf_path() . '/files') . '/page_wrappers');
+define('PAGE_WRAPPERS_CSS_DIR', PAGE_WRAPPERS_DIR . '/styles');
+define('PAGE_WRAPPERS_JS_DIR', PAGE_WRAPPERS_DIR . '/scripts');
+define('PAGE_WRAPPERS_TPL_DIR', PAGE_WRAPPERS_DIR . '/tpl');
+
 /**
  * Implements hook_theme().
  */
@@ -119,13 +125,12 @@ function page_wrappers_entity_info_alter(&$entity_info) {
  * Adds page wrapper tpl folder to theme registry.
  */
 function page_wrappers_theme_registry_alter(&$theme_registry) {
-  $path = variable_get('file_public_path', conf_path() . '/files') . '/page_wrappers/tpl';
   $theme_registry_copy = $theme_registry;
-  _theme_process_registry($theme_registry_copy, 'phptemplate', 'theme_engine', 'pow', $path);
+  _theme_process_registry($theme_registry_copy, 'phptemplate', 'theme_engine', 'pow', PAGE_WRAPPERS_TPL_DIR);
   $theme_registry += array_diff_key($theme_registry_copy, $theme_registry);
   $hooks = array('page');
   foreach ($hooks as $h) {
-    _page_wrappers_insert_after_first_element($theme_registry[$h]['theme paths'], $path);
+    _page_wrappers_insert_after_first_element($theme_registry[$h]['theme paths'], PAGE_WRAPPERS_TPL_DIR);
   }
 }
 
@@ -429,8 +434,7 @@ function page_wrappers_node_delete($node) {
   // remove the template from any nodes that are assigned to it
   if ($node->type == 'page_wrapper') {
     $template = _page_wrappers_template_filename($node->nid);
-    $files_dir = file_stream_wrapper_get_instance_by_uri('public://')->getDirectoryPath();
-    $path = $files_dir . '/page_wrappers/tpl/' . $template;
+    $path = PAGE_WRAPPERS_TPL_DIR . '/' . $template;
     file_unmanaged_delete($path);
     db_delete('node_page_wrappers')
       ->condition('wrapper_nid', $node->nid)
@@ -749,22 +753,21 @@ function theme_page_wrappers_node_assignments($variables) {
  */
 function page_wrappers_file_insert($file) {
 
-  //add timestamps to files and rename js files, do not do this on clone process
+  //rename js files to remove .txt extension, do not do this on clone process
   if (arg(2) != 'clone' && isset($file->source)) {
-    $dir = drupal_dirname($file->uri) . 'page_wrappers/';
+    $dir = PAGE_WRAPPERS_CSS_DIR;
     $filename = $file->filename;
     if(strpos($file->source, 'page_wrappers_js_und_') === 0) {
       $filename = substr($filename, 0, strlen($filename) - 4);
-      $dir .= 'scripts/';
+      $dir = PAGE_WRAPPERS_JS_DIR;
     }
-    else if(strpos($file->source, 'page_wrappers_css_und_') === 0) {
-      $dir .= 'styles/';
-    }
-    else {
+    // If this isn't a file from the page wrappers css or js field, we don't do anything.
+    else if(!strpos($file->source, 'page_wrappers_css_und_') === 0) {
       return;
     }
-    $destination = $dir . $filename;
-    $file = file_move($file, $destination);
+
+    $destination = $dir . '/' . $filename;
+    file_move($file, $destination);
   }
 }
 
@@ -962,25 +965,6 @@ function _page_wrappers_cached_form_node($form_build_id) {
 }
 
 /**
- * Returns the path to where all page wrapper files are stored.
- */
-function _page_wrappers_base_path() {
-  return drupal_realpath(file_default_scheme() . '://') . '/page_wrappers';
-}
-
-function _page_wrappers_template_path() {
-  return _page_wrappers_base_path() . '/tpl';
-}
-
-function _page_wrappers_css_path() {
-  return _page_wrappers_base_path() . '/css';
-}
-
-function _page_wrappers_js_path() {
-  return _page_wrappers_base_path() . '/js';
-}
-
-/**
  * Creates a template file.
  *
  * This function will create a template file in the /theme subdirectory
@@ -994,8 +978,7 @@ function _page_wrappers_js_path() {
  *   Filenane or FALSE.
  */
 function _page_wrappers_create_template($node) {
-  $base_path = _page_wrappers_base_path();
-
+  $full_path = PAGE_WRAPPERS_TPL_DIR;
   // See if a template file already exists for this node.
   $filename =  _page_wrappers_template_filename($node->nid);
 
@@ -1003,8 +986,6 @@ function _page_wrappers_create_template($node) {
     // Create a template file name based on title.
     $filename = page_wrappers_format_filename($node->title);
   }
-
-  $full_path = $base_path . '/tpl';
 
   if (file_prepare_directory($full_path, FILE_CREATE_DIRECTORY)) {
     $full_path = $full_path . '/' . $filename;
@@ -1125,7 +1106,7 @@ function _page_wrappers_tokens($content) {
  *   The template filename.
  */
 function _page_wrappers_template_exists($template) {
-  $path = _page_wrappers_template_path() . '/' . $template;
+  $path = PAGE_WRAPPERS_TPL_DIR . '/' . $template;
 
   if (file_exists($path)) {
     return TRUE;

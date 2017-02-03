@@ -14,6 +14,14 @@ function page_wrappers_install() {
   variable_set('clone_method', 'save-edit');
   _page_wrappers_create_fields();
   _page_wrappers_create_file_entities();
+
+  // Prepare the Page Wrappers directories.
+  $tpl_dir = PAGE_WRAPPERS_TPL_DIR;
+  $css_dir = PAGE_WRAPPERS_CSS_DIR;
+  $js_dir = PAGE_WRAPPERS_JS_DIR;
+  file_prepare_directory($tpl_dir, FILE_CREATE_DIRECTORY);
+  file_prepare_directory($css_dir, FILE_CREATE_DIRECTORY);
+  file_prepare_directory($js_dir, FILE_CREATE_DIRECTORY);
 }
 
 /**
