@@ -16,7 +16,9 @@ class PsiClient {
       $this->wsdl = 'https://client.paymentsolutionsinc.net/Services/Payment/PsiWcfService.svc?wsdl';
     }
     elseif ($account['txn_mode'] == COMMERCE_PSI_MODE_STAGING) {
-      $this->wsdl = 'https://client.paymentsolutionsinc.net/Staging/Services/Payment/PsiWcfService.svc?wsdl';
+      // @todo Make the following URL a configurable variable.
+      // $this->wsdl = 'https://client.paymentsolutionsinc.net/Staging/Services/Payment/PsiWcfService.svc?wsdl';
+      $this->wsdl = 'https://staging.paymentsolutionsinc.net/Services/Aspca/Payment/PsiWcfService.svc?wsdl';
     }
     else {
       $this->wsdl = 'https://psiwebdev.paymentsolutionsincdev.net/Services/Payment/PsiWcfService.svc?wsdl';
@@ -84,7 +86,7 @@ class PsiClient {
 
       // Only vault if not vaulted.
       if ($vault && !$vaulted) {
-        $vault_info = $this->credentials() + array(
+        $vault_params = $this->credentials() + array(
           'transactionToVault' => array(
             'SourceTransactionId' => $response->SendCreditCardPaymentResult->TransactionId,
             'PsiTransactionId' => $response->SendCreditCardPaymentResult->ClientTransactionId,

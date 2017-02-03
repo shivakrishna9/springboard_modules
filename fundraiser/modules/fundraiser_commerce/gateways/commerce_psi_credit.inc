@@ -124,6 +124,9 @@ function commerce_psi_credit_fundraiser_commerce_charge($method_instance, $donat
   $pane_form = array();
 
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+  if (!empty($donation->data['payment_fields']['credit']['cardonfile'])) {
+    $pane_values['cardonfile'] = $donation->data['payment_fields']['credit']['cardonfile'];
+  }
   $pane_values['frequency'] = $donation->donation['recurs_monthly'] == TRUE ? 'Monthly' : NULL;
 
   // Execute call to PSI, only returns FALSE if the payment failed,

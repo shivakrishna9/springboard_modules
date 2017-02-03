@@ -75,13 +75,11 @@ function commerce_psi_credit_submit_form($payment_method, $pane_values = array()
  * Payment method callback: checkout form submission.
  */
 function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
-  dpm($pane_values);
-  dpm($payment_method);
   // Determine the credit card type if possible for use in later code.
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
   $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
   $all_types = commerce_payment_credit_card_types();
-  // PSI api uses the pretty name for the card type, need to customize a few
+  // PSI api uses the pretty name for the card type, need to customize a few.
   $all_types['amex'] = t('AmericanExpress');
   $all_types['discover'] = t('Discover');
   $pretty_card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : NULL;
@@ -173,9 +171,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
 
   // Submit the request to PSI.
-  $response = _commerce_psi_request($payment_method, $nvp, $vault, $vaulted);
-
-  dpm($response);
+  $response = _commerce_psi_request($payment_method, $nvp, 'credit', $vault, $vaulted);
 
   // If no response bail out and ask them to try again.
   if (empty($response)) {
@@ -187,7 +183,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   }
 
   $transaction->payload[REQUEST_TIME] = $response;
-  $transaction->remote_id = $response->ClientTransactionId;
+  $transaction->remote_id = $response->PsiTransactionId;
 
   // Mark as success if we get back a 1 or 4
   if (in_array((int) $response->ResponseCode, array(1, 4))) {
@@ -223,7 +219,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
       $card->remote_id = $remote_id;
       $card->card_type = $pretty_card_type;
       $card->card_name = !empty($card_data->card_name) ? $card_data->card_name : '';
-      $card->card_number = $pane_values['credit_card']['number'];
+      $card->card_number = substr($pane_values['credit_card']['number'], -4);
       $card->card_exp_month = $pane_values['credit_card']['exp_month'];
       $card->card_exp_year = $pane_values['credit_card']['exp_year'];
       $card->status = 1;
