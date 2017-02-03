@@ -1333,7 +1333,7 @@ function _fundraiser_other_amount_field_display($form, $form_state, $field) {
       $field['#field_prefix'] = $currency['symbol'];
     }
   }
-  
+
   // Replace the minimum donation amount token for recurring and non-recurring amounts:
   if (isset($field['#description']) && isset($form['#node']->nid)) {
     $min_donation_amount = _fundraiser_get_min_donation_amount($form['#node']->nid);
@@ -4032,12 +4032,11 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_val
       $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'] = $values['payment_fields']['credit']['card_expiration_year'] = $input['payment_fields']['credit']['expiration_date']['card_expiration_year'];
     }
   }
-  else {
-    // If the expiration_date array doens't exist, this might be a payment
-    // method that utilize nonces and validates using its own client-side
-    // implementation (Braintree). In that case, set a default value from the
-    // card so we can get past validation without any notices.
+
+  if (empty($values['credit_card']['exp_month']) && !empty($card->card_exp_month)) {
     $values['credit_card']['exp_month'] = $card->card_exp_month;
+  }
+  if (empty($values['credit_card']['exp_year']) && !empty($card->card_exp_year)) {
     $values['credit_card']['exp_year'] = $card->card_exp_year;
   }
 
@@ -4218,12 +4217,12 @@ function fundraiser_donation_get_newest_donation_by_uid($uid) {
 /**
  * Helper function to alter other_amount and recurring_other_amount component description
  * text to replace string literal values for currency token and min. payment amount
- * with corresponding tokens. 
+ * with corresponding tokens.
  *
  * If the minimum amount has changed on node_update BUT the old description wasn't
  * able to be updated to contain both the currency symbol token AND the min amount token
  * then replace the whole description with its default value, which now contains tokens.
- * 
+ *
  * @param $node
  *   The node object.
  */
@@ -4246,7 +4245,7 @@ function _fundraiser_update_other_amount_component_descr($node) {
     $currency_symbol = isset($currency['symbol']) ? $currency['symbol'] : '$';
     if ($form_key == 'other_amount') {
       $previous_min_amount = isset($node->original->minimum_donation_amount) ? $node->original->minimum_donation_amount : '';
-      $current_min_amount = isset($node->minimum_donation_amount) ? $node->minimum_donation_amount : ''; 
+      $current_min_amount = isset($node->minimum_donation_amount) ? $node->minimum_donation_amount : '';
       $min_amount_token = '[min-donation-amount]';
     }
     elseif ($form_key == 'recurring_other_amount') {
@@ -4274,7 +4273,7 @@ function _fundraiser_update_other_amount_component_descr($node) {
       $currency_symbol . $current_min_amount,
       '[currency-symbol]' . $current_min_amount,
       $currency_symbol . $previous_min_amount,
-      '[currency-symbol]' . $previous_min_amount,      
+      '[currency-symbol]' . $previous_min_amount,
       $currency_symbol . $min_amount_token,
     );
     $replacement = '[currency-symbol]' . $min_amount_token;
