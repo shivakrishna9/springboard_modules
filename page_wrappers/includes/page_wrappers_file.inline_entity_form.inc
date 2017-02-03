@@ -5,22 +5,32 @@
  * Defines the inline entity form controller for Commerce Line Items.
  */
 
-class PageWrappersFileInlineEntityFormController extends EntityInlineEntityFormController
-{
+class PageWrappersFileInlineEntityFormController extends EntityInlineEntityFormController {
 
-
-  public function tableFields($bundles)
-  {
-    $fields['filename'] = array(
-      'type' => 'field',
+  public function tableFields($bundles) {
+    $fields['name'] = array(
+      'type' => 'property',
       'label' => t('File Name'),
       'formatter' => 'file_default',
-      'weight' => 4,
+      'weight' => 0,
     );
-    $fields['title'] = array(
-      'type' => 'field',
-      'label' => 'Title',
-      'formatter' => 'default',
+    $fields['owner'] = array(
+      'type' => 'property',
+      'label' => t('Owner'),
+      'formatter' => 'text_default',
+      'weight' => 1,
+    );
+    $fields['url'] = array(
+      'type' => 'property',
+      'label' => t('URL'),
+      'formatter' => 'text_default'
+    );
+    $fields['timestamp'] = array(
+      'type' => 'property',
+      'label' => t('Last Updated'),
+      'formatter' => 'date_default',
+      'settings' => array('format_type' => 'medium'),
+      'weight' => 2,
     );
     return $fields;
   }
@@ -28,13 +38,10 @@ class PageWrappersFileInlineEntityFormController extends EntityInlineEntityFormC
   /**
    * Overrides EntityInlineEntityFormController::tableFields().
    */
-  public function entityForm($entity_form, &$form_state)
-  {
-
+  public function entityForm($entity_form, &$form_state) {
     $bundle = file_type_load($entity_form['#entity']->type);
 
     $file = $entity_form['#entity'];
-    $extra_fields = field_info_extra_fields('file', $file->type, 'form');
     $file_extensions = file_type_get_valid_extensions($bundle);
     $options = array(
       'file_extensions' => implode(' ', $file_extensions),
@@ -53,33 +60,15 @@ class PageWrappersFileInlineEntityFormController extends EntityInlineEntityFormC
       '#weight' => -1,
     );
 
-    $entity_form['filename'] = array(
-      '#type' => 'hidden',
-      '#title' => t('filename'),
-      '#required' => FALSE,
-      '#default_value' => isset($file->filename) ? $file->filename : NULL,
-      '#needs_save' => TRUE,
-    );
-
-    $entity_form['title'] = array(
-      '#type' => 'text',
-      '#title' => t('Title'),
-      '#required' => FALSE,
-      '#default_value' => isset($file->title) ? $file->title : NULL,
-    );
-
     field_attach_form('file', $file, $entity_form, $form_state);
-    
+
     return $entity_form;
-
-
   }
 
   /**
    * Overrides EntityInlineEntityFormController::settingsForm().
    */
-  public function settingsForm($field, $instance)
-  {
+  public function settingsForm($field, $instance) {
     $form = parent::settingsForm($field, $instance);
 
     // Adding existing entities is not supported for line items.
@@ -88,21 +77,15 @@ class PageWrappersFileInlineEntityFormController extends EntityInlineEntityFormC
     return $form;
   }
 
-  public function entityFormSubmit(&$entity_form, &$form_state)
-  {
-    $file = $entity_form['upload']['#file'];
-    if($entity_form['#entity']->filename == null) {
-      $entity_form['#entity']->filename = $file->filename;
-
-      if (isset($form_state['values']['page_wrappers_css']) && $form_state['values']['page_wrappers_css'][$entity_form['#parent_language']]['form']['upload'] == $file->fid) {
-        $form_state['values']['page_wrappers_css'][$entity_form['#parent_language']]['form']['filename'] = $file->filename;
+  public function entityFormSubmit(&$entity_form, &$form_state) {
+    // The Drupal core 'managed file' is already created when the file is originally
+    // uploaded. The file entity associated with that managed file will use the same file ID (fid)
+    // as its entity ID. Creating a "new" file entity, then, is really just updating the fields
+    // related to the entity ID already created in the file_managed table.
+    if(isset($entity_form['upload']['#file'])){
+      // Replace the generic "new" entity object with the actual file entity.
+      $entity_form['#entity'] = $entity_form['upload']['#file'];
     }
-    }
-
-  }
-
-  public function save($entity, $context)
-  {
-    dpm($entity);
+    parent::entityFormSubmit($entity_form, $form_state);
   }
 }

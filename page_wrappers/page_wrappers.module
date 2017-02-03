@@ -45,7 +45,7 @@ function page_wrappers_permission() {
 function page_wrappers_file_default_types() {
 
   return  array(
-    'image' => (object) array(
+    'page_wrappers_asset' => (object) array(
       'disabled' => FALSE, /* Edit this to true to make a default file_type disabled initially */
       'api_version' => 1,
       'type' => 'page_wrappers_asset',
@@ -263,7 +263,8 @@ function page_wrappers_css_alter(&$css) {
     // If a stylesheet has been added to the wrapper, don't remove it.
     if (!empty($css_files)) {
       foreach ($css_files as $css_file) {
-        $keep[] = $css_file['uri'];
+        $file = entity_load('file', array($css_file['target_id']));
+        $keep[] = $file[$css_file['target_id']]->uri;
       }
     }
 
@@ -749,19 +750,21 @@ function theme_page_wrappers_node_assignments($variables) {
 function page_wrappers_file_insert($file) {
 
   //add timestamps to files and rename js files, do not do this on clone process
-  if (arg(2) != 'clone' && isset($file->source) && (strpos($file->source, 'page_wrappers_js_und_') === 0 || strpos($file->source, 'page_wrappers_css_und_') === 0)) {
-
-    $dir = drupal_dirname($file->uri);
-    $filename = _page_wrappers_add_timestamp($file->filename);
-
-    // for .js files, strip off the .txt extension that gets added
-    if (strpos($file->source, 'page_wrappers_js_und_') === 0) {
+  if (arg(2) != 'clone' && isset($file->source)) {
+    $dir = drupal_dirname($file->uri) . 'page_wrappers/';
+    $filename = $file->filename;
+    if(strpos($file->source, 'page_wrappers_js_und_') === 0) {
       $filename = substr($filename, 0, strlen($filename) - 4);
+      $dir .= 'scripts/';
     }
-
-    $destination = $dir . '/' . $filename;
-
-    file_move($file, $destination);
+    else if(strpos($file->source, 'page_wrappers_css_und_') === 0) {
+      $dir .= 'styles/';
+    }
+    else {
+      return;
+    }
+    $destination = $dir . $filename;
+    $file = file_move($file, $destination);
   }
 }
 
