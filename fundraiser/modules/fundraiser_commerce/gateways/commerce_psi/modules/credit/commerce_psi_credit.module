@@ -131,7 +131,19 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   $nvp['MarketSource'] = drupal_substr(_commerce_psi_token_replace($payment_method['settings']['custom_fields']['market_source'], $order), 0, 100);
   $nvp['PsiTransactionId'] = $order->order_id;
 
-  // Allow modules to alter the values sent to PSI
+  $vault = FALSE;
+  $vaulted = FALSE;
+  if (module_exists('commerce_cardonfile') && $payment_method['settings']['cardonfile'] && !empty($pane_values['cardonfile'])) {
+    if ($pane_values['cardonfile'] !== 'new') {
+      $remote_id = $nvp['Token'] = $pane_values['cardonfile'];
+      $vaulted = TRUE;
+    }
+    else {
+      $vault = TRUE;
+    }
+  }
+
+  // Allow modules to alter the values sent to PSI.
   $context = array(
     'payment_method' => $payment_method,
     'type' => 'credit',
@@ -153,19 +165,19 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
     watchdog('commerce_psi', 'PSI request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
 
-  // Prepare a transaction object
+  // Prepare a transaction object.
   $transaction = commerce_payment_transaction_new('commerce_psi_credit', $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];
   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
 
-  // Submit the request to PSI
-  $response = _commerce_psi_request($payment_method, $nvp);
+  // Submit the request to PSI.
+  $response = _commerce_psi_request($payment_method, $nvp, $vault, $vaulted);
 
   dpm($response);
 
-  // If no response bail out and ask them to try again
+  // If no response bail out and ask them to try again.
   if (empty($response)) {
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
     $transaction->message = 'The PSI API did not respond.';
@@ -201,19 +213,40 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
     $transaction->message .= '; Authorization code: !auth_code';
     $transaction->message_variables['!auth_code'] = $response->AuthorizationCode;
 
-    $remote_id = (string) $response->Token;
-    // Save the card.
-    $card = commerce_cardonfile_new();
-    $card->uid = $order->uid;
-    $card->payment_method = $payment_method['method_id'];
-    $card->instance_id = $payment_method['instance_id'];
-    $card->remote_id = $remote_id;
-    $card->card_type = $pretty_card_type;
-    $card->card_name = !empty($card_data->card_name) ? $card_data->card_name : '';
-    $card->card_number = $pane_values['credit_card']['number'];
-    $card->card_exp_month = $pane_values['credit_card']['exp_month'];
-    $card->card_exp_year = $pane_values['credit_card']['exp_year'];
-    $card->status = 1;
+    if (!$vaulted && $vault) {
+      $remote_id = (string) $response->Token;
+      // Save the card.
+      $card = commerce_cardonfile_new();
+      $card->uid = $order->uid;
+      $card->payment_method = $payment_method['method_id'];
+      $card->instance_id = $payment_method['instance_id'];
+      $card->remote_id = $remote_id;
+      $card->card_type = $pretty_card_type;
+      $card->card_name = !empty($card_data->card_name) ? $card_data->card_name : '';
+      $card->card_number = $pane_values['credit_card']['number'];
+      $card->card_exp_month = $pane_values['credit_card']['exp_month'];
+      $card->card_exp_year = $pane_values['credit_card']['exp_year'];
+      $card->status = 1;
+      commerce_cardonfile_save($card);
+    }
+    elseif ($vaulted) {
+      $cards = commerce_cardonfile_load_multiple(array(), array('remote_id' => $remote_id));
+      $card = reset($cards);
+      $update_cof = FALSE;
+      if ($card->card_exp_month != $pane_values['credit_card']['exp_month']) {
+        $card->card_exp_month = $pane_values['credit_card']['exp_month'];
+        $update_cof = TRUE;
+      }
+      if ($card->card_exp_year != $pane_values['credit_card']['exp_year']) {
+        $card->card_exp_year = $pane_values['credit_card']['exp_year'];
+        $update_cof = TRUE;
+      }
+
+      if ($update_cof) {
+        commerce_cardonfile_save($card);
+        // Call the update callback.
+      }
+    }
   }
 
   // Save the transaction information.
