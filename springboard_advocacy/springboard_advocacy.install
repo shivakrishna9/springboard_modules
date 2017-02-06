@@ -260,3 +260,12 @@ function springboard_advocacy_update_7011() {
     db_create_table('springboard_action_opt_in_block', $schema['springboard_action_opt_in_block']);
   }
 }
+
+/**
+ * Enable springboard target saerch module if springboard target is enabled.
+ */
+function springboard_advocacy_update_7012() {
+  if (module_exists('springboard_target')) {
+    module_enable(array('sba_target_search'));
+  }
+}

@@ -177,7 +177,7 @@ function commerce_cybersource_soap_cc_settings_form($settings = NULL) {
     $form['cardonfile'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enable card on file to store credit card information.'),
-      '#default_value' => $settings['cardonfile'],
+      '#default_value' => !empty($settings['credit_card']['cardonfile']) ? $settings['credit_card']['cardonfile'] : FALSE,
     );
   }
 
@@ -1119,8 +1119,7 @@ function commerce_cybersource_soap_api_request($payment_method, $request) {
     // Mask the credit card number and CVV.
     if (!empty($log_request->card)) {
       $log_request->card = clone($log_request->card);
-
-      $log_request->card->accountNumber = str_repeat('X', strlen($log_request->card->accountNumber) - 4) . substr($log_request->card->accountNumber, -4);
+      $log_request->card->accountNumber = str_repeat('X', max(4, strlen($log_request->card->accountNumber)) - 4) . substr($log_request->card->accountNumber, -4);
 
       if (!empty($log_request->card->cavv)) {
         $log_request->card->cavv = str_repeat('X', strlen($log_request->card->cavv));

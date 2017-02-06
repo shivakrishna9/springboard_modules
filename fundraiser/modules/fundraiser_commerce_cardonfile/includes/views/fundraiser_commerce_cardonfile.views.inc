@@ -87,21 +87,18 @@ function fundraiser_commerce_cardonfile_views_default_views_alter(&$views) {
   $handler->display->display_options['fields']['card_name']['field'] = 'card_name';
   $handler->display->display_options['fields']['card_name']['label'] = '';
   $handler->display->display_options['fields']['card_name']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['card_name']['element_default_classes'] = FALSE;
   /* Field: Commerce Card on File: Billing Profile */
   $handler->display->display_options['fields']['commerce_cardonfile_profile']['id'] = 'commerce_cardonfile_profile';
   $handler->display->display_options['fields']['commerce_cardonfile_profile']['table'] = 'field_data_commerce_cardonfile_profile';
   $handler->display->display_options['fields']['commerce_cardonfile_profile']['field'] = 'commerce_cardonfile_profile';
   $handler->display->display_options['fields']['commerce_cardonfile_profile']['label'] = 'Billing Information';
-  if (module_exists('fundraiser_commerce_cardonfile')) {
-    /* Field: Commerce Card on File: Used By */
-    $handler->display->display_options['fields']['used_by']['id'] = 'used_by';
-    $handler->display->display_options['fields']['used_by']['table'] = 'commerce_cardonfile';
-    $handler->display->display_options['fields']['used_by']['field'] = 'used_by';
-    $handler->display->display_options['fields']['used_by']['element_type'] = 'div';
-    $handler->display->display_options['fields']['used_by']['element_label_type'] = 'span';
-    $handler->display->display_options['fields']['used_by']['hide_empty'] = TRUE;
-  }
+  /* Field: Commerce Card on File: Used By */
+  $handler->display->display_options['fields']['used_by']['id'] = 'used_by';
+  $handler->display->display_options['fields']['used_by']['table'] = 'commerce_cardonfile';
+  $handler->display->display_options['fields']['used_by']['field'] = 'used_by';
+  $handler->display->display_options['fields']['used_by']['element_type'] = 'div';
+  $handler->display->display_options['fields']['used_by']['element_label_type'] = 'span';
+  $handler->display->display_options['fields']['used_by']['hide_empty'] = TRUE;
   /* Field: Commerce Card on File: Operations links */
   $handler->display->display_options['fields']['operations']['id'] = 'operations';
   $handler->display->display_options['fields']['operations']['table'] = 'commerce_cardonfile';
@@ -125,6 +122,7 @@ function fundraiser_commerce_cardonfile_views_default_views_alter(&$views) {
   $handler->display->display_options['arguments']['user']['summary_options']['items_per_page'] = '25';
   $handler->display->display_options['arguments']['user']['specify_validation'] = TRUE;
   $handler->display->display_options['arguments']['user']['validate']['type'] = 'commerce_cof_owner';
+  $handler->display->display_options['arguments']['user']['validate']['fail'] = 'empty';
   /* Filter criterion: Commerce Card on File: Card Status */
   $handler->display->display_options['filters']['status']['id'] = 'status';
   $handler->display->display_options['filters']['status']['table'] = 'commerce_cardonfile';

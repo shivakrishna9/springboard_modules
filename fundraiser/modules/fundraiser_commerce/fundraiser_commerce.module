@@ -561,7 +561,7 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
   // That would also avoid the weird ajaxy stuff we have to do to get
   // reference back working.
   $countries = fundraiser_commerce_get_countries();
-  $include_all_countries = variable_get('fundraiser_all_countries', 0);
+  $include_all_countries = variable_get('fundraiser_all_countries', TRUE);
 
   if ($include_all_countries) {
     $default_available = array();
@@ -1516,6 +1516,7 @@ function _fundraiser_commerce_update_donation_result_data($donation, $success) {
   }
   $donation->data = $data;
   $donation->txn_id = $remote_id; // TODO Not called anywhere locally, this may not even need to be stored.
+  drupal_alter('fundraiser_commerce_update_donation_result_data', $donation);
   // Encrypt it for storage.
   $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
   // Save the order again to update its line item reference field and user.
@@ -1703,33 +1704,64 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 
   // Update the billing information
   if (!empty($donation->update_billing)) {
-    // Update the customer profile with new info.
-    $found = commerce_customer_profile_load_multiple(array(), array('uid' => $user->uid));
-    $profile_id = -1;
-    foreach ($found as $id => $found) {
-      $profile_id = $id;
+    // If this is the first sustainer, update the billing information.
+    if (empty($donation->sustainer_update) || (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first))) {
+      $profile_id = -1;
+      // Let other modules tell us what profile_id to use.
+      drupal_alter('fundraiser_commerce_update_billing_profile_id', $donation, $profile_id);
+
+      if ($profile_id == -1) {
+        // Update the customer profile with new info.
+        $found = commerce_customer_profile_load_multiple(array(), array('uid' => $user->uid));
+        $profile_id = -1;
+        foreach ($found as $id => $found) {
+          $profile_id = $id;
+        }
+      }
+
+      $update_other_orders = FALSE;
+      if ($profile_id != -1) {
+        $profile = commerce_customer_profile_load($profile_id);
+        $update_other_orders = TRUE;
+      }
+      else {
+        $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
+      }
+      // Update profile with the billing information.
+      $field = field_info_field('commerce_customer_address');
+      $instance = field_info_instance('commerce_customer_profile', 'commerce_customer_address', 'billing');
+      $profile->data = addressfield_default_values($field, $instance);
+      $profile->data['country'] = $donation->donation['country'];
+      $profile->data['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
+      $profile->data['first_name'] = $donation->donation['first_name'];
+      $profile->data['last_name'] = $donation->donation['last_name'];
+      $profile->data['administrative_area'] = $donation->donation['state'];
+      $profile->data['thoroughfare'] = $donation->donation['address'];
+      $profile->data['premise'] = $donation->donation['address_line_2'];
+      $profile->data['locality'] = $donation->donation['city'];
+      $profile->data['postal_code'] = $donation->donation['zip'];
+      $profile->commerce_customer_address[LANGUAGE_NONE][0] = $profile->data;
+      commerce_customer_profile_save($profile);
+
+      $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
+
+      // Get other orders with the old profile_id and set them to the updated
+      // profile_id value.
+      if ($update_other_orders) {
+        $query = new EntityFieldQuery();
+        $query->entityCondition('entity_type', 'commerce_order')
+          ->fieldCondition('commerce_customer_billing', 'profile_id', $profile_id, '=');
+        $results = $query->execute();
+        if (!empty($results)) {
+          $entity_ids = array_keys($results['commerce_order']);
+          $entities = entity_load('commerce_order', $entity_ids);
+          foreach ($entities as $entity) {
+            $entity->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
+            entity_save('commerce_order', $entity);
+          }
+        }
+      }
     }
-    if ($profile_id != -1) {
-      $profile = commerce_customer_profile_load($profile_id);
-    }
-    else {
-      $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
-    }
-    // Update profile with the billing information.
-    $field = field_info_field('commerce_customer_address');
-    $instance = field_info_instance('commerce_customer_profile', 'commerce_customer_address', 'billing');
-    $profile->data = addressfield_default_values($field, $instance);
-    $profile->data['country'] = $donation->donation['country'];
-    $profile->data['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
-    $profile->data['first_name'] = $donation->donation['first_name'];
-    $profile->data['last_name'] = $donation->donation['last_name'];
-    $profile->data['administrative_area'] = $donation->donation['state'];
-    $profile->data['thoroughfare'] = $donation->donation['address'];
-    $profile->data['premise'] = $donation->donation['address_line_2'];
-    $profile->data['locality'] = $donation->donation['city'];
-    $profile->data['postal_code'] = $donation->donation['zip'];
-    commerce_customer_profile_save($profile);
-    $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
   }
 
   // Update the payment information
@@ -1744,22 +1776,20 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     // Gateways that allow recurring donation will have an update callback
     $update_callback = isset($donation->gateway['update callback']) && function_exists($donation->gateway['update callback']) ? $donation->gateway['update callback'] : FALSE;
     // If we're in a sustainer update, and this is the first record update the stored payment information
-    if (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first) && $update_callback) {
+    if (empty($donation->sustainer_update) || (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first)) && $update_callback) {
       // Load the current card data for updating
       $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
       if (!empty($card_data)) {
         // Ensure the expiration values are copied correctly.
         $card_data = $update_callback($donation, $card_data);
-        if (!empty($card_data)) {
-          $donation->data['cardonfile'] = $card_data->card_id;
-        }
+        drupal_alter('fundraiser_commerce_donation_update_card_update', $donation, $card_data);
       }
     }
     // Sustainer update, update remaining donations with the first record's cardonfile id
     // This avoids calling the APIs for each donation
     elseif (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_did)) {
       $master = fundraiser_donation_get_donation($donation->sustainer_update_did);
-      $donation->data['cardonfile'] = isset($master->data['cardonfile']) ? $master->data['cardonfile'] : FALSE;
+      drupal_alter('fundraiser_commerce_sustainer_series_donation_update', $master, $donation);
     }
 
     // Allow the gateways to scrub the data before saving
@@ -2312,6 +2342,10 @@ function fundraiser_commerce_get_payment_method_expiration_date_from_donation($d
   if (isset($donation->gateway['expire callback'])) {
     $expiration_func = $donation->gateway['expire callback'];
     if (function_exists($expiration_func)) {
+      // Add cardonfile data to $donation->donation for payment methods.
+      if (empty($donation->donation['cardonfile']) && !empty($donation->data['cardonfile'])) {
+        $donation->donation['cardonfile'] = $donation->data['cardonfile'];
+      }
       $expires = $expiration_func($donation->donation);
       if (isset($expires['month']) && isset($expires['year'])) {
         return $expires;
@@ -2562,10 +2596,9 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
  *   Fundraiser donation object.
  * @param string $form_key
  *   The form key under pane values where the cardonfile_store key exists.
- *
- * @return void
  */
 function _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation, $form_key = 'credit_card') {
+
   // If this charge resulted in a new card on file save that to the donation
   if ($success && module_exists('commerce_cardonfile') && !empty($pane_values[$form_key]['cardonfile_store'])) {
     // Load up the cardonfile record for this donation and save it
@@ -2984,6 +3017,7 @@ function fundraiser_sustainers_fundraiser_update_billing_form_alter__fundraiser_
  * Form validation handler for billing address update form.
  */
 function fundraiser_commerce_update_billing_form_validate($form, &$form_state) {
+  $submission_fields = $form_state['values'];
   // If it's a credit card, do some generic validation.
   // This is because the gateway's validation doesn't happen during a
   // billing update.
