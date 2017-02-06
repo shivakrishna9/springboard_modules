@@ -11,20 +11,18 @@ class PsiClient {
    */
   public function __construct($account) {
 
-    // Determine the correct WSDL URL
+    // Determine the correct WSDL URL.
     if ($account['txn_mode'] == COMMERCE_PSI_MODE_LIVE) {
-      $this->wsdl = 'https://client.paymentsolutionsinc.net/Services/Payment/PsiWcfService.svc?wsdl';
+      $this->wsdl = variable_get('commerce_psi_mode_live_url', 'https://client.paymentsolutionsinc.net/Services/Payment/PsiWcfService.svc?wsdl');
     }
     elseif ($account['txn_mode'] == COMMERCE_PSI_MODE_STAGING) {
-      // @todo Make the following URL a configurable variable.
-      // $this->wsdl = 'https://client.paymentsolutionsinc.net/Staging/Services/Payment/PsiWcfService.svc?wsdl';
-      $this->wsdl = 'https://staging.paymentsolutionsinc.net/Services/Aspca/Payment/PsiWcfService.svc?wsdl';
+      $this->wsdl = variable_get('commerce_psi_mode_staging_url', 'https://client.paymentsolutionsinc.net/Staging/Services/Payment/PsiWcfService.svc?wsdl');
     }
     else {
-      $this->wsdl = 'https://psiwebdev.paymentsolutionsincdev.net/Services/Payment/PsiWcfService.svc?wsdl';
+      $this->wsdl = variable_get('commerce_psi_mode_test_url', 'https://psiwebdev.paymentsolutionsincdev.net/Services/Payment/PsiWcfService.svc?wsdl');
     }
 
-    // Create a new soapclient
+    // Create a new soapclient.
     try {
       $this->soapclient = new SoapClient($this->wsdl);
     }
