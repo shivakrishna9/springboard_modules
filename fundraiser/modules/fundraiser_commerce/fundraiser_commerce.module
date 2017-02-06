@@ -561,7 +561,7 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
   // That would also avoid the weird ajaxy stuff we have to do to get
   // reference back working.
   $countries = fundraiser_commerce_get_countries();
-  $include_all_countries = variable_get('fundraiser_all_countries', TRUE);
+  $include_all_countries = variable_get('fundraiser_all_countries', 0);
 
   if ($include_all_countries) {
     $default_available = array();
