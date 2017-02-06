@@ -1750,15 +1750,18 @@ function fundraiser_donation_submit(&$form, &$form_state) {
  * Provided for other modules to use as needed for redirection style processes.
  */
 function _fundraiser_donation_submit_to_process($form, $form_state, $donation) {
+  drupal_set_message('<pre>' . print_r($donation, true) . '</pre>');
   // Create the donation to process, allows other modules to modify results by hooks.
   fundraiser_donation_create($donation);
   $did = $donation->did;
   // Caching form values are provided ONLY for the purpose of handling redirect submissions.
   // It is intended to allow redirects to pick back up with form submission after returning to site.
-  cache_set('fundraiser-form-id-' . $did, $form_state['values']['form_build_id'], 'cache', strtotime('+15 minutes'));
-  // Cache the CURRENT version of the forms as well, as they have been processed up to this point.
-  cache_set('fundraiser-form-' . $did, $form, 'cache_form', strtotime('+15 minutes'));
-  cache_set('fundraiser-form-state-' . $did, $form_state, 'cache_form', strtotime('+15 minutes'));
+  if ($donation->gateway['gateway_details']['offsite']) {
+    cache_set('fundraiser-form-id-' . $did, $form_state['values']['form_build_id'], 'cache', strtotime('+15 minutes'));
+    // Cache the CURRENT version of the forms as well, as they have been processed up to this point.
+    cache_set('fundraiser-form-' . $did, $form, 'cache_form', strtotime('+15 minutes'));
+    cache_set('fundraiser-form-state-' . $did, $form_state, 'cache_form', strtotime('+15 minutes'));
+  }
   // The created donation information should be at at $donation->donation, ready to process.
   fundraiser_donation_process($donation);
 }
@@ -1768,11 +1771,13 @@ function _fundraiser_donation_submit_to_process($form, $form_state, $donation) {
  * Provided for other modules to use as needed for redirection style processes.
  */
 function _fundraiser_donation_submit_after_process($donation) {
-  // Clear caches.
-  cache_clear_all('fundraiser-form-id-' . $donation->did, 'cache');
-  cache_clear_all('fundraiser-form-' . $donation->did, 'cache_form');
-  cache_clear_all('fundraiser-form-state-' . $donation->did, 'cache_form');
-
+  if ($donation->gateway['gateway_details']['offsite']) {
+    // Clear caches.
+    cache_clear_all('fundraiser-form-id-' . $donation->did, 'cache');
+    cache_clear_all('fundraiser-form-' . $donation->did, 'cache_form');
+    cache_clear_all('fundraiser-form-state-' . $donation->did, 'cache_form');
+  }
+  
   // Finish donation processing.
   if (!isset($donation->result['message'])) {
     $donation->result['message'] = '';
