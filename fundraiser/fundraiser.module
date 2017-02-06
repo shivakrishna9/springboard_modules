@@ -1620,8 +1620,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
     );
   }
   else {
-    // Prevent caching on this form, this will keep the back button operational.
-    drupal_add_http_header('Cache-Control', 'no-cache, no-store, must-revalidate, post-check=0, pre-check=0');
     $form['#attributes']['class'][] = 'fundraiser-donation-form';
     // Add validation and submit routines for fundraiser to get called during submission.
     // Otherwise, do nothing, rely on the glue modules to provide the form we need to the user.
