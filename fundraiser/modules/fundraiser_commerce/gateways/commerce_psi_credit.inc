@@ -52,7 +52,7 @@ function commerce_psi_credit_fundraiser_gateway_status_cron_check($details) {
 /**
  * Returns the form fields for this method.
  */
-function commerce_psi_credit_fundraiser_commerce_submit_form($payment_method, $config) {
+function commerce_psi_credit_fundraiser_commerce_submit_form($payment_method) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   return _fundraiser_commerce_credit_card_form();
 }
