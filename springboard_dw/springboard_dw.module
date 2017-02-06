@@ -2154,12 +2154,20 @@ function _springboard_dw_export_queue_data_export() {
   $data = $_POST['export_params'];
   unset($data['source_view']);
   unset($data['items_per_page']);
- 
-  if (isset($_POST['date_range_min'])) {
-    $data['transaction_date']['min'] = $_POST['date_range_min'];
+  if (isset($data['transaction_date']['min']['date']) && !empty($data['transaction_date']['min']['date'])) {
+    $data['transaction_date']['min'] = $data['transaction_date']['min']['date'];
   }
-  if (isset($_POST['date_range_max'])) {
-    $data['transaction_date']['max'] = $_POST['date_range_max'];
+  else {
+    unset($data['transaction_date']['min']);
+  }
+  if (isset($data['transaction_date']['max']['date']) && !empty($data['transaction_date']['max']['date'])) {
+    $data['transaction_date']['max'] = $data['transaction_date']['max']['date'];
+  }
+  else {
+    unset($data['transaction_date']['max']);
+  }
+  if (!isset($data['transaction_date']['max']) && !isset($data['transaction_date']['min'])) {
+    unset($data['transaction_date']);
   }
 
   watchdog('springboard_dw', 'CSV export request: ' . json_encode($data));
