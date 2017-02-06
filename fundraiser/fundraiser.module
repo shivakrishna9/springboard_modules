@@ -1777,7 +1777,7 @@ function _fundraiser_donation_submit_after_process($donation) {
     cache_clear_all('fundraiser-form-' . $donation->did, 'cache_form');
     cache_clear_all('fundraiser-form-state-' . $donation->did, 'cache_form');
   }
-  
+
   // Finish donation processing.
   if (!isset($donation->result['message'])) {
     $donation->result['message'] = '';
@@ -1920,7 +1920,6 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   // The additional fields $donation->additional, ready to process.
   // For now, our creation system is responsible for creating a did.
   // Track the did, nid, uid internally so we can keep things in order.
-  $fundraiser_node = node_load($donation->nid);
   $donation_record = array('did' => $donation->did);
   if (isset($donation->nid) && !empty($donation->nid)) {
     $donation_record['nid'] = $donation->nid;
