@@ -19,7 +19,6 @@ function commerce_psi_credit_fundraiser_commerce_fundraiser_gateway_info() {
     'validate callback' => 'commerce_psi_credit_fundraiser_commerce_validate',
     'expire callback' => 'commerce_psi_credit_fundraiser_commerce_expire',
     'charge callback' => 'commerce_psi_credit_fundraiser_commerce_charge',
-    'cardonfile callback' => 'commerce_psi_credit_fundraiser_commerce_cardonfile',
   );
 }
 
@@ -137,26 +136,4 @@ function commerce_psi_credit_fundraiser_commerce_charge($method_instance, $donat
     $success = TRUE;
   }
   return $success;
-}
-
-/**
- * Card on file callback.
- */
-function commerce_psi_credit_fundraiser_commerce_cardonfile($donation) {
-  // Use standard function to setup the card on file fields.
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
-
-  if (isset($donation->reference_charge) && $donation->reference_charge === FALSE) {
-    // Query the db for an existing record.
-    $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields);
-
-    // If we have a profile for this user update it.
-    if ($card_data) {
-      // Make the update request to authorize.net
-      commerce_psi_credit_fundraiser_commerce_update($donation, $card_data);
-    }
-  }
-
-  return $cardonfile_fields;
 }
