@@ -200,7 +200,9 @@ function commerce_authnet_fundraiser_commerce_update($donation, $card_data = NUL
   // If it does then we use the update function
   // if its a new card check if we should create a new CIM profile
   $action = 'update';
-  if ($cardonfile_fields['card_number'] != $card_data->card_number) {
+  // If the card_number in $cardonfile_fields is FALSE, the number wasn't
+  // entered, so the address might need updating.
+  if ($cardonfile_fields['card_number'] && $cardonfile_fields['card_number'] != $card_data->card_number) {
     // This is a new card for this donation, make sure we don't have an existing profile
     // First check with the card number and date
     if ($existing = _fundraiser_commerce_cardonfile_match($cardonfile_fields)) {
@@ -219,7 +221,9 @@ function commerce_authnet_fundraiser_commerce_update($donation, $card_data = NUL
     }
   }
   if ($action == 'update') {
-    $card_data->card_number = $cardonfile_fields['card_number'];
+    if (!empty($cardonfile_fields['card_number'])) {
+      $card_data->card_number = $cardonfile_fields['card_number'];
+    }
     $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
     $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];
 
@@ -304,7 +308,7 @@ function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($fo
   // Extract the Customer Profile and Payment Profile IDs from the remote_id.
   list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data->remote_id);
 
-  if ($form_state['values']['credit_card']['number'] != $form['credit_card']['number']['#default_value']) {
+  if (!empty($form['credit_card']['number']['#default_value']) && $form_state['values']['credit_card']['number'] != $form['credit_card']['number']['#default_value']) {
     $number = $form_state['values']['credit_card']['number'];
   }
   else {
@@ -420,6 +424,17 @@ function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
       drupal_set_message('New transactions are settled once per day based on your Authorize.net account\'s "Transaction Cut-Off Time".' . '<br />' .
         'If you change the cut-off time after today\'s transactions have been settled, the new cut-off time will be used tomorrow.', 'error');
       break;
+  }
+
+  // Correct commerce message typo if present:
+  $error_messages = drupal_get_messages('error');
+  if (isset($error_messages['error']) && is_array($error_messages['error'])) {
+    foreach ($error_messages['error'] as $message) {
+      if ($message == 'The transaction must be setted before a credit can be issued. This usually takes 24 hours') {
+        $message = 'The transaction must be settled before a credit can be issued. This usually takes 24 hours';
+      }
+      drupal_set_message($message, 'error');
+    }
   }
 
   // A response code of 1 indicates success AND $result will
