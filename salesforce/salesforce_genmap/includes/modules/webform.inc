@@ -199,6 +199,7 @@ function webform_salesforce_genmap_map_field_info($node) {
     '#fields' => array(
       'nid' => t('Node ID'),
       'title' => t('Node Title'),
+      'type' => t('Node Type'),
     ),
   );
   // Submission fields.

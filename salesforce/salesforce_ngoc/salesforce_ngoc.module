@@ -16,7 +16,6 @@ require_once 'includes/salesforce_ngoc.salesforce.inc';
 require_once 'includes/salesforce_ngoc.sync_map.inc';
 require_once 'includes/salesforce_ngoc.fundraiser_sustainers.inc';
 
-
 /**
  * Implements hook_cron().
  */
