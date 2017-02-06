@@ -1776,7 +1776,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     // Gateways that allow recurring donation will have an update callback
     $update_callback = isset($donation->gateway['update callback']) && function_exists($donation->gateway['update callback']) ? $donation->gateway['update callback'] : FALSE;
     // If we're in a sustainer update, and this is the first record update the stored payment information
-    if (empty($donation->sustainer_update) || (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first)) && $update_callback) {
+    if ((empty($donation->sustainer_update) || (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first))) && !empty($update_callback)) {
       // Load the current card data for updating
       $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
       if (!empty($card_data)) {
