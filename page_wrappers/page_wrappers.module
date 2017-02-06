@@ -63,7 +63,6 @@ function page_wrappers_file_default_types() {
 }
 
 function page_wrappers_entity_info_alter(&$entity_info) {
-  drupal_set_message('hello');
   $entity_info['file']['inline entity form'] = array(
     'controller' => 'PageWrappersFileInlineEntityFormController',
   );
