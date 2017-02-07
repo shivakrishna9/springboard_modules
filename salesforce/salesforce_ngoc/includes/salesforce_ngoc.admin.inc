@@ -48,7 +48,6 @@ function salesforce_ngoc_admin_form() {
     '#options' => salesforce_picklist_values($batch_upload_info, 'rC_Connect__Address_Type__c'),
     '#default_value' => variable_get('salesforce_ngoc_default_address_type', SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE),
   );
-  // @TODO this should probably be set dynamically based on one-time or recur?
   $form['salesforce_ngoc']['salesforce_ngoc_default_frequency'] = array(
     '#title' => t('Giving: Payment Frequency'),
     '#type' => 'select',
@@ -61,6 +60,11 @@ function salesforce_ngoc_admin_form() {
     '#title' => t('Giving: Record Type'),
     '#type' => 'textfield',
     '#default_value' => variable_get('salesforce_ngoc_default_record_type', SALESFORCE_NGOC_DEFAULT_RECORD_TYPE),
+  );
+  $form['salesforce_ngoc']['salesforce_ngoc_default_source_file'] = array(
+    '#title' => t('Batch Upload: Source File'),
+    '#type' => 'textfield',
+    '#default_value' => variable_get('salesforce_ngoc_default_source_file', SALESFORCE_NGOC_DEFAULT_SOURCE_FILE),
   );
   $form['salesforce_ngoc_poll_record_limit'] = array(
     '#title' => t('Poll Record Limit'),

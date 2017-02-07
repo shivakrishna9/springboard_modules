@@ -10,6 +10,7 @@ define('SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE', 'Home');
 define('SALESFORCE_NGOC_DEFAULT_RECORD_TYPE', 'Pledge');
 define('SALESFORCE_NGOC_DEFAULT_FREQUENCY', 'One Payment');
 define('SALESFORCE_NGOC_DEFAULT_POLL_RECORD_LIMIT', 2000);
+define('SALESFORCE_NGOC_DEFAULT_SOURCE_FILE', 'Springboard');
 
 require_once 'includes/salesforce_ngoc.polling.inc';
 require_once 'includes/salesforce_ngoc.salesforce.inc';

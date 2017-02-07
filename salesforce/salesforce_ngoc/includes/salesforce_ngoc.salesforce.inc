@@ -23,6 +23,7 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
   // mapping interface because these flags have no donation counterpart.
   if ($context['map']->salesforce_object_type == 'rC_Connect__Batch_Upload__c') {
     $fields['rC_Connect__Address_Type__c'] = variable_get('salesforce_ngoc_default_address_type', SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE);
+    $fields['rC_Connect__Batch_Upload_Source_File__c'] = variable_get('salesforce_ngoc_default_source_file', SALESFORCE_NGOC_DEFAULT_SOURCE_FILE);
     // Fields specific to donations.
     if ($context['module'] == 'salesforce_donation') {
       $fields['rC_Connect__Giving_Paid__c'] = TRUE;
