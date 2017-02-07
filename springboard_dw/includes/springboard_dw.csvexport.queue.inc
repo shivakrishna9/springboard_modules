@@ -71,6 +71,8 @@ function springboard_dw_process_csv_export_queue() {
  * @return bool
  */
 function springboard_dw_csv_export($item) {
+  require_once "sites/all/libraries/springboard_composer/vendor/autoload.php";
+
   // If the queue type is Drupal then our dump will come from the Drupal DB
   // instead of the data warehouse.
   if ($item['queue_type'] == 'Drupal') {
