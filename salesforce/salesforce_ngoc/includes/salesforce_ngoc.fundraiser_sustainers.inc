@@ -20,7 +20,7 @@ function salesforce_ngoc_fundraiser_sustainers_upgrade_success($master_did, $upg
     'Upgrade_Source__c' => $upgrade_form_values['cid'],
     'rC_Connect__Giving_Is_Sustainer__c' => TRUE,
     'rC_Connect__Giving_Close_Date__c' => date('Y-m-d'),
-    'rC_Connect__Giving_Payment_Frequency__c' => variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY),
+    'rC_Connect__Giving_Payment_Frequency__c' => 'Monthly',
     'rC_Connect__Giving_Giving_Type__c' => 'Pledge',
   );
 

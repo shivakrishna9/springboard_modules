@@ -26,11 +26,17 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
     // Fields specific to donations.
     if ($context['module'] == 'salesforce_donation') {
       $fields['rC_Connect__Giving_Paid__c'] = TRUE;
-      $fields['rC_Connect__Giving_Payment_Frequency__c'] = variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY);
       // Prevents NGOC from trying to process the payment.
       $fields['rC_Connect__Disable_Merchant_Messages__c'] = TRUE;
-      // Depends on one-time or recurring gift.
-      $fields['rC_Connect__Giving_Giving_Frequency__c'] = 'One Payment';
+      // Frequency depends on one-time or recurring gift.
+      if (isset($fields['rC_Connect__Giving_Is_Sustainer__c']) && $fields['rC_Connect__Giving_Is_Sustainer__c'] == 1) {
+        $fields['rC_Connect__Giving_Payment_Frequency__c'] = 'Monthly';
+        $fields['rC_Connect__Giving_Giving_Frequency__c'] = 'Monthly';
+      }
+      else {
+        $fields['rC_Connect__Giving_Payment_Frequency__c'] = variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY);
+        $fields['rC_Connect__Giving_Giving_Frequency__c'] = variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY);
+      }
       $fields['rC_Connect__Giving_Record_Type__c'] = variable_get('salesforce_ngoc_default_record_type', SALESFORCE_NGOC_DEFAULT_RECORD_TYPE);
       // Per tom: "for online donations the Address: Preferred Billing and
       // Address: Preferred Shipping should be set to TRUE.  (For advocacy

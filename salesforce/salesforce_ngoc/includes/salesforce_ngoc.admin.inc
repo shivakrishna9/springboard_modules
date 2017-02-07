@@ -53,7 +53,7 @@ function salesforce_ngoc_admin_form() {
     '#title' => t('Giving: Payment Frequency'),
     '#type' => 'select',
     '#multiple' => FALSE,
-    '#description' => '@TODO This should probably be set dynamically',
+    '#description' => 'This is switched to "Monthly" when Is Recurring Donation is TRUE',
     '#options' => salesforce_picklist_values($batch_upload_info, 'rC_Connect__Giving_Payment_Frequency__c'),
     '#default_value' => variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY),
   );
