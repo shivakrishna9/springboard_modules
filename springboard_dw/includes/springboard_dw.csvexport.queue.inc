@@ -44,6 +44,11 @@ function springboard_dw_process_csv_export_queue() {
     $item_count++;
   }
 
+  if (count($failed_queue_items)) {
+    echo "\n" . count($failed_queue_items) . ' ' .
+      format_plural(count($failed_queue_items), 'queue item', 'queue items') . ' ' . 'failed to process.' . "\n";
+  }
+
   /*
    * Loop through any failed queue items and release them back onto the queue
    * This has to be done because releasing directly within the processing
