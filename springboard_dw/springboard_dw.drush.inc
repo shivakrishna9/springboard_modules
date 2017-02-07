@@ -50,6 +50,7 @@ function springboard_dw_drush_command() {
  * Processes the Springboard data warehouse export queue.
  */
 function drush_springboard_dw_export_queue_process() {
+  require_once "sites/all/libraries/springboard_composer/vendor/autoload.php";
 
   // If the data warehouse config is not set, don't try to process the queue.
   if (!variable_get('springboard_dw_api_endpoint', FALSE) || !variable_get('springboard_dw_api_endpoint', FALSE)) {
