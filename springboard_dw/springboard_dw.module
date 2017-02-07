@@ -2190,7 +2190,7 @@ function _springboard_dw_export_queue_data_export() {
 
   // Queue the data export job:
   $success = TRUE;
-  $success = springboard_dw_csv_export_insert('DW', $data, $recipient);
+  $success = springboard_dw_csv_export_insert('Warehouse', $data, $recipient);
 
   // Return status to jQuery:
 
