@@ -2762,6 +2762,7 @@ function salesforce_ngoc_create_donation_mapping($nid = -1) {
     'salesforce_node_map' => array(
       'nid' => 'SB_Acquisition_Form_ID__c',
       'internal_name' => 'SB_Acquisition_Form_Internal_Name__c',
+      'type' => 'SB_Content_Type__c',
     ),
     'salesforce_user_map' => array(
       'uid' => 'SB_User_Id__c',
