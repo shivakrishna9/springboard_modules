@@ -1753,6 +1753,10 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
         if (!empty($card_data)) {
           $donation->data['cardonfile'] = $card_data->card_id;
         }
+        else {
+          drupal_set_message(t('Unable to update payment information. Please check your information and try again.'), 'warning');
+          return FALSE;
+        }
       }
     }
     // Sustainer update, update remaining donations with the first record's cardonfile id
