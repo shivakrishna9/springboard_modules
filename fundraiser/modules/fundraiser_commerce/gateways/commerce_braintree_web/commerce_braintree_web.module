@@ -618,8 +618,9 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   $braintree_result = $braintree_result['result'];
   if ($success) {
     // If cardonfile is enabled and this appears to be a new card.
-    $existing = db_query('SELECT uid, card_id FROM {braintree_vault_payment_methods} WHERE unique_identifier = :id', array(
+    $existing = db_query('SELECT uid, card_id FROM {braintree_vault_payment_methods} WHERE unique_identifier = :id AND uid = :uid', array(
       ':id' => $braintree_result->transaction->creditCardDetails->uniqueNumberIdentifier,
+      ':uid' => $order->uid,
     ))->fetchAll();
 
     $existing = reset($existing);
