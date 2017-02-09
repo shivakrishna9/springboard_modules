@@ -199,7 +199,7 @@ function commerce_sage_payments_tokenizer_batch_process($accounts, $gateway, $he
 
     // Translate the source .csv file headers into the format Sage expects.
     if (isset($account['Account or Card Number'])) {
-      $account['routing_number'] = substr($account['Account or Card Number'], 0, 8);
+      $account['routing_number'] = substr($account['Account or Card Number'], 0, 9);
       $account['account_number'] = substr($account['Account or Card Number'], 9);
     }
     if (isset($account['AccountType'])) {
