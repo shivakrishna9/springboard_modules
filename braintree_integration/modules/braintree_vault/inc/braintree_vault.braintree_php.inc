@@ -107,13 +107,14 @@ function braintree_vault_payment_method_save($payment_method, $context = array()
     // determining if the card's unique idenifier ID exists for the user.
     // @todo Re-implement this when/if Braintree ever supports looking up a
     // user's card before it has to be saved.
-    if ($context['op'] == 'add' && !empty($context['customer']['creditCards'] && in_array($context['result']->paymentMethod->uniqueNumberIdentifier, $context['customer']['creditCards']))) {
+    if ($context['op'] == 'add' && !empty($context['customer']['creditCards']) && in_array($context['result']->paymentMethod->uniqueNumberIdentifier, $context['customer']['creditCards'])) {
       // If we already have this card stored, delete this card and update the
       // stored card.
       try {
         Braintree_PaymentMethod::delete($context['result']->paymentMethod->token);
-        $token = db_query('SELECT payment_method_token FROM {braintree_vault_payment_methods} WHERE unique_identifier = :u', array(
+        $token = db_query('SELECT payment_method_token FROM {braintree_vault_payment_methods} WHERE unique_identifier = :u AND uid = :uid', array(
           ':u' => $context['result']->paymentMethod->uniqueNumberIdentifier,
+          ':uid' => $context['customer']['customer']->uid,
         ))->fetchField();
         unset($payment_method['paymentMethodNonce']);
         unset($payment_method['customerId']);
