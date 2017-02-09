@@ -25,6 +25,30 @@ function secure_autofill_module_implements_alter(&$implementations, $hook) {
 }
 
 /**
+ * Implements hook_permission().
+ */
+function secure_autofill_permission() {
+  return array(
+    'administer secure autofill' => array(
+      'title' => t('Administer Secure Autofill'),
+      'description' => t('Administer Secure Autofill settings.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_cron().
+ */
+function secure_autofill_cron() {
+  // Cleanup the secure_autofill_expired table.
+  $max_days = variable_get('secure_autofill_expired_date_limit', 30);
+  $max_date = REQUEST_TIME - ($max_days * 24 * 60 * 60);
+  db_delete('secure_autofill_expired')
+    ->condition('expire_date', $max_date, '<')
+    ->execute();
+}
+
+/**
  * Implements hook_menu().
  */
 function secure_autofill_menu() {
@@ -120,19 +144,25 @@ function secure_autofill_js_callback_get_amounts($gs) {
  *
  * Callback for decrypting a secure prepopulate string.
  */
-function secure_autofill_js_callback_get_values($af) {
+function secure_autofill_js_callback_get_values($af, $hash) {
   $json = array();
 
   // Ensure that the gift string variable was provided.
-  if (empty($af)) {
-    drupal_set_message(t('You must provide a query string.'), 'error');
+  if (empty($af) || empty($hash)) {
+    drupal_set_message(t('You must provide a query string and user hash.'), 'error');
+    $json['content'] = NULL;
+  }
+  elseif (secure_autofill_is_expired($af, $hash)) {
+    // Don't decrypt expired strings.
+    drupal_set_message(t('Query string is expired.'), 'error');
     $json['content'] = NULL;
   }
   else {
-    // Decrypt af
-    // TODO check for expiration as appropriate.
+    // Decrypt af.
     $raw_qs = secure_autofill_decrypt($af);
     $json['content'] = secure_autofill_parse_qs($raw_qs);
+    // Expire string.
+    secure_autofill_expire($af, $hash);
   }
 
   return $json;
@@ -403,6 +433,11 @@ function secure_autofill_clear_cookies($nid) {
     unset($_COOKIE['af-'. $nid]);
     setcookie('af-'. $nid, '', time() - 3600, '/'); // empty value and old timestamp
   }
+  // Unset user hash.
+  if (isset($_COOKIE['af-'. $nid .'-hash'])) {
+    unset($_COOKIE['af-'. $nid .'-hash']);
+    setcookie('af-'. $nid .'-hash', '', time() - 3600, '/'); // empty value and old timestamp
+  }
   // Unset gift string hash.
   if (isset($_COOKIE['gs-'. $nid])) {
     unset($_COOKIE['gs-'. $nid]);
@@ -411,25 +446,45 @@ function secure_autofill_clear_cookies($nid) {
 }
 
 /**
- * Implements hook_permission().
+ * Helper function, Determines if an encrypted query string has already been used.
+ *
+ * @param $qs
+ *   The query string to examine.
+ * @param $user_hash
+ *   The unique user hash, used to ensure that users can still have their values decrypted for an otherwise expired string.
  */
-function secure_autofill_permission() {
-  return array(
-    'administer secure autofill' => array(
-      'title' => t('Administer Secure Autofill'),
-      'description' => t('Administer Secure Autofill settings.'),
-    ),
-  );
+function secure_autofill_is_expired($qs, $user_hash) {
+  $result = db_query("SELECT COUNT(hash) FROM {secure_autofill_expired} WHERE hash = :hash AND userhash <> :userhash", array(':hash' => $qs, ":userhash" => $user_hash))->fetchField();
+  // if no results it's a new query string or user has the unique hash that allows them to continue using it.
+  if ($result == 0) {
+    return FALSE;
+  }
+  drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+  watchdog('Secure Autofill', 'Attempted use of encrypted query string @q', array('@q' => $qs_hashed), WATCHDOG_NOTICE);
+  return TRUE;
 }
 
 /**
- * Implements hook_cron().
+ * Helper function, expires query string so it cannot be used more than once.
+ *
+ * @param $qs
+ *   The hash to expire.
+ * @param $user_hash
+ *   The unique user hash, used to ensure that users can still have their values decrypted for an otherwise expired string.
  */
-function secure_autofill_cron() {
-  // Cleanup the secure_prepopulate_expired table.
-  $max_days = variable_get('secure_autofill_expired_date_limit', 30);
-  $max_date = REQUEST_TIME - ($max_days * 24 * 60 * 60);
-  db_delete('secure_autofill_expired')
-    ->condition('expire_date', $max_date, '<')
-    ->execute();
+function secure_autofill_expire($qs, $user_hash) {
+  // If the "Pre-populated tokens never expire" setting is enabled then do not set an expiration timestamp:
+  if (secure_autofill_variable_get('secure_autofill_toggle_expiration', 0)) {
+    return;
+  }
+
+  $result = db_query("SELECT COUNT(hash) FROM {secure_autofill_expired} WHERE hash = :hash AND userhash = :userhash", array(':hash' => $qs, ":userhash" => $user_hash))->fetchField();
+  // If no results, create an entry.
+  if ($result == 0) {
+    $record = new stdClass();
+    $record->hash = $qs;
+    $record->expire_date = REQUEST_TIME;
+    $record->userhash = $user_hash;
+    drupal_write_record('secure_autofill_expired', $record);
+  }
 }

@@ -154,23 +154,30 @@
       if (!afCookie) {
         // Get af from URL if it wasn't in our cookie.
         var af = getParameterByName('af');
+        if (af) {
+          // Get a random 16-character string for identifying this user.
+          var afHash = randomString(16);
+        }
       }
       else {
         // Show welcome message with link to 'not me'
         showWelcome = true;
         var af = afCookie;
+        // Get per-user hash.
+        var afHash = $.cookie("af-" + nid + '-hash');
       }
 
       // Decrypt whichever value we chose to use above.
-      if (typeof(af) !== 'undefined') {
+      if (typeof(af) !== 'undefined' && typeof(afHash) !== 'undefined') {
         // Post af to 'get_amounts' callback, assemble request params and respond.
         $.post( "/js/secure_autofill/get_values", {
           js_callback: "get_values",
           js_module: "secure_autofill",
-          af: af
+          af: af,
+          hash: afHash
         }).done(function(data) {
           // If response code is successful, take action.
-          if (data.response.code == 200) {
+          if (data.response.code == 200 && data.content) {
             // Iterate through returned object and populate appropriate fields.
             for (var key in data.content) {
               if (data.content.hasOwnProperty(key)) {
@@ -180,9 +187,9 @@
                 }
                 else {
                   // Populate input fields matching key with value returned from callback.
-                  $("input[name*='" + key + "']").val(data.content[key]);
+                  $("input[name*='\[" + key + "\]']").val(data.content[key]);
                   // Populate selects.
-                  $("select[name*='" + key + "']").each(function(){
+                  $("select[name*='\[" + key + "\]']").each(function(){
                     $('option[value="' + data.content[key] + '"]', this).prop('selected', true);
                   });
                   // TODO handle select fields, radios, and checkboxes.
@@ -199,10 +206,12 @@
               }
             }
 
-            if (nid && !afCookie) {
+            if (nid && !afCookie && af && afHash) {
               // Set af cookie if it wasn't before.
               // This cookie will expire at end of session.
               $.cookie("af-" + nid, af, { path: '/' });
+              // Set the per-user hash.
+              $.cookie("af-" + nid + "-hash", afHash, { path: '/' });
             }
 
           // End data check.
@@ -225,6 +234,7 @@
         return decodeURIComponent(results[2].replace(/\+/g, " "));
       }
 
+
       // Helper function to get node id.
       function getCurrentNodeId() {
         var $body = $('body.page-node');
@@ -237,6 +247,11 @@
             return parseInt(c.substring(10), 10);
         }
         return false;
+      }
+
+      // Helper function to generate a random string.
+      function randomString(length) {
+        return Math.round((Math.pow(36, length + 1) - Math.random() * Math.pow(36, length))).toString(36).slice(1);
       }
     }
   };

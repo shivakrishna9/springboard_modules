@@ -35,9 +35,15 @@ function secure_autofill_schema() {
     'description' => 'Expired Autofill strings',
     'fields' => array(
       'hash' => array(
-        'description' => 'The hashed qs string',
+        'description' => 'The encrypted string',
         'type' => 'varchar',
-        'length' => '40',
+        'length' => '800',
+        'not null' => FALSE,
+      ),
+      'userhash' => array(
+        'description' => 'Unique per-user hash',
+        'type' => 'varchar',
+        'length' => '16',
         'not null' => FALSE,
       ),
       'expire_date' => array(
@@ -46,18 +52,6 @@ function secure_autofill_schema() {
         'not null' => FALSE,
       ),
     ),
-    'indexes' => array(
-      'hash' => array('hash'),
-      'expired' => array('expire_date'),
-    ),
   );
   return $schema;
-}
-
-/**
- * Add indexes to tables.
- */
-function secure_autofill_update_7001() {
-  db_add_index('secure_autofill_expired', 'hash', array('hash'));
-  db_add_index('secure_autofill_expired', 'expired', array('expire_date'));
 }
