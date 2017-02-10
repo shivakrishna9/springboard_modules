@@ -97,7 +97,6 @@ class PageWrappersFileInlineEntityFormController extends EntityInlineEntityFormC
       }
       $entity_form['#entity'] = $entity;
     }
-    }
     parent::entityFormSubmit($entity_form, $form_state);
   }
 }
