@@ -554,7 +554,7 @@ function webform_user_webform_submit($form, &$form_state) {
     $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree'], $node->nid);
     $map = _webform_user_get_map($form_state['values']['details']['nid'], $fields);
     // Track the content type that created or last updated the user by setting
-    // sbp_created_via user profile field.
+    // originating_content_type user profile field.
     $map['originating_content_type'] = $form['#node']->type;
     $fields['mail'] = trim($fields['mail']);
     // Return object or FALSE if none found.
