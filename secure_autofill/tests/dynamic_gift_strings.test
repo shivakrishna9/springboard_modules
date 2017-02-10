@@ -8,7 +8,7 @@
 /**
  * Setup and tear down web class. Does nothing else.
  */
-abstract class DynamicGiftStringsTestSetup extends FundraiserSetup {
+abstract class SecureAutofillDynamicGiftStringsTestSetup extends FundraiserSetup {
 
   /**
    * @var string
@@ -40,16 +40,13 @@ abstract class DynamicGiftStringsTestSetup extends FundraiserSetup {
   public function setUp($additional_modules = array()) {
     // Call the parent to set all of the base modules up.
     $additional_modules = array(
-      'secure_prepopulate',
-      'dynamic_gift_strings',
       'webform_confirmations',
     );
     parent::setUp($additional_modules);
 
     // Set up some default variables.
-    variable_set('secure_prepopulate_key', '12345678901234561234567890123456');
-    variable_set('secure_prepopulate_iv', '1234567890123456');
-    variable_set('secure_prepopulate_precedence', 'url');
+    variable_set('secure_autofill_key', '12345678901234561234567890123456');
+    variable_set('secure_autofill_iv', '1234567890123456');
 
     // Create an encrypted gift string with no default.
     $amounts = array(
@@ -63,7 +60,7 @@ abstract class DynamicGiftStringsTestSetup extends FundraiserSetup {
     }
 
     $query_string = implode('&', $query);
-    $this->encryptedGSNoDefault = secure_prepopulate_encrypt($query_string);
+    $this->encryptedGSNoDefault = secure_autofill_encrypt($query_string);
 
     // Create an encrypted gift string with a default.
     $amounts = array(
@@ -76,13 +73,13 @@ abstract class DynamicGiftStringsTestSetup extends FundraiserSetup {
     }
 
     $query_string = implode('&', $query);
-    $this->encryptedGSWithDefault = secure_prepopulate_encrypt($query_string);
+    $this->encryptedGSWithDefault = secure_autofill_encrypt($query_string);
 
     // Create an encrypted secure pre-pop string.
     $settings = array(
-      'first_name' => 'Allen',
-      'last_name' => 'Freeman',
-      'email' => 'allen.freeman@example.com',
+      'first_name' => 'Joe',
+      'last_name' => 'Tester',
+      'email' => 'joe.tester@example.com',
       'address' => '12345 Test Dr',
       'address_line_2' => 'Apt 2',
       'city' => 'Springfield',
@@ -94,7 +91,7 @@ abstract class DynamicGiftStringsTestSetup extends FundraiserSetup {
       $query[] = "$key=$value";
     }
     $query_string = implode('&', $query);
-    $this->encryptedAF = secure_prepopulate_encrypt($query_string);
+    $this->encryptedAF = secure_autofill_encrypt($query_string);
 
     // Create the form.
     $this->donationForm = $this->createDonationForm();

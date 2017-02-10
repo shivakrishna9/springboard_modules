@@ -114,7 +114,7 @@ class SecureAutofillUnitTestCase extends DrupalWebTestCase {
         'state' => 'IL',
         'zip' => '55555',
       ),
-      'encrypted' => 'zbvnX%2B74laMyfiPCl4gqK7f2xvm64YloiOGBc1PPUAeqzdMQmanWTIeiR8LkU1NMBZcN8ocqpMW%2FqdkXHQ3oLHleoGPAMymIRMKv67JPg7unz4DJse6DbClZpdoyUrgtCz6Ff3O7VAnKGkeRb9ZEf%2F%2B0ZPhAzD68r2CaEHuWMWqyIDCk2hMFCSGAHyzEcbdMLY4XfziQeMZn0u9g%2BSlmWA%3D%3D',
+      'encrypted' => 'zbvnX+74laMyfiPCl4gqK7f2xvm64YloiOGBc1PPUAeqzdMQmanWTIeiR8LkU1NMBZcN8ocqpMW/qdkXHQ3oLHleoGPAMymIRMKv67JPg7unz4DJse6DbClZpdoyUrgtCz6Ff3O7VAnKGkeRb9ZEf/+0ZPhAzD68r2CaEHuWMWqyIDCk2hMFCSGAHyzEcbdMLY4XfziQeMZn0u9g+SlmWA==',
     );
 
     $cases[] = array(

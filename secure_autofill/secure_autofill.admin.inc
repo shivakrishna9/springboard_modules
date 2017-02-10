@@ -25,17 +25,6 @@ function secure_autofill_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('secure_autofill_iv', ''),
   );
 
-  $form['secure_autofill_precedence'] = array(
-    '#type' => 'radios',
-    '#title' => t('Pre-populate precedence'),
-    '#description' => t('Determines which set of values take precedence when the user is already logged in.'),
-    '#options' => array(
-      'url' => 'Encrypted URL values',
-      'drupal' => 'Drupal values',
-    ),
-    '#default_value' => variable_get('secure_autofill_precedence', 'url'),
-  );
-
   $form['dynamic_gift_strings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Dynamic gift string settings'),

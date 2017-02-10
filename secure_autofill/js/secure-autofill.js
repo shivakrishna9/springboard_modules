@@ -17,18 +17,25 @@
       if (!gsCookie) {
         // Get GS from URL if it wasn't in our cookie.
         var gs = getParameterByName('gs');
+        if (gs) {
+          // Get a random 16-character string for identifying this user.
+          var gsHash = randomString(16);
+        }
       }
       else {
         var gs = gsCookie;
+        // Get per-user hash.
+        var gsHash = $.cookie("gs-" + nid + '-hash');
       }
 
       // Decrypt whichever value we chose to use above.
-      if (typeof(gs) !== 'undefined') {
+      if (typeof(gs) !== 'undefined' && typeof(gsHash) !== 'undefined') {
         // Post GS to 'get_amounts' callback, assemble request params and respond.
         $.post( "/js/secure_autofill/get_amounts", {
           js_callback: "get_amounts",
           js_module: "secure_autofill",
-          gs: gs
+          gs: gs,
+          user_hash: gsHash
         }).done(function(data) {
           // If response code is successful, take action.
           if (data.response.code == 200) {
@@ -133,12 +140,13 @@
               }
             }
 
-            if (nid && !gsCookie) {
+            if (nid && !gsCookie && gs && gsHash) {
               // Set GS cookie if it wasn't before.
               // This cookie will expire at end of session.
               $.cookie("gs-" + nid, gs, { path: '/' });
+              // Set the per-user hash.
+              $.cookie("gs-" + nid + "-hash", gsHash, { path: '/' });
             }
-
           // End data check.
           }
         // End response handler.
@@ -174,7 +182,7 @@
           js_callback: "get_values",
           js_module: "secure_autofill",
           af: af,
-          hash: afHash
+          user_hash: afHash
         }).done(function(data) {
           // If response code is successful, take action.
           if (data.response.code == 200 && data.content) {
