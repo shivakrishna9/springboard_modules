@@ -774,6 +774,22 @@ function page_wrappers_file_insert($file) {
 }
 
 /**
+ * Implements hook_entity_presave().
+ *
+ * Manipulate Page Wrappers file entities before they are saved.
+ *
+ */
+
+function page_wrappers_entity_presave($entity, $type) {
+  if($type == 'file' && preg_match('/^page_wrappers_asset?/', $entity->type)) {
+    // If a title hasn't been set, use the filename.
+    if(!field_get_items($type, $entity, 'field_pw_asset_title')) {
+      $entity->field_pw_asset_title[LANGUAGE_NONE][0]['value'] = $entity->filename;
+    }
+  }
+}
+
+/**
  * Adds a timestamp to a filename.
  *
  * @param $filename

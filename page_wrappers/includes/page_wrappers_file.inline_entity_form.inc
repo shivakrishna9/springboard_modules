@@ -8,10 +8,10 @@
 class PageWrappersFileInlineEntityFormController extends EntityInlineEntityFormController {
 
   public function tableFields($bundles) {
-    $fields['name'] = array(
-      'type' => 'property',
-      'label' => t('File Name'),
-      'formatter' => 'file_default',
+    $fields['field_pw_asset_title'] = array(
+      'type' => 'field',
+      'label' => t('Title'),
+      'formatter' => 'text_default',
       'weight' => 0,
     );
     $fields['owner'] = array(
@@ -20,9 +20,9 @@ class PageWrappersFileInlineEntityFormController extends EntityInlineEntityFormC
       'formatter' => 'text_default',
       'weight' => 1,
     );
-    $fields['url'] = array(
+    $fields['name'] = array(
       'type' => 'property',
-      'label' => t('URL'),
+      'label' => t('Filename'),
       'formatter' => 'text_default'
     );
     $fields['timestamp'] = array(
@@ -82,9 +82,21 @@ class PageWrappersFileInlineEntityFormController extends EntityInlineEntityFormC
     // uploaded. The file entity associated with that managed file will use the same file ID (fid)
     // as its entity ID. Creating a "new" file entity, then, is really just updating the fields
     // related to the entity ID already created in the file_managed table.
+
     if(isset($entity_form['upload']['#file'])){
       // Replace the generic "new" entity object with the actual file entity.
-      $entity_form['#entity'] = $entity_form['upload']['#file'];
+      $entity = $entity_form['upload']['#file'];
+      // Load the existing entity's field values
+      $entity_values = (array) $entity_form['#entity'];
+      // Reset the entity type to match the field settings.
+      $entity->type = $entity_values['type'];
+      foreach($entity_values as $key => $values) {
+        if(preg_match('/^field_?/', $key)) {
+          $entity->$key = $values;
+        }
+      }
+      $entity_form['#entity'] = $entity;
+    }
     }
     parent::entityFormSubmit($entity_form, $form_state);
   }
