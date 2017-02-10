@@ -188,24 +188,22 @@ function page_wrappers_preprocess_page(&$vars) {
 
       // If there's a css file add it; also see this module's
       // hook_css_alter function.
-      if (isset($wrapper_node->page_wrappers_css) && count($wrapper_node->page_wrappers_css)) {
+      if (isset($wrapper_node->sb_page_wrappers_css) && count($wrapper_node->sb_page_wrappers_css)) {
+        $field_items = field_get_items('node', $wrapper_node, 'sb_page_wrappers_css');
 
-        $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
-
-        foreach ($css_files as $css_file) {
-          $css_file['options']['weight'] = 20;
-          drupal_add_css($css_file['uri'], $css_file['options']);
+        foreach ($field_items as $item) {
+          $options['weight'] = 20;
+          drupal_add_css($item['entity']->uri, array('weight' => 20));
         }
       }
 
       // If there's a js file add it.
-      if (isset($wrapper_node->page_wrappers_js) && count($wrapper_node->page_wrappers_js)) {
+      if (isset($wrapper_node->sb_page_wrappers_js) && count($wrapper_node->sb_page_wrappers_js)) {
 
-        $js_files = field_get_items('node', $wrapper_node, 'page_wrappers_js');
+        $field_items = field_get_items('node', $wrapper_node, 'sb_page_wrappers_js');
 
-        foreach ($js_files as $js_file) {
-          $js_file['options']['weight'] = 10;
-          drupal_add_js($js_file['uri'], $js_file['options']);
+        foreach ($field_items as $item) {
+          drupal_add_js($item['entity']->uri, array('weight' => 20));
         }
       }
 
@@ -248,7 +246,7 @@ function page_wrappers_css_alter(&$css) {
     // provides a node.  Test if the two nodes are the same and if so replace
     // this with the one from $wrapper_data['node'].
     $wrapper_node = node_load($wrapper['wrapper_nid']);
-    $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
+    $css_files = field_get_items('node', $wrapper_node, 'sb_page_wrappers_css');
     $keep = array();
     // If a stylesheet is from an allowed theme, don't remove it.
     if ($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
@@ -756,11 +754,11 @@ function page_wrappers_file_insert($file) {
   if (arg(2) != 'clone' && isset($file->source)) {
     $dir = PAGE_WRAPPERS_DIR;
     $filename = $file->filename;
-    if(strpos($file->source, 'page_wrappers_js_und_') === 0) {
+    if(strpos($file->source, 'sb_page_wrappers_js_und_') === 0) {
       $filename = substr($filename, 0, strlen($filename) - 4);
       $dir .= PAGE_WRAPPERS_JS_DIR;
     }
-    else if(strpos($file->source, 'page_wrappers_css_und_') === 0) {
+    else if(strpos($file->source, 'sb_page_wrappers_css_und_') === 0) {
       $dir .= PAGE_WRAPPERS_CSS_DIR;
     }
     else {
@@ -768,7 +766,7 @@ function page_wrappers_file_insert($file) {
       return;
     }
 
-    if(file_prepare_directory($dir)) {
+    if(file_prepare_directory($dir, FILE_CREATE_DIRECTORY)) {
       $destination = $dir . '/' . $filename;
       file_move($file, $destination);
     }

@@ -12,6 +12,9 @@
 function page_wrappers_install() {
   // change the clone module's cloning method to save-edit cause that's the way we like it.
   variable_set('clone_method', 'save-edit');
+  // ensure file_entity is installed before creating file types.
+  module_enable(array('file_entity'));
+
   _page_wrappers_create_fields();
   _page_wrappers_create_file_entities();
 
@@ -171,7 +174,7 @@ function _page_wrappers_create_fields() {
 
     // css filefield
     'css_file_entity' => array(
-      'field_name' => 'page_wrappers_css',
+      'field_name' => 'sb_page_wrappers_css',
       'active' => 1,
       'cardinality' => -1,
       'deleted' => 0,
@@ -195,7 +198,7 @@ function _page_wrappers_create_fields() {
             'type' => 'none',
           ),
           'target_bundles' => array(
-            'page_wrappers_asset' => 'page_wrappers_asset',
+            'page_wrappers_asset_css' => 'page_wrappers_asset_css',
           ),
         ),
         'target_type' => 'file',
@@ -225,7 +228,7 @@ function _page_wrappers_create_fields() {
           ),
         ),
         'entity_type' => 'node',
-        'field_name' => 'page_wrappers_css',
+        'field_name' => 'sb_page_wrappers_css',
         'label' => 'Upload a Stylesheet',
         'required' => 0,
         'settings' => array(
@@ -251,7 +254,7 @@ function _page_wrappers_create_fields() {
 
     // javascript filefield
     'js_filefield' => array(
-      'field_name' => 'page_wrappers_js',
+      'field_name' => 'sb_page_wrappers_js',
       'active' => 1,
       'cardinality' => -1,
       'deleted' => 0,
@@ -275,7 +278,7 @@ function _page_wrappers_create_fields() {
             'type' => 'none',
           ),
           'target_bundles' => array(
-            'page_wrappers_asset' => 'page_wrappers_asset',
+            'page_wrappers_asset_js' => 'page_wrappers_asset_js',
           ),
         ),
         'target_type' => 'file',
@@ -305,7 +308,7 @@ function _page_wrappers_create_fields() {
           ),
         ),
         'entity_type' => 'node',
-        'field_name' => 'page_wrappers_js',
+        'field_name' => 'sb_page_wrappers_js',
         'label' => 'Upload a Script',
         'required' => 0,
         'settings' => array(
@@ -331,13 +334,13 @@ function _page_wrappers_create_fields() {
 
     // html template
     'html_template' => array(
-      'field_name' => 'page_wrappers_html_template',
+      'field_name' => 'sb_page_wrappers_html_template',
       'type' => 'text_with_summary',
       'cardinality' => 1,
       'settings' => array(),
       'entity_types' => array('node'),
       '_instance' => array(
-        'field_name' => 'page_wrappers_html_template',
+        'field_name' => 'sb_page_wrappers_html_template',
         'entity_type' => 'node',
         'bundle' => 'page_wrapper',
         'required' => TRUE,
@@ -385,18 +388,33 @@ function _page_wrappers_delete_nodes() {
 }
 
 function _page_wrappers_create_file_entities() {
+  $file_types = array();
+
   $file_type = new stdClass();
   $file_type->disabled = FALSE; /* Edit this to true to make a default file_type disabled initially */
   $file_type->api_version = 1;
-  $file_type->type = 'page_wrappers_asset';
-  $file_type->label = 'Page Wrappers Asset';
+  $file_type->type = 'page_wrappers_asset_css';
+  $file_type->label = 'Page Wrappers Styles';
+  $file_type->description = '@TODO'; // @TODO
+  $file_type->mimetypes = array(
+    0 => 'text/css',
+  );
+  $file_types[$file_type->type] = $file_type;
+
+  $file_type = new stdClass();
+  $file_type->disabled = FALSE; /* Edit this to true to make a default file_type disabled initially */
+  $file_type->api_version = 1;
+  $file_type->type = 'page_wrappers_asset_js';
+  $file_type->label = 'Page Wrappers Script';
   $file_type->description = '@TODO'; // @TODO
   $file_type->mimetypes = array(
     0 => 'application/x-javascript',
-    1 => 'text/css',
   );
+  $file_types[$file_type->type] = $file_type;
 
-  file_type_save($file_type);
+  foreach ($file_types as $file_type) {
+    file_type_save($file_type);
+  }
 
   $fields = array(
     'pw_asset_title' => array(
@@ -425,47 +443,92 @@ function _page_wrappers_create_file_entities() {
       ),
       'translatable' => 0,
       'type' => 'text',
-      '_instance' => array(
-        'bundle' => 'page_wrappers_asset',
-        'default_value' => NULL,
-        'deleted' => 0,
-        'description' => 'Enter a title for this file that will make it easy to search for. If you leave this field blank, the name of the file you upload will be used.',
-        'display' => array(
-          'default' => array(
-            'label' => 'none',
-            'settings' => array(),
-            'type' => 'hidden',
-            'weight' => 1,
+      '_instances' => array(
+        'page_wrappers_asset_css' => array(
+          'bundle' => 'page_wrappers_asset_css',
+          'default_value' => NULL,
+          'deleted' => 0,
+          'description' => 'Enter a title for this file that will make it easy to search for. If you leave this field blank, the name of the file you upload will be used.',
+          'display' => array(
+            'default' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 1,
+            ),
+            'preview' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 0,
+            ),
+            'teaser' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 0,
+            ),
           ),
-          'preview' => array(
-            'label' => 'none',
-            'settings' => array(),
-            'type' => 'hidden',
-            'weight' => 0,
-          ),
-          'teaser' => array(
-            'label' => 'none',
-            'settings' => array(),
-            'type' => 'hidden',
-            'weight' => 0,
-          ),
-        ),
-        'entity_type' => 'file',
-        'field_name' => 'field_pw_asset_title',
-        'label' => 'Title',
-        'required' => 0,
-        'settings' => array(
-          'text_processing' => 0,
-          'user_register_form' => FALSE,
-        ),
-        'widget' => array(
-          'active' => 1,
-          'module' => 'text',
+          'entity_type' => 'file',
+          'field_name' => 'field_pw_asset_title',
+          'label' => 'Title',
+          'required' => 0,
           'settings' => array(
-            'size' => 60,
+            'text_processing' => 0,
+            'user_register_form' => FALSE,
           ),
-          'type' => 'text_textfield',
-          'weight' => 0,
+          'widget' => array(
+            'active' => 1,
+            'module' => 'text',
+            'settings' => array(
+              'size' => 60,
+            ),
+            'type' => 'text_textfield',
+            'weight' => 0,
+          ),
+          'page_wrappers_asset_js' => array(
+            'bundle' => 'page_wrappers_asset_js',
+            'default_value' => NULL,
+            'deleted' => 0,
+            'description' => 'Enter a title for this file that will make it easy to search for. If you leave this field blank, the name of the file you upload will be used.',
+            'display' => array(
+              'default' => array(
+                'label' => 'none',
+                'settings' => array(),
+                'type' => 'hidden',
+                'weight' => 1,
+              ),
+              'preview' => array(
+                'label' => 'none',
+                'settings' => array(),
+                'type' => 'hidden',
+                'weight' => 0,
+              ),
+              'teaser' => array(
+                'label' => 'none',
+                'settings' => array(),
+                'type' => 'hidden',
+                'weight' => 0,
+              ),
+            ),
+            'entity_type' => 'file',
+            'field_name' => 'field_pw_asset_title',
+            'label' => 'Title',
+            'required' => 0,
+            'settings' => array(
+              'text_processing' => 0,
+              'user_register_form' => FALSE,
+            ),
+            'widget' => array(
+              'active' => 1,
+              'module' => 'text',
+              'settings' => array(
+                'size' => 60,
+              ),
+              'type' => 'text_textfield',
+              'weight' => 0,
+            ),
+          ),
         ),
       ),
     ),
@@ -493,56 +556,101 @@ function _page_wrappers_create_file_entities() {
       'settings' => array(),
       'translatable' => 0,
       'type' => 'text_long',
-      '_instance' => array(
-        'bundle' => 'page_wrappers_asset',
-        'default_value' => NULL,
-        'deleted' => 0,
-        'description' => 'Enter a description for this file that will help others to understand its purpose. You may also use this space to make notes about how to best use this file',
-        'display' => array(
-          'default' => array(
-            'label' => 'none',
-            'settings' => array(),
-            'type' => 'hidden',
-            'weight' => 0,
+      '_instances' => array(
+        'page_wrapper_asset_css' => array(
+          'bundle' => 'page_wrappers_asset_css',
+          'default_value' => NULL,
+          'deleted' => 0,
+          'description' => 'Enter a description for this file that will help others to understand its purpose. You may also use this space to make notes about how to best use this file',
+          'display' => array(
+            'default' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 0,
+            ),
+            'preview' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 0,
+            ),
+            'teaser' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 0,
+            ),
           ),
-          'preview' => array(
-            'label' => 'none',
-            'settings' => array(),
-            'type' => 'hidden',
-            'weight' => 0,
-          ),
-          'teaser' => array(
-            'label' => 'none',
-            'settings' => array(),
-            'type' => 'hidden',
-            'weight' => 0,
-          ),
-        ),
-        'entity_type' => 'file',
-        'field_name' => 'field_pw_asset_description',
-        'label' => 'Description',
-        'required' => 0,
-        'settings' => array(
-          'text_processing' => 0,
-          'user_register_form' => FALSE,
-        ),
-        'widget' => array(
-          'active' => 1,
-          'module' => 'text',
+          'entity_type' => 'file',
+          'field_name' => 'field_pw_asset_description',
+          'label' => 'Description',
+          'required' => 0,
           'settings' => array(
-            'rows' => 5,
+            'text_processing' => 0,
+            'user_register_form' => FALSE,
           ),
-          'type' => 'text_textarea',
+          'widget' => array(
+            'active' => 1,
+            'module' => 'text',
+            'settings' => array(
+              'rows' => 5,
+            ),
+            'type' => 'text_textarea',
+          ),
+        ),
+        'page_wrapper_asset_js' => array(
+          'bundle' => 'page_wrappers_asset_js',
+          'default_value' => NULL,
+          'deleted' => 0,
+          'description' => 'Enter a description for this file that will help others to understand its purpose. You may also use this space to make notes about how to best use this file',
+          'display' => array(
+            'default' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 0,
+            ),
+            'preview' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 0,
+            ),
+            'teaser' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 0,
+            ),
+          ),
+          'entity_type' => 'file',
+          'field_name' => 'field_pw_asset_description',
+          'label' => 'Description',
+          'required' => 0,
+          'settings' => array(
+            'text_processing' => 0,
+            'user_register_form' => FALSE,
+          ),
+          'widget' => array(
+            'active' => 1,
+            'module' => 'text',
+            'settings' => array(
+              'rows' => 5,
+            ),
+            'type' => 'text_textarea',
+          ),
         ),
       ),
     ),
   );
   foreach ($fields as $key => $values) {
-    $instance = $values['_instance'];
-    unset($values['_instance']);
-
+    $instances = $values['_instances'];
+    unset($values['_instances']);
     field_create_field($values);
-    field_create_instance($instance);
+    foreach ($instances as $instance) {
+      field_create_instance($instance);
+    }
   }
 }
 
