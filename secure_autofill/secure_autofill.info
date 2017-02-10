@@ -6,3 +6,6 @@ dependencies[] = webform
 dependencies[] = js
 version = 7.x-4.x-dev
 configure = 'admin/config/system/secure-autofill'
+
+files[] = tests/secure_autofill.unit.test
+

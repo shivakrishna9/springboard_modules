@@ -120,20 +120,38 @@ function secure_autofill_js_info() {
  *
  * Callback for decrypting a dynamic gift string.
  */
-function secure_autofill_js_callback_get_amounts($gs) {
+function secure_autofill_js_callback_get_amounts($gs, $user_hash) {
   $json = array();
 
   // Ensure that the gift string variable was provided.
-  if (empty($gs)) {
-    drupal_set_message(t('You must provide a gift string.'), 'error');
+  if (empty($gs) || empty($user_hash)) {
+    drupal_set_message(t('You must provide a gift string and user hash.'), 'error');
+    $json['content'] = NULL;
+  }
+  elseif (secure_autofill_is_expired($gs, $hash)) {
+    // Don't decrypt expired strings.
+    drupal_set_message(t('Gift string is expired.'), 'error');
     $json['content'] = NULL;
   }
   else {
     // Decrypt gs per dynamic gift strings.
-    // TODO check for expiration as appropriate.
-    // TODO validate amounts as with _dynamic_gift_strings_parse_amounts. Throw watchdog.
     $raw_qs = secure_autofill_decrypt($gs);
-    $json['content'] = secure_autofill_parse_qs($raw_qs);
+    $parsed_qs = secure_autofill_parse_qs($raw_qs);
+    // Ensure amounts are valid.
+    $valid = secure_autofill_validate_gs($parsed_qs);
+    if ($valid) {
+      $json['content'] = $parsed_qs;
+    }
+    else {
+      drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+      watchdog("Secure Autofill", "Gift string is invalid.", NULL, WATCHDOG_ERROR);
+      $json['content'] = NULL;
+    }
+    // see if we need to expire the query string
+    $never_expire = secure_autofill_variable_get('secure_autofill_dynamic_gift_strings_never_expire', 1);
+    if (!$never_expire) {
+      secure_autofill_expire($gs, $hash);
+    }
   }
 
   return $json;
@@ -144,15 +162,15 @@ function secure_autofill_js_callback_get_amounts($gs) {
  *
  * Callback for decrypting a secure prepopulate string.
  */
-function secure_autofill_js_callback_get_values($af, $hash) {
+function secure_autofill_js_callback_get_values($af, $user_hash) {
   $json = array();
 
   // Ensure that the gift string variable was provided.
-  if (empty($af) || empty($hash)) {
+  if (empty($af) || empty($user_hash)) {
     drupal_set_message(t('You must provide a query string and user hash.'), 'error');
     $json['content'] = NULL;
   }
-  elseif (secure_autofill_is_expired($af, $hash)) {
+  elseif (secure_autofill_is_expired($af, $user_hash)) {
     // Don't decrypt expired strings.
     drupal_set_message(t('Query string is expired.'), 'error');
     $json['content'] = NULL;
@@ -162,7 +180,7 @@ function secure_autofill_js_callback_get_values($af, $hash) {
     $raw_qs = secure_autofill_decrypt($af);
     $json['content'] = secure_autofill_parse_qs($raw_qs);
     // Expire string.
-    secure_autofill_expire($af, $hash);
+    secure_autofill_expire($af, $user_hash);
   }
 
   return $json;
@@ -487,4 +505,39 @@ function secure_autofill_expire($qs, $user_hash) {
     $record->userhash = $user_hash;
     drupal_write_record('secure_autofill_expired', $record);
   }
+}
+
+/**
+ * Helper function, validates gift string amounts. Based on _dynamic_gift_strings_parse_amounts.
+ */
+function secure_autofill_validate_gs($gs) {
+  if (!is_array($gs)) {
+    return FALSE;
+  }
+
+  $valid = TRUE;
+
+  // Validate amounts.
+  if (array_key_exists('amounts', $gs)) {
+    $amounts = explode('|', $gs['amounts']);
+    // Validate the amounts.
+    foreach ($amounts as $amount) {
+      if (!is_numeric($amount) || $amount == 0) {
+        $valid = FALSE;
+      }
+    }
+  }
+
+  // Validate amounts.
+  if (array_key_exists('recurring_amounts', $gs)) {
+    $recurring_amounts = explode('|', $gs['amounts']);
+    // Validate the amounts.
+    foreach ($recurring_amounts as $amount) {
+      if (!is_numeric($amount) || $amount == 0) {
+        $valid = FALSE;
+      }
+    }
+  }
+
+  return $valid;
 }
