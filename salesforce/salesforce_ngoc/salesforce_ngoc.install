@@ -32,9 +32,9 @@ function salesforce_ngoc_install() {
   }
 
   // Add profile field to track which module created a user.
-  $field_creating_result = salesforce_ngoc_create_user_created_via_field();
+  $field_creating_result = salesforce_ngoc_create_orginating_content_type_field();
   if ($user_mapping_result !== FALSE) {
-    drupal_set_message(t('Drupal user profile field sbp_created_via has been created.'));
+    drupal_set_message(t('Drupal user profile field orginating_content_type has been created.'));
   }
 
   // Create default parent object data structure. This is used when determining
@@ -267,15 +267,15 @@ function salesforce_ngoc_create_salesforce_donation_mappings() {
 }
 
 /**
- * Creates the sbp_created_via field.
+ * Creates the orginating_content_type field.
  *
  * Used to track what action created the user.
  */
-function salesforce_ngoc_create_user_created_via_field() {
+function salesforce_ngoc_create_orginating_content_type_field() {
   $success = FALSE;
-  $created_via = array(
-    'label' => t('Created Via'),
-    'field_name' => 'sbp_created_via',
+  $orginating_content_type = array(
+    'label' => t('Originating Content Type'),
+    'field_name' => 'orginating_content_type',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -292,19 +292,19 @@ function salesforce_ngoc_create_user_created_via_field() {
     ),
   );
 
-  $field_exists = field_info_field('sbp_created_via');
+  $field_exists = field_info_field('orginating_content_type');
 
   if (empty($field_exists)) {
-    field_create_field($created_via);
+    field_create_field($orginating_content_type);
   }
 
-  $instance_exists = field_info_instance('user', 'sbp_created_via', 'user');
+  $instance_exists = field_info_instance('user', 'orginating_content_type', 'user');
   if (empty($instance_exists)) {
     $instance = array(
       'entity_type' => 'user',
       'bundle' => 'user',
     );
-    $instance = array_merge($created_via, $instance);
+    $instance = array_merge($orginating_content_type, $instance);
     field_create_instance($instance);
   }
 
@@ -313,7 +313,7 @@ function salesforce_ngoc_create_user_created_via_field() {
 
   // If the group exists make sure its not disabled.
   if ($field_group) {
-    $field_group->children[] = 'sbp_created_via';
+    $field_group->children[] = 'orginating_content_type';
     $success = ctools_export_crud_save($table, $field_group);
   }
   return $success;

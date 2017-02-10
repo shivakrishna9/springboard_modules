@@ -555,7 +555,7 @@ function webform_user_webform_submit($form, &$form_state) {
     $map = _webform_user_get_map($form_state['values']['details']['nid'], $fields);
     // Track the content type that created or last updated the user by setting
     // sbp_created_via user profile field.
-    $map['sbp_created_via'] = $form['#node']->type;
+    $map['originating_content_type'] = $form['#node']->type;
     $fields['mail'] = trim($fields['mail']);
     // Return object or FALSE if none found.
     $account = user_load_by_mail($fields['mail']);
