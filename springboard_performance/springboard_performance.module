@@ -11,10 +11,10 @@
  */
 function springboard_performance_entity_info_alter(&$entity_info) {
   // Disable field cache on all entities.
-  foreach ($entity_info as $entity_type => $entity_info) {
-    if (isset($entity_info['field cache'])) {
+  foreach ($entity_info as $type => $info) {
+    if (isset($entity_info[$type]['field cache'])) {
       // Explicitly disable field cache on this entity.
-      $entity_info['field cache'] = FALSE;
+      $entity_info[$type]['field cache'] = FALSE;
     }
   }
 }
