@@ -4010,7 +4010,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
  * Sets some array elements so the cardonfile module can correctly validate and
  * submit.
  *
- * @see fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter
+ * @see fundraiser_commerce_cardonfile_form_commerce_cardonfile_card_form_alter
  */
 function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate(&$form, &$form_state) {
   $input = $form_state['input'];
