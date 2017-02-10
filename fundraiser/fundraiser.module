@@ -1580,7 +1580,7 @@ function _fundraiser_donation_form_js_validation_config($node) {
  */
 function fundraiser_donation_form(&$form, &$form_state) {
   $node = $form['#node'];
-  
+
   // Attach the js files.
   $path = drupal_get_path('module', 'fundraiser');
   $form['#attached']['js'][] =  $path . '/js/jquery.alphanumeric.min.js';
@@ -1813,8 +1813,6 @@ function fundraiser_donation_comment($donation, $comment, $variables = array(), 
   if (variable_get('fundraiser_log_comments', 0)) {
     watchdog('fundraiser_comment', $comment, $variables, $severity, $link);
   }
-  // Allow other modules to respond to the cancel. Including Ubercart, etc.
-  module_invoke_all('fundraiser_donation_comment', $donation, $comment, $variables, $severity, $link);
 }
 
 /**
