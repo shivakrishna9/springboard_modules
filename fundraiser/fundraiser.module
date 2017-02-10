@@ -1748,7 +1748,6 @@ function fundraiser_donation_submit(&$form, &$form_state) {
  * Provided for other modules to use as needed for redirection style processes.
  */
 function _fundraiser_donation_submit_to_process($form, $form_state, $donation) {
-  drupal_set_message('<pre>' . print_r($donation, true) . '</pre>');
   // Create the donation to process, allows other modules to modify results by hooks.
   fundraiser_donation_create($donation);
   $did = $donation->did;
