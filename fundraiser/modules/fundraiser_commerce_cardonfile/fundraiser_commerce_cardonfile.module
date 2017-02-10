@@ -27,6 +27,19 @@ function fundraiser_commerce_cardonfile_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function fundraiser_commerce_cardonfile_menu_alter(&$items) {
+  if (module_exists('commerce_cardonfile')) {
+    $items['user/%user/cards/%commerce_cardonfile/edit'] += array(
+      'page callback' => 'fundraiser_commerce_cardonfile_form_commerce_cardonfile_card_form',
+      'page arguments' => array(3, 1),
+    );
+  }
+  return $items;
+}
+
+/**
  * Implements hook_springboard_admin_admin_menu_items_alter().
  */
 function fundraiser_commerce_cardonfile_springboard_admin_admin_menu_items_alter(&$items) {
@@ -173,4 +186,40 @@ jQuery(document).ready(function() {
 });
 EOT;
   drupal_add_js($script, 'inline');
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function fundraiser_commerce_cardonfile_form_commerce_cardonfile_card_form($card, $user) {
+  // Let other modules adjust the card we use.
+  drupal_alter('fundraiser_commerce_cardonfile_update_billing_card', $card);
+
+  // Load the user's newest donation for the card's gateway.
+  $donation = fundraiser_donation_get_donations_by_uid($user->uid, 1, 'DESC', $card->instance_id, $card->card_id);
+  if (empty($donation)) {
+    return;
+  }
+
+  drupal_set_title('Edit Payment Method');
+
+  $data = array(
+    'calling module' => 'fundraiser_commerce_cardonfile',
+    'donation' => $donation,
+    'card' => $card,
+    'payment_fields' => array(
+      'credit' => array(
+        'expiration_date' => array(
+          'card_expiration_month' => array(
+            '#default_value' => $card->card_exp_month,
+          ),
+          'card_expiration_year' => array(
+            '#default_value' => $card->card_exp_year,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  return drupal_get_form('fundraiser_update_billing_form', $data);
 }
