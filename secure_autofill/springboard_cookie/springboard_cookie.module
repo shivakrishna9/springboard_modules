@@ -50,7 +50,7 @@ function springboard_cookie_permission() {
 function springboard_cookie_inspect($uid) {
   $cookie = springboard_cookie_get_cookie();
   $output = array();
-  
+
   $output['header'] = array(
     '#type' => 'markup',
     '#markup' => 'Springboard cookie debug info',
@@ -65,7 +65,7 @@ function springboard_cookie_inspect($uid) {
     '#suffix' => '</pre>',
   );
 
-  return $output;  
+  return $output;
 }
 
 /**
@@ -75,7 +75,7 @@ function springboard_cookie_init() {
   // Check the query string for an encrypted email address.
   global $user;
   if (isset($_GET['sbck']) && empty($user->uid)) {
-    $email = secure_prepopulate_decrypt($_GET['sbck']);
+    $email = secure_autofill_decrypt($_GET['sbck']);
     if (!empty($email)) {
       // Quietly create a user account for this email, if there isn't one already.
       $account = user_load_by_mail($email);
@@ -221,7 +221,7 @@ function springboard_cookie_add_profile_values($account) {
   try {
     $user_wrapper = entity_metadata_wrapper('user', $account);
     $properties = $user_wrapper->getPropertyInfo();
-    
+
     if (array_key_exists('sbp_salutation', $properties)) {
       $profile_data['profile']['salutation'] = $user_wrapper->sbp_salutation->value();
     }
@@ -248,7 +248,7 @@ function springboard_cookie_add_profile_values($account) {
     }
     if (array_key_exists('sbp_phone', $properties)) {
       $profile_data['profile']['phone'] = $user_wrapper->sbp_phone->value();
-    }    
+    }
   }
   catch (EntityMetadataWrapperException $exc) {
     watchdog('springboard_cookie', 'Error loading user profile data into cookie for card id %uid.', array('%uid' => $account->uid), WATCHDOG_ERROR);
@@ -262,7 +262,7 @@ function springboard_cookie_add_profile_values($account) {
  */
 function springboard_cookie_form_alter(&$form, &$form_state, $form_id) {
   // Add cookie settings to the Secure Prepopulate admin form.
-  if ($form_id == 'secure_prepopulate_admin_settings') {
+  if ($form_id == 'secure_autofill_admin_settings') {
     $form['springboard_cookie'] = array(
       '#type' => 'fieldset',
       '#title' => t('Springboard cookie settings'),
@@ -346,7 +346,7 @@ function springboard_cookie_js_new_cookie() {
   springboard_cookie_tag_client();
   $cookie = springboard_cookie_get_cookie();
   $serialized = serialize($cookie);
-  $encrypted = secure_prepopulate_encrypt($serialized);
+  $encrypted = secure_autofill_encrypt($serialized);
 
   // Send it back as JSON.
   drupal_json_output(array(
@@ -419,7 +419,7 @@ function springboard_cookie_get_cookie() {
     $cookie_name = variable_get('springboard_cookie_name', SPRINGBOARD_COOKIE_NAME_DEFAULT);
     if (isset($_COOKIE[$cookie_name]) && !empty($_COOKIE[$cookie_name])) {
       // Attempt to decrypt and deserialize
-      $decrypted = secure_prepopulate_decrypt($_COOKIE[$cookie_name]);
+      $decrypted = secure_autofill_decrypt($_COOKIE[$cookie_name]);
       if (!empty($decrypted)) {
         // Unserialize and make sure we got an array.
         $unserialized = unserialize($decrypted);
@@ -450,7 +450,7 @@ function springboard_cookie_set_cookie($cookie_data) {
 
   // Serialize, encrypt, and add to the response.
   $serialized = serialize($cookie_data);
-  $encrypted = secure_prepopulate_encrypt($serialized);
+  $encrypted = secure_autofill_encrypt($serialized);
   $cookie_name = variable_get('springboard_cookie_name', SPRINGBOARD_COOKIE_NAME_DEFAULT);
   $expiration_days = variable_get('springboard_cookie_expiration_days', SPRINGBOARD_COOKIE_EXPIRATION_DAYS_DEFAULT);
   setcookie($cookie_name, $encrypted, time() + 60 * 60 * 24 * $expiration_days, ini_get('session.cookie_path'));
