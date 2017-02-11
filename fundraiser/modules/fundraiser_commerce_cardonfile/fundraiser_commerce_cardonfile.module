@@ -221,5 +221,38 @@ function fundraiser_commerce_cardonfile_form_commerce_cardonfile_card_form($card
     ),
   );
 
-  return drupal_get_form('fundraiser_update_billing_form', $data);
+  $form = drupal_get_form('fundraiser_update_billing_form', $data);
+
+  $title = array(
+    '#type' => 'html_tag',
+    '#tag' => 'h4',
+    '#value' => t('You are editing billing information for:'),
+  );
+  $title = drupal_render($title);
+  $card_title = array(
+    '#type' => 'html_tag',
+    '#tag' => 'span',
+    '#value' => format_string('@type - XXXX-XXXX-XXXX-@number', array(
+      '@type' => strtoupper($card->card_type),
+      '@number' => $card->card_number,
+    )),
+  );
+  $card_title = drupal_render($card_title);
+  $expires = array(
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#value' => t('Expires: @month/@year', array(
+      '@month' => sprintf('%02d', $card->card_exp_month),
+      '@year' => $card->card_exp_year,
+    )),
+  );
+  $expires = drupal_render($expires);
+  $form = array(
+    'message' => array(
+      '#type' => 'markup',
+      '#markup' => $title . $card_title . $expires,
+    ),
+  ) + $form;
+
+  return $form;
 }
