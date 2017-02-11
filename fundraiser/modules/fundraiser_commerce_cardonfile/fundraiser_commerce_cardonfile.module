@@ -207,6 +207,7 @@ function fundraiser_commerce_cardonfile_form_commerce_cardonfile_card_form($card
     'calling module' => 'fundraiser_commerce_cardonfile',
     'donation' => $donation,
     'card' => $card,
+    'update other orders' => TRUE,
     'payment_fields' => array(
       'credit' => array(
         'expiration_date' => array(

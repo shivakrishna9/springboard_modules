@@ -2899,6 +2899,7 @@ function fundraiser_sustainers_update_billing_info_in_series($donations, $submis
     // Let other modules know the first donation being updated in the series.
     if ($sustainer_update_first) {
       $sustainer_update_did = $donation->did;
+      $donation->update_other_orders = TRUE;
     }
     else {
       $donation->sustainer_update_did = $sustainer_update_did;
