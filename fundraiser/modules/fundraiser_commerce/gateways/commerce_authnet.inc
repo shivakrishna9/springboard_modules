@@ -295,6 +295,7 @@ function commerce_authnet_fundraiser_commerce_update($donation, $card_data = NUL
       return $new_data;
     }
   }
+  return $card_data;
 }
 
 /**

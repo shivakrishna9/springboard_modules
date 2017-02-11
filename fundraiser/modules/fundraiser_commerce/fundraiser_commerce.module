@@ -1785,11 +1785,11 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
       $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
       if (!empty($card_data)) {
         $old_card_id = $card_data->card_id;
-        // Ensure the expiration values are copied correctly.
         $card_data = $update_callback($donation, $card_data);
         drupal_alter('fundraiser_commerce_donation_update_card_update', $donation, $card_data);
 
         $payment_method = $donation->data['payment_method'];
+
         $exp_month_changed = !empty($donation->data['payment_fields'][$payment_method]) && !empty($donation->donation['payment_fields'][$payment_method]) && $donation->data['payment_fields']['credit']['card_expiration_month'] != $donation->donation['payment_fields']['credit']['card_expiration_month'];
         $exp_year_changed = !empty($donation->data['payment_fields'][$payment_method]) && !empty($donation->donation['payment_fields'][$payment_method]) && $donation->data['payment_fields']['credit']['card_expiration_year'] != $donation->donation['payment_fields']['credit']['card_expiration_year'];
 

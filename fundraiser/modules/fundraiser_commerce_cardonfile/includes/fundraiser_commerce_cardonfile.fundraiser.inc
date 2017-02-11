@@ -54,6 +54,7 @@ function fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donatio
 function fundraiser_commerce_cardonfile_fundraiser_commerce_donation_update_card_update_alter(&$donation, $card_data) {
   if (!empty($card_data)) {
     $donation->data['cardonfile'] = $card_data->card_id;
+    $donation->donation['cardonfile'] = $card_data->card_id;
   }
 }
 
