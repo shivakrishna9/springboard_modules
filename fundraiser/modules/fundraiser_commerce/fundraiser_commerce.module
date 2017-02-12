@@ -1828,13 +1828,23 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
             }
           }
 
-          // Update the donation record with the new card id.
+          // Update the donation record and related records with the new card
+          // id.
           if (!empty($card_data) && $card_data->card_id != $old_card_id) {
-            db_update('fundraiser_donation')
-              ->fields(array('card_id' => $card_data->card_id))
-              ->condition('card_id', $old_card_id, '=')
-              ->condition('status', 'pending_future_payment', '=')
-              ->execute();
+            if (empty($donation->sustainer_update)) {
+              db_update('fundraiser_donation')
+                ->fields(array('card_id' => $card_data->card_id))
+                ->condition('card_id', $old_card_id, '=')
+                ->condition('status', 'pending_future_payment', '=')
+                ->execute();
+            }
+            elseif (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_did)) {
+              db_update('fundraiser_donation')
+                ->fields(array('card_id' => $card_data->card_id))
+                ->condition('master_did', $donation->sustainer_update_did, '=')
+                ->condition('status', 'pending_future_payment', '=')
+                ->execute();
+            }
           }
         }
       }
@@ -1844,6 +1854,13 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     elseif (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_did)) {
       $master = fundraiser_donation_get_donation($donation->sustainer_update_did);
       drupal_alter('fundraiser_commerce_sustainer_series_donation_update', $master, $donation);
+
+      // Update each related donation's order record.
+      $related_order = commerce_order_load($donation->did);
+      $related_order_data = _fundraiser_commerce_order_data_retrieve($related_order->data['fundraiser_commerce']);
+      $related_order_data['cardonfile'] = $donation->data['cardonfile'];
+      $related_order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($related_order_data);
+      commerce_order_save($related_order);
     }
 
     // Allow the gateways to scrub the data before saving
