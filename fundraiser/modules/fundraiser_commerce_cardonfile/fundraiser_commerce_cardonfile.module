@@ -255,5 +255,10 @@ function fundraiser_commerce_cardonfile_form_commerce_cardonfile_card_form($card
     ),
   ) + $form;
 
+  $form['actions']['cancel'] = array(
+    '#markup' => '<span class="cancel"> or ' . l(t('Cancel'), 'user/' . $card->uid . '/cards') . '</span>',
+    '#weight' => 20,
+  );
+
   return $form;
 }

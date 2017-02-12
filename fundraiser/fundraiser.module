@@ -4051,6 +4051,15 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_val
     $values['credit_card']['exp_year'] = $card->card_exp_year;
   }
 
+  // If the exp_month and exp_year values are still empty, set them so the
+  // cardonfile module can validate.
+  if (empty($values['credit_card']['exp_month'])) {
+    $values['credit_card']['exp_month'] = $card->card_exp_month;
+  }
+  if (empty($values['credit_card']['exp_year'])) {
+    $values['credit_card']['exp_year'] = $card->card_exp_year;
+  }
+
   $values['credit_card']['owner'] = $input['first_name'] . ' ' . $input['last_name'];
 
   $form['credit_card']['number']['#default_value'] = $form_state['card']->card_number;

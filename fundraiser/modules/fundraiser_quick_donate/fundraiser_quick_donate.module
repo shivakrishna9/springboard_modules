@@ -415,6 +415,7 @@ function _fundraiser_quick_donate_check_qd_default($form, $form_state) {
  * back to the cards overview page.
  */
 function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_commerce_cardonfile__alter(&$form, $form_state) {
+  $card = $form_state['card'];
   // If the gateway isn't configured for cardonfile, skip the quick donate
   // feature.
   if (!empty($form['#donation']->gateway['gateway_details']['settings']['cardonfile'])) {
@@ -431,11 +432,6 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_comm
   }
 
   $form['actions']['submit']['#submit'][] = '_fundraiser_quick_donate_set_new_qd_cof';
-
-  $form['actions']['cancel'] = array(
-    '#markup' => '<span class="cancel"> or ' . l(t('Cancel'), 'user/' . $card->uid . '/cards') . '</span>',
-    '#weight' => 20,
-  );
 }
 
 /**
