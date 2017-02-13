@@ -74,8 +74,8 @@ function salesforce_ngoc_salesforce_mapping_confirm_entity_for_queue($entity, $e
   // batch_upload salesforce sync item.
   if ($entity_type == 'user') {
     $wrapper = entity_metadata_wrapper('user', $entity);
-    $orginating_content_type = $wrapper->orginating_content_type->value();
-    if (!empty($orginating_content_type) && fundraiser_is_donation_type($orginating_content_type)) {
+    $originating_content_type = $wrapper->originating_content_type->value();
+    if (!empty($originating_content_type) && fundraiser_is_donation_type($originating_content_type)) {
       return FALSE;
     }
   }

@@ -32,9 +32,9 @@ function salesforce_ngoc_install() {
   }
 
   // Add profile field to track which module created a user.
-  $field_creating_result = salesforce_ngoc_create_orginating_content_type_field();
+  $field_creating_result = salesforce_ngoc_create_originating_content_type_field();
   if ($user_mapping_result !== FALSE) {
-    drupal_set_message(t('Drupal user profile field orginating_content_type has been created.'));
+    drupal_set_message(t('Drupal user profile field originating_content_type has been created.'));
   }
 
   // Create default parent object data structure. This is used when determining
@@ -267,15 +267,15 @@ function salesforce_ngoc_create_salesforce_donation_mappings() {
 }
 
 /**
- * Creates the orginating_content_type field.
+ * Creates the originating_content_type field.
  *
  * Used to track what action created the user.
  */
-function salesforce_ngoc_create_orginating_content_type_field() {
+function salesforce_ngoc_create_originating_content_type_field() {
   $success = FALSE;
-  $orginating_content_type = array(
+  $originating_content_type = array(
     'label' => t('Originating Content Type'),
-    'field_name' => 'orginating_content_type',
+    'field_name' => 'originating_content_type',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -292,19 +292,19 @@ function salesforce_ngoc_create_orginating_content_type_field() {
     ),
   );
 
-  $field_exists = field_info_field('orginating_content_type');
+  $field_exists = field_info_field('originating_content_type');
 
   if (empty($field_exists)) {
-    field_create_field($orginating_content_type);
+    field_create_field($originating_content_type);
   }
 
-  $instance_exists = field_info_instance('user', 'orginating_content_type', 'user');
+  $instance_exists = field_info_instance('user', 'originating_content_type', 'user');
   if (empty($instance_exists)) {
     $instance = array(
       'entity_type' => 'user',
       'bundle' => 'user',
     );
-    $instance = array_merge($orginating_content_type, $instance);
+    $instance = array_merge($originating_content_type, $instance);
     field_create_instance($instance);
   }
 
@@ -313,7 +313,7 @@ function salesforce_ngoc_create_orginating_content_type_field() {
 
   // If the group exists make sure its not disabled.
   if ($field_group) {
-    $field_group->children[] = 'orginating_content_type';
+    $field_group->children[] = 'originating_content_type';
     $success = ctools_export_crud_save($table, $field_group);
   }
   return $success;
@@ -2683,7 +2683,7 @@ function salesforce_ngoc_create_user_mapping() {
       {
         "drupal_field" : {
           "fieldmap_type" : "property",
-          "fieldmap_value" : "orginating_content_type"
+          "fieldmap_value" : "originating_content_type"
         },
         "salesforce_field" : {
           "autoNumber" : false,
@@ -2738,7 +2738,7 @@ function salesforce_ngoc_create_user_mapping() {
       {
         "drupal_field" : {
           "fieldmap_type" : "property",
-          "fieldmap_value" : "orginating_content_type"
+          "fieldmap_value" : "originating_content_type"
         },
         "salesforce_field" : {
           "autoNumber" : false,
