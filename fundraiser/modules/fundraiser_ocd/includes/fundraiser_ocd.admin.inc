@@ -69,43 +69,43 @@ function fundraiser_ocd_admin_settings($form, $form_state) {
   $form['default_messages'] = array(
     '#type' => 'fieldset',
     '#title' => t('Default Messages'),
-    '#description' => t('Configure the default one-click donate messages that will be displayed to the end user.'),
+    '#description' => t('Configure the default One Click Donate messages that will be displayed to the end user.'),
   );
   $form['default_messages']['fundraiser_ocd_default_optin_message_new_user'] = array(
     '#type' => 'textfield',
-    '#title' => t('"One-click Donation" opt-in text (for users not already set up with One-click Donate)'),
+    '#title' => t('"One Click Donate" opt-in text (for users not currently enrolled in One Click Donate)'),
     '#description' => t('This is the title of the opt-in checkbox. The "@type" placeholder can be used to specify the type of payment method (either credit card or bank account). Defaults to "Save this @type for future use".'),
     '#default_value' => variable_get('fundraiser_ocd_default_optin_message_new_user', t('Save this @type for future use')),
   );
   $form['default_messages']['fundraiser_ocd_default_help_message_new_user'] = array(
     '#type' => 'text_format',
-    '#title' => t('"One-click Donation" help text (for users not already set up with One-click Donate)'),
+    '#title' => t('"One Click Donate" help text (for users not currently enrolled in One Click Donate)'),
     '#description' => t('This message will be shown to users to provide information about one-click donations. Use !type to print the type of payment method, which will be either credit or bank account.<br/><br/>', array('!type' => '<strong>@type</strong>')),
-    '#default_value' => variable_get('fundraiser_ocd_default_help_message_new_user', t('Save your @type details and donate faster next time. We may email you from time to time with one-click donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
+    '#default_value' => variable_get('fundraiser_ocd_default_help_message_new_user', t('Save your @type details and donate faster next time. We may email you from time to time with donation opportunities. You can update your @type details or cancel your enrollment at any time.')),
     '#format' => variable_get('fundraiser_ocd_default_help_message_new_user_format', 'plain_text'),
   );
   $form['default_messages']['fundraiser_ocd_default_optin_message_existing_user'] = array(
     '#type' => 'textfield',
-    '#title' => t('"One-click Donation" opt-in text (for users already set up with One-click Donate)'),
+    '#title' => t('"One Click Donate" opt-in text (for users already enrolled in One Click Donate)'),
     '#description' => t('This is the title of the opt-in checkbox. The "@type" placeholder can be used to specify the type of payment method (either credit card or bank account). Defaults to "Save this @type for future use".'),
     '#default_value' => variable_get('fundraiser_ocd_default_optin_message_existing_user', t('Update your saved @type?')),
   );
   $form['default_messages']['fundraiser_ocd_default_help_message_existing_user'] = array(
     '#type' => 'text_format',
-    '#title' => t('"One-click Donation" help text (for users already set up with One-click Donate)'),
+    '#title' => t('"One Click Donate" help text (for users already enrolled in One Click Donate)'),
     '#description' => t('This message will be shown to users to provide information about one-click donations. Use !type to print the type of payment method, which will be either credit or bank account.<br/><br/>', array('!type' => '<strong>@type</strong>')),
     '#default_value' => variable_get('fundraiser_ocd_default_help_message_existing_user', t('Check this box if you want to make this new @type your default for future donations.')),
     '#format' => variable_get('fundraiser_ocd_default_help_message_existing_user_format', 'plain_text'),
   );
   $form['default_messages']['fundraiser_ocd_default_login_message'] = array(
     '#type' => 'textfield',
-    '#title' => t('"One-click Donation" login text'),
+    '#title' => t('"One Click Donate" login text'),
     '#description' => t('This is the title of the log-in checkbox. The "@type" placeholder can be used to specify the type of payment method (credit card or bank account). Defaults to "Already have a saved @type?".'),
     '#default_value' => variable_get('fundraiser_ocd_default_login_message', t('Already have a saved @type?')),
   );
   $form['default_messages']['fundraiser_ocd_default_login_link_message'] = array(
     '#type' => 'textfield',
-    '#title' => t('"One-click Donation" login link text'),
+    '#title' => t('"One Click Donate" login link text'),
     '#description' => t('This is the title of the log-in checkbox. Defaults to "Click here to login".'),
     '#default_value' => variable_get('fundraiser_ocd_default_login_link_message', t('Click here to login')),
   );
@@ -227,7 +227,7 @@ function fundraiser_ocd_token_generator($form, $form_state) {
 
   $form['fundraiser_ocd_springboard_hmac'] = array(
     '#type' => 'fieldset',
-    '#title' => t('One-click Donate Token'),
+    '#title' => t('One Click Donate Token Generator'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
     '#description' => t('To test one-click donation tokens, enter the following field information and press "Generate Token".'),
@@ -305,5 +305,5 @@ function fundraiser_ocd_token_generator_submit($form, $form_state) {
 
   $link = fundraiser_ocd_create_link($payload);
 
-  drupal_set_message('One-click donate link generated! ' . l($link, $link));
+  drupal_set_message('One-click donation link generated! ' . l($link, $link));
 }

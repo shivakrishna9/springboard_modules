@@ -426,7 +426,7 @@ function fundraiser_ocd_fundraiser_update_billing_form__fundraiser_commerce_card
 
     $form['payment_fields'][$gateway_type]['ocd'] = array(
       '#type' => 'checkbox',
-      '#title' => '&nbsp;' . t('Use this card for One Click Donate'),
+      '#title' => '&nbsp;' . t('Use this card for one-click donations'),
       '#default_value' => !!$enabled,
     );
   }
@@ -699,17 +699,17 @@ function _fundraiser_ocd_get_payment_info_for_card_id($card_id, $status = TRUE) 
 }
 
 /**
- * Implements hook_fundraiser_commerce_cardonfile_used_by().
+ * Implements hook_fundraiser_commerce_cardonfile_used_for().
  *
  * Used to inform fundraiser_commerce_cardonfile if the card is used for
  * One Click Donations.
  */
-function fundraiser_ocd_fundraiser_commerce_cardonfile_used_by($card_id) {
+function fundraiser_ocd_fundraiser_commerce_cardonfile_used_for($card_id) {
   $result = _fundraiser_ocd_get_payment_info_for_card_id($card_id);
   if (empty($result)) {
     return;
   }
-  return t('One Click Donate');
+  return t('One-click donations');
 }
 
 /**
