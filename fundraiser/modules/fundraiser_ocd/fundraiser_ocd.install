@@ -78,7 +78,7 @@ function fundraiser_ocd_schema() {
   $schema['fundraiser_ocd_cardonfile'] = array(
     'description' => 'Stores data about user\'s payment information to be used for one-click donations.',
     'fields' => array(
-      'qd_id' => array(
+      'ocd_id' => array(
         'description' => 'ID for this one-click donation record.',
         'type' => 'serial',
         'unsigned' => TRUE,
@@ -141,7 +141,7 @@ function fundraiser_ocd_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('qd_id', 'uid'),
+    'primary key' => array('ocd_id', 'uid'),
     'indexes' => array(
       'card_id' => array('card_id'),
       'donation_id' => array('did'),
@@ -256,6 +256,12 @@ function fundraiser_ocd_install() {
   if (db_table_exists('fundraiser_quick_donate_cardonfile')) {
     db_drop_table('fundraiser_ocd_cardonfile');
     db_rename_table('fundraiser_quick_donate_cardonfile', 'fundraiser_ocd_cardonfile');
+    db_change_field('fundraiser_ocd_cardonfile', 'qd_id', 'ocd_id', array(
+      'description' => 'ID for this one-click donation record.',
+      'type' => 'serial',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ));
   }
 }
 
