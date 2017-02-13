@@ -43,7 +43,6 @@ function braintree_payment_library() {
  *   The payment method configuration.
  */
 function braintree_form_elements($payment_type, $config) {
-  global $user;
   $js_settings = array();
   $form = array();
   $form_processed = &drupal_static(__FUNCTION__);
@@ -93,12 +92,13 @@ function braintree_form_elements($payment_type, $config) {
       $error_message = braintree_report_error($e);
       $message = t('Braintree token generation failed: @message. Please check Braintree gateway configuration.', array('@message' => $error_message));
       drupal_set_message($message, 'error');
-      return;
+      return array();
     }
 
     $form_processed = TRUE;
   }
 
+  $form_state = array();
   $context = array(
     'form' => &$form,
     'form_state' => &$form_state,
