@@ -17,7 +17,7 @@ function fundraiser_ocd_menu() {
   $items = array();
 
   $items['admin/springboard/options/fundraiser/fundraiser_ocd'] = array(
-    'title' => 'One-Click Donate Settings',
+    'title' => 'One Click Donate Settings',
     'description' => 'Settings for one-click donations.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_ocd_admin_settings'),
@@ -28,7 +28,7 @@ function fundraiser_ocd_menu() {
   );
 
   $items['admin/springboard/options/fundraiser/fundraiser_ocd/autocomplete'] = array(
-    'title' => 'Autocomplete for One-Click Donation forms',
+    'title' => 'Autocomplete for One Click Donation forms',
     'page callback' => 'fundraiser_ocd_admin_settings_autocomplete_callback',
     'access arguments' => array('use autocomplete'),
     'type' => MENU_CALLBACK,
@@ -45,7 +45,7 @@ function fundraiser_ocd_menu() {
 
   // HMAC token generator page.
   $items['admin/config/system/fundraiser/ocd/token-generator'] = array(
-    'title' => 'One-Click Donate Token Generator',
+    'title' => 'One Click Donate Token Generator',
     'description' => 'Generate one-click donate HMAC tokens for testing or use',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_ocd_token_generator'),
@@ -64,7 +64,7 @@ function fundraiser_ocd_springboard_admin_admin_menu_items_alter(&$items) {
   // Settings > Settings > Sustainer Upsell.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_ocd'] = array(
     'link_path' => 'admin/springboard/options/fundraiser/fundraiser_ocd',
-    'link_title' => 'One-Click Donate Settings',
+    'link_title' => 'One Click Donate Settings',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 0,
     'customized' => 1,
@@ -306,12 +306,12 @@ function fundraiser_ocd_fundraiser_field_info_alter(&$fields) {
   $fields['ocd_opt_in'] = array(
     '#type' => 'hidden',
     '#name' => 'sbp_ocd_opt_in',
-    '#title' => 'One-Click Donate Opt-in',
+    '#title' => 'One Click Donate Opt-in',
   );
   $fields['ocd_opt_out'] = array(
     '#type' => 'hidden',
     '#name' => 'sbp_ocd_opt_out',
-    '#title' => 'One-Click Donate Opt-out',
+    '#title' => 'One Click Donate Opt-out',
   );
   return $fields;
 }
@@ -426,7 +426,7 @@ function fundraiser_ocd_fundraiser_update_billing_form__fundraiser_commerce_card
 
     $form['payment_fields'][$gateway_type]['ocd'] = array(
       '#type' => 'checkbox',
-      '#title' => '&nbsp;' . t('Use this card for One-Click Donate'),
+      '#title' => '&nbsp;' . t('Use this card for One Click Donate'),
       '#default_value' => !!$enabled,
     );
   }
@@ -437,7 +437,7 @@ function fundraiser_ocd_fundraiser_update_billing_form__fundraiser_commerce_card
 /**
  * Submission handler to update {fundraiser_ocd_cardonfile}.
  *
- * Updated when user selects "Make this my default One-Click Donate card" on the
+ * Updated when user selects "Make this my default One Click Donate card" on the
  * user's stored cards page.
  *
  * @see fundraiser_ocd_fundraiser_update_billing_form__fundraiser_ocd__alter()
@@ -643,7 +643,7 @@ function fundraiser_ocd_entity_delete($entity, $type) {
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * Remove the One-Click Donate Opt In and Opt Out fields from appearing on the user
+ * Remove the One Click Donate Opt In and Opt Out fields from appearing on the user
  * edit form.
  */
 function fundraiser_ocd_form_user_profile_form_alter(&$form, $form_state) {
@@ -666,7 +666,7 @@ function fundraiser_ocd_webform_user_send_mail_alter(&$options) {
   }
 
   // Since this is coming from the webform_user module, and if this is a
-  // One-Click Donation, set the email to send regardless of what the node's
+  // One Click Donation, set the email to send regardless of what the node's
   // settings are.
   if (isset($params['form_state']['values']['submitted_tree']['payment_information'])) {
     $payment_info = $params['form_state']['values']['submitted_tree']['payment_information'];
@@ -702,14 +702,14 @@ function _fundraiser_ocd_get_payment_info_for_card_id($card_id, $status = TRUE) 
  * Implements hook_fundraiser_commerce_cardonfile_used_by().
  *
  * Used to inform fundraiser_commerce_cardonfile if the card is used for
- * One-Click Donations.
+ * One Click Donations.
  */
 function fundraiser_ocd_fundraiser_commerce_cardonfile_used_by($card_id) {
   $result = _fundraiser_ocd_get_payment_info_for_card_id($card_id);
   if (empty($result)) {
     return;
   }
-  return t('One-Click Donate');
+  return t('One Click Donate');
 }
 
 /**

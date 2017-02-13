@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Fundraiser related hooks for Fundraiser One-Click Donate.
+ * Fundraiser related hooks for Fundraiser One Click Donate.
  */
 
 /**

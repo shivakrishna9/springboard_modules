@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Springboard HMAC hook implementations for Springboard One-Click Donate.
+ * Springboard HMAC hook implementations for Springboard One Click Donate.
  */
 
 /**

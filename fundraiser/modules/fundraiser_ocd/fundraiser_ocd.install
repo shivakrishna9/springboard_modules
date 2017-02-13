@@ -22,29 +22,29 @@ function fundraiser_ocd_schema() {
         'default' => 0,
       ),
       'ocd_optin_message_new_user' => array(
-        'description' => 'The opt-in message to display to end users (who have not opted into One-Click Donate) if the fundraiser has one-click payments enabled.',
+        'description' => 'The opt-in message to display to end users (who have not opted into One Click Donate) if the fundraiser has one-click payments enabled.',
         'type' => 'text',
         'not null' => FALSE,
       ),
       'ocd_help_message_new_user' => array(
-        'description' => 'The help message to display to end users (who have not opted into One-Click Donate) if the fundraiser has one-click payments enabled.',
+        'description' => 'The help message to display to end users (who have not opted into One Click Donate) if the fundraiser has one-click payments enabled.',
         'type' => 'text',
         'not null' => FALSE,
       ),
       'ocd_help_message_new_user_format' => array(
-        'description' => 'The format of the help message for users not opted into One-Click Donate.',
+        'description' => 'The format of the help message for users not opted into One Click Donate.',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
         'default' => 'plain_text',
       ),
       'ocd_optin_message_existing_user' => array(
-        'description' => 'The opt-in message to display to end users (who have already opted into One-Click Donate) if the fundraiser has one-click payments enabled.',
+        'description' => 'The opt-in message to display to end users (who have already opted into One Click Donate) if the fundraiser has one-click payments enabled.',
         'type' => 'text',
         'not null' => FALSE,
       ),
       'ocd_help_message_existing_user' => array(
-        'description' => 'The help message to display to end users (who have already opted into One-Click Donate) if the fundraiser has one-click payments enabled.',
+        'description' => 'The help message to display to end users (who have already opted into One Click Donate) if the fundraiser has one-click payments enabled.',
         'type' => 'text',
         'not null' => FALSE,
       ),
@@ -173,8 +173,8 @@ function fundraiser_ocd_schema() {
  * field names to match the new module name.
  */
 function fundraiser_ocd_install() {
-  _fundraiser_ocd_create_date_field('field_ocd_opt_in', 'One-Click Donate Opt In');
-  _fundraiser_ocd_create_date_field('field_ocd_opt_out', 'One-Click Donate Opt Out');
+  _fundraiser_ocd_create_date_field('field_ocd_opt_in', 'One Click Donate Opt In');
+  _fundraiser_ocd_create_date_field('field_ocd_opt_out', 'One Click Donate Opt Out');
 }
 
 function _fundraiser_ocd_create_date_field($field_name, $field_label) {

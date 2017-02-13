@@ -1,4 +1,4 @@
-name = Salesforce One-Click Donate
+name = Salesforce One Click Donate
 description = Salesforce integration support for one-click donate.
 package = Salesforce
 core = 7.x

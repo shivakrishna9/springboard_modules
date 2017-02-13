@@ -38,7 +38,7 @@
         if (!$pleasenote.length) {
           $pleasenote = $('<div/>', {
             class: 'pleasenote'
-          }).html('<strong>Please note</strong>, donors will not be able to opt-in to One-Click Donate when using a bank account or PayPal.');
+          }).html('<strong>Please note</strong>, donors will not be able to opt-in to One Click Donate when using a bank account or PayPal.');
           $ocd.after($pleasenote);
         }
         if ($gateways_enabled.bank || $gateways_enabled.paypal) {
@@ -50,7 +50,7 @@
         if (!$note.length) {
           $note = $('<div/>', {
             class: 'note'
-          }).html('Please select a compatible credit gateway in order to enable One-Click Donate.');
+          }).html('Please select a compatible credit gateway in order to enable One Click Donate.');
           $pleasenote.after($note);
         }
 
