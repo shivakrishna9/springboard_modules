@@ -27,6 +27,19 @@ function fundraiser_commerce_cardonfile_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function fundraiser_commerce_cardonfile_menu_alter(&$items) {
+  if (module_exists('commerce_cardonfile')) {
+    $items['user/%user/cards/%commerce_cardonfile/edit'] += array(
+      'page callback' => 'fundraiser_commerce_cardonfile_form_commerce_cardonfile_card_form',
+      'page arguments' => array(3, 1),
+    );
+  }
+  return $items;
+}
+
+/**
  * Implements hook_springboard_admin_admin_menu_items_alter().
  */
 function fundraiser_commerce_cardonfile_springboard_admin_admin_menu_items_alter(&$items) {
@@ -173,4 +186,79 @@ jQuery(document).ready(function() {
 });
 EOT;
   drupal_add_js($script, 'inline');
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function fundraiser_commerce_cardonfile_form_commerce_cardonfile_card_form($card, $user) {
+  // Let other modules adjust the card we use.
+  drupal_alter('fundraiser_commerce_cardonfile_update_billing_card', $card);
+
+  // Load the user's newest donation for the card's gateway.
+  $donation = fundraiser_donation_get_donations_by_uid($user->uid, 1, 'DESC', $card->instance_id, $card->card_id);
+  if (empty($donation)) {
+    return;
+  }
+
+  drupal_set_title('Edit Payment Method');
+
+  $data = array(
+    'calling module' => 'fundraiser_commerce_cardonfile',
+    'donation' => $donation,
+    'card' => $card,
+    'update other orders' => TRUE,
+    'payment_fields' => array(
+      'credit' => array(
+        'expiration_date' => array(
+          'card_expiration_month' => array(
+            '#default_value' => $card->card_exp_month,
+          ),
+          'card_expiration_year' => array(
+            '#default_value' => $card->card_exp_year,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  $form = drupal_get_form('fundraiser_update_billing_form', $data);
+
+  $title = array(
+    '#type' => 'html_tag',
+    '#tag' => 'h4',
+    '#value' => t('You are editing billing information for:'),
+  );
+  $title = drupal_render($title);
+  $card_title = array(
+    '#type' => 'html_tag',
+    '#tag' => 'span',
+    '#value' => format_string('@type - XXXX-XXXX-XXXX-@number', array(
+      '@type' => strtoupper($card->card_type),
+      '@number' => $card->card_number,
+    )),
+  );
+  $card_title = drupal_render($card_title);
+  $expires = array(
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#value' => t('Expires: @month/@year', array(
+      '@month' => sprintf('%02d', $card->card_exp_month),
+      '@year' => $card->card_exp_year,
+    )),
+  );
+  $expires = drupal_render($expires);
+  $form = array(
+    'message' => array(
+      '#type' => 'markup',
+      '#markup' => $title . $card_title . $expires,
+    ),
+  ) + $form;
+
+  $form['actions']['cancel'] = array(
+    '#markup' => '<span class="cancel"> or ' . l(t('Cancel'), 'user/' . $card->uid . '/cards') . '</span>',
+    '#weight' => 20,
+  );
+
+  return $form;
 }

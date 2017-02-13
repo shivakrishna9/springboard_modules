@@ -33,13 +33,15 @@ function fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donatio
   }
 
   $card = commerce_cardonfile_load($donation->data['cardonfile']);
-  $card_wrapper = entity_metadata_wrapper('commerce_cardonfile', $card);
+  if (!empty($card)) {
+    $card_wrapper = entity_metadata_wrapper('commerce_cardonfile', $card);
 
-  $order = commerce_order_load($donation->did);
-  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+    $order = commerce_order_load($donation->did);
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
-  $card_wrapper->commerce_cardonfile_profile = $order_wrapper->commerce_customer_billing->value();
-  $card_wrapper->save();
+    $card_wrapper->commerce_cardonfile_profile = $order_wrapper->commerce_customer_billing->value();
+    $card_wrapper->save();
+  }
 
   $updated_donation = TRUE;
 }
@@ -52,6 +54,7 @@ function fundraiser_commerce_cardonfile_fundraiser_donation_post_update($donatio
 function fundraiser_commerce_cardonfile_fundraiser_commerce_donation_update_card_update_alter(&$donation, $card_data) {
   if (!empty($card_data)) {
     $donation->data['cardonfile'] = $card_data->card_id;
+    $donation->donation['cardonfile'] = $card_data->card_id;
   }
 }
 

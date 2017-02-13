@@ -561,7 +561,7 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
   // That would also avoid the weird ajaxy stuff we have to do to get
   // reference back working.
   $countries = fundraiser_commerce_get_countries();
-  $include_all_countries = variable_get('fundraiser_all_countries', TRUE);
+  $include_all_countries = variable_get('fundraiser_all_countries', 0);
 
   if ($include_all_countries) {
     $default_available = array();
@@ -1719,8 +1719,11 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
         }
       }
 
+      // Note: this is a different variable from $donation->update_other_orders.
+      // This variable will only affect the billing information.
       $update_other_orders = FALSE;
       if ($profile_id != -1) {
+        // Only update other orders if the profile ID was found.
         $profile = commerce_customer_profile_load($profile_id);
         $update_other_orders = TRUE;
       }
@@ -1773,16 +1776,77 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     }
 
     // Update the gateway's stored data.
-    // Gateways that allow recurring donation will have an update callback
+    // Gateways that allow recurring donation will have an update callback.
     $update_callback = isset($donation->gateway['update callback']) && function_exists($donation->gateway['update callback']) ? $donation->gateway['update callback'] : FALSE;
-    // If we're in a sustainer update, and this is the first record update the stored payment information
+    // If we're in a sustainer update, and this is the first record update the
+    // stored payment information.
     if (empty($donation->sustainer_update) || (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first)) && $update_callback) {
-      // Load the current card data for updating
+      // Load the current card data for updating.
       $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
       if (!empty($card_data)) {
-        // Ensure the expiration values are copied correctly.
+        $old_card_id = $card_data->card_id;
         $card_data = $update_callback($donation, $card_data);
         drupal_alter('fundraiser_commerce_donation_update_card_update', $donation, $card_data);
+
+        $payment_method = $donation->data['payment_method'];
+
+        $exp_month_changed = !empty($donation->data['payment_fields'][$payment_method]) && !empty($donation->donation['payment_fields'][$payment_method]) && $donation->data['payment_fields']['credit']['card_expiration_month'] != $donation->donation['payment_fields']['credit']['card_expiration_month'];
+        $exp_year_changed = !empty($donation->data['payment_fields'][$payment_method]) && !empty($donation->donation['payment_fields'][$payment_method]) && $donation->data['payment_fields']['credit']['card_expiration_year'] != $donation->donation['payment_fields']['credit']['card_expiration_year'];
+
+        if (!empty($donation->update_other_orders)) {
+          // If set to update other donations, update other donations with the
+          // same card_id to the new one.
+          // @todo This seems like a lot to do just to update the card_id. Maybe
+          // someone can find a better way?
+          $results = db_query('SELECT fs.master_did AS master_did, fd.did AS did, fd.status AS status FROM {fundraiser_donation} fd LEFT JOIN {fundraiser_sustainers} fs ON fd.did = fs.did WHERE fd.card_id = :card_id ORDER BY did', array(
+            ':card_id' => $old_card_id,
+          ))->fetchAll(PDO::FETCH_ASSOC);
+
+          $masters_done = array();
+          foreach ($results as $result) {
+            // If this payment isn't pending, OR if this is a donation that
+            // already belongs to the sustainer donation we're updating,
+            // continue.
+            if ($result['status'] != 'pending_future_payment' || (!empty($donation->sustainer_update) && !empty($result['master_did']) && $result['master_did'] == $donation->did)) {
+              continue;
+            }
+
+            if (!empty($card_data)) {
+              // Update each related donation's order record.
+              $related_order = commerce_order_load($result['did']);
+              $related_order_data = _fundraiser_commerce_order_data_retrieve($related_order->data['fundraiser_commerce']);
+              $related_order_data['cardonfile'] = $card_data->card_id;
+              $related_order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($related_order_data);
+              commerce_order_save($related_order);
+            }
+
+            // Update other recurring donations.
+            if (!empty($result['master_did']) && empty($masters_done[$result['master_did']]) && (!empty($card_data) || $exp_month_changed || $exp_year_changed)) {
+              $masters_done[$result['master_did']] = fundraiser_donation_get_donation($result['master_did']);
+              $source_donation = fundraiser_donation_get_donation($result['did']);
+              fundraiser_sustainers_update_billing_info_create_new_donations($masters_done[$result['master_did']], $source_donation, $donation->donation);
+            }
+          }
+
+          // Update the donation record and related records with the new card
+          // id.
+          if (!empty($card_data) && $card_data->card_id != $old_card_id) {
+            if (empty($donation->sustainer_update)) {
+              db_update('fundraiser_donation')
+                ->fields(array('card_id' => $card_data->card_id))
+                ->condition('card_id', $old_card_id, '=')
+                ->condition('status', 'pending_future_payment', '=')
+                ->execute();
+            }
+            elseif (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_did)) {
+              db_update('fundraiser_donation')
+                ->fields(array('card_id' => $card_data->card_id))
+                ->condition('master_did', $donation->sustainer_update_did, '=')
+                ->condition('status', 'pending_future_payment', '=')
+                ->execute();
+            }
+          }
+        }
       }
     }
     // Sustainer update, update remaining donations with the first record's cardonfile id
@@ -1790,6 +1854,13 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     elseif (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_did)) {
       $master = fundraiser_donation_get_donation($donation->sustainer_update_did);
       drupal_alter('fundraiser_commerce_sustainer_series_donation_update', $master, $donation);
+
+      // Update each related donation's order record.
+      $related_order = commerce_order_load($donation->did);
+      $related_order_data = _fundraiser_commerce_order_data_retrieve($related_order->data['fundraiser_commerce']);
+      $related_order_data['cardonfile'] = $donation->data['cardonfile'];
+      $related_order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($related_order_data);
+      commerce_order_save($related_order);
     }
 
     // Allow the gateways to scrub the data before saving

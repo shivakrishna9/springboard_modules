@@ -1321,6 +1321,10 @@
          if(individs > 0 || groups > 0) {
             $('#springboard-advocacy-target-recipients-content').append(counter);
         }
+         else {
+             $('#edit-save-target-group').show().removeClass('hidden');
+
+         }
 
         $('.remove-all-targets').click(function() {
 

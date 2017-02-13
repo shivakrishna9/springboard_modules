@@ -499,7 +499,12 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
   if ($context['module'] == 'salesforce_donation') {
     $donation = $context['object'];
     $info = _fundraiser_get_donation_gateway($donation->did);
-    $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method']);
+    if (!empty($info['offsite_recurring'])) {
+      $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method']);
+    }
+    else {
+      $offsite_recurring = FALSE;
+    }
     $map = $context['map'];
 
     // Add recurring item marker if recurring or not.
@@ -2894,6 +2899,7 @@ function fundraiser_sustainers_update_billing_info_in_series($donations, $submis
     // Let other modules know the first donation being updated in the series.
     if ($sustainer_update_first) {
       $sustainer_update_did = $donation->did;
+      $donation->update_other_orders = TRUE;
     }
     else {
       $donation->sustainer_update_did = $sustainer_update_did;

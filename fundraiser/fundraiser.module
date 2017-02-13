@@ -3809,8 +3809,11 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     'calling module' => 'fundraiser',
     'donation' => NULL,
     'card' => NULL,
+    'update other orders' => TRUE,
   );
   $data = array_replace_recursive($defaults, $data);
+
+  $form['#fundraiser_data'] = $data;
 
   // Allow other modules to stop the process if something doesn't meet one of
   // their conditions. If return value is empty, we assume we can continue.
@@ -4010,7 +4013,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
  * Sets some array elements so the cardonfile module can correctly validate and
  * submit.
  *
- * @see fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter
+ * @see fundraiser_commerce_cardonfile_form_commerce_cardonfile_card_form_alter
  */
 function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate(&$form, &$form_state) {
   $input = $form_state['input'];
@@ -4045,6 +4048,15 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_val
     // implementation (Braintree). In that case, set a default value from the
     // card so we can get past validation without any notices.
     $values['credit_card']['exp_month'] = $card->card_exp_month;
+    $values['credit_card']['exp_year'] = $card->card_exp_year;
+  }
+
+  // If the exp_month and exp_year values are still empty, set them so the
+  // cardonfile module can validate.
+  if (empty($values['credit_card']['exp_month'])) {
+    $values['credit_card']['exp_month'] = $card->card_exp_month;
+  }
+  if (empty($values['credit_card']['exp_year'])) {
     $values['credit_card']['exp_year'] = $card->card_exp_year;
   }
 
@@ -4189,6 +4201,7 @@ function fundraiser_update_billing_form_submit($form, &$form_state) {
   $donation->donation = array_merge($donation->donation, $submission_fields);
   $donation->update_billing = TRUE;
   $donation->update_payment = TRUE;
+  $donation->update_other_orders = $form['#fundraiser_data']['update other orders'];
   fundraiser_donation_update($donation);
 }
 
