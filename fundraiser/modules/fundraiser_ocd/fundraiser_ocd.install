@@ -175,94 +175,6 @@ function fundraiser_ocd_schema() {
 function fundraiser_ocd_install() {
   _fundraiser_ocd_create_date_field('field_ocd_opt_in', 'One-Click Donate Opt In');
   _fundraiser_ocd_create_date_field('field_ocd_opt_out', 'One-Click Donate Opt Out');
-
-  if (db_table_exists('fundraiser_quick_donate')) {
-    db_drop_table('fundraiser_ocd');
-    db_rename_table('fundraiser_quick_donate', 'fundraiser_ocd');
-
-    $schema = array();
-    $schema['fundraiser_ocd'] = array(
-      'fields' => array(
-        'fundraiser_nid' => array(
-          'type' => 'int',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-          'description' => 'The {node}.nid of the fundraiser.',
-          'default' => 0,
-        ),
-        'ocd_optin_message_new_user' => array(
-          'description' => 'The opt-in message to display to end users (who have not opted into One-Click Donate) if the fundraiser has one-click payments enabled.',
-          'type' => 'text',
-          'not null' => FALSE,
-        ),
-        'ocd_help_message_new_user' => array(
-          'description' => 'The help message to display to end users (who have not opted into One-Click Donate) if the fundraiser has one-click payments enabled.',
-          'type' => 'text',
-          'not null' => FALSE,
-        ),
-        'ocd_help_message_new_user_format' => array(
-          'description' => 'The format of the help message for users not opted into One-Click Donate.',
-          'type' => 'varchar',
-          'length' => '255',
-          'not null' => FALSE,
-          'default' => 'plain_text',
-        ),
-        'ocd_optin_message_existing_user' => array(
-          'description' => 'The opt-in message to display to end users (who have already opted into One-Click Donate) if the fundraiser has one-click payments enabled.',
-          'type' => 'text',
-          'not null' => FALSE,
-        ),
-        'ocd_help_message_existing_user' => array(
-          'description' => 'The help message to display to end users (who have already opted into One-Click Donate) if the fundraiser has one-click payments enabled.',
-          'type' => 'text',
-          'not null' => FALSE,
-        ),
-        'ocd_help_message_existing_user_format' => array(
-          'description' => 'The format of the help message for existing one-click donate users.',
-          'type' => 'varchar',
-          'length' => '255',
-          'not null' => FALSE,
-          'default' => 'plain_text',
-        ),
-        'ocd_login_message' => array(
-          'description' => 'The login message to display to end users if the fundraiser has one-click payments enabled.',
-          'type' => 'text',
-          'not null' => FALSE,
-        ),
-        'ocd_login_link_message' => array(
-          'description' => 'The login link message to display to end users if the fundraiser has one-click payments enabled.',
-          'type' => 'text',
-          'not null' => FALSE,
-        ),
-      ),
-    );
-    $table = 'fundraiser_ocd';
-    $fields_to_change = array(
-      'quickdonate_optin_message_new_user' => 'ocd_optin_message_new_user',
-      'quickdonate_help_message_new_user' => 'ocd_help_message_new_user',
-      'quickdonate_help_message_new_user_format' => 'ocd_help_message_new_user_format',
-      'quickdonate_optin_message_existing_user' => 'ocd_optin_message_existing_user',
-      'quickdonate_help_message_existing_user' => 'ocd_help_message_existing_user',
-      'quickdonate_help_message_existing_user_format' => 'ocd_help_message_existing_user_format',
-      'quickdonate_login_message' => 'ocd_login_message',
-      'quickdonate_login_link_message' => 'ocd_login_link_message',
-    );
-    foreach ($fields_to_change as $old_field => $new_field) {
-      if (db_field_exists($table, $old_field)) {
-        db_change_field($table, $old_field, $new_field, $schema[$table]['fields'][$new_field]);
-      }
-    }
-  }
-  if (db_table_exists('fundraiser_quick_donate_cardonfile')) {
-    db_drop_table('fundraiser_ocd_cardonfile');
-    db_rename_table('fundraiser_quick_donate_cardonfile', 'fundraiser_ocd_cardonfile');
-    db_change_field('fundraiser_ocd_cardonfile', 'qd_id', 'ocd_id', array(
-      'description' => 'ID for this one-click donation record.',
-      'type' => 'serial',
-      'unsigned' => TRUE,
-      'not null' => TRUE,
-    ));
-  }
 }
 
 function _fundraiser_ocd_create_date_field($field_name, $field_label) {
@@ -349,4 +261,3 @@ function fundraiser_ocd_uninstall() {
 
   field_purge_batch(100);
 }
-
