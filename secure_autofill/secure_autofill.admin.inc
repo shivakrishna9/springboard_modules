@@ -73,7 +73,7 @@ function secure_autofill_admin_settings($form, &$form_state) {
     '#type' => 'textarea',
     '#title' => t("'Not Me' Message"),
     '#description' => t("Enter custom message for 'Not Me.' FIRSTNAME will be replaced by the first name from the secure autofill string. NOTME will be replaced by the appropriate link."),
-    '#default_value' => variable_get('secure_autofill_not_me', ''),
+    '#default_value' => variable_get('secure_autofill_not_me', "<div id='welcome-back'><span class='welcome-back-name'>Welcome back, <span class='welcome-back-name'>FIRSTNAME</span>. Not FIRSTNAME? <a href='NOTME'>Click here</span></div>"),
   );
 
   return system_settings_form($form);
