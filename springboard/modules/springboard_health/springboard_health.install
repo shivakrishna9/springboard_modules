@@ -14,7 +14,7 @@ function springboard_health_install() {
     'salesforce_log_batch' => 'salesforce_log_batch',
     'salesforce_log_item' => 'salesforce_log_item',
     'webform_submissions' => 'webform_submissions',
-    'secure_prepopulate_expired' => 'secure_prepopulate_expired',
+    'secure_autofill_expired' => 'secure_autofill_expired',
     'fundraiser_sustainers_log' => 'fundraiser_sustainers_log',
   );
   variable_set('springboard_health_tables', $default);

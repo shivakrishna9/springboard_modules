@@ -13,8 +13,7 @@
 function secure_autofill_module_implements_alter(&$implementations, $hook) {
   // We need these hooks to run last.
   $hooks = array(
-    'form_alter',
-    'form_webform_client_form_alter',
+    'form_alter'
   );
 
   if (in_array($hook, $hooks) && isset($implementations['secure_autofill'])) {
@@ -355,6 +354,24 @@ function secure_autofill_decrypt($cipher) {
 }
 
 /**
+ * Get the SPP key and vector.
+ *
+ * @return array|bool
+ *   The key and vector in an array, or FALSE
+ */
+function secure_autofill_get_key_and_vector() {
+  // The 128 bit key to use to decrypt the string.
+  $key = variable_get('secure_autofill_key', NULL);
+  // The initialization vector to use to decrypt the string.
+  $iv = variable_get('secure_autofill_iv', NULL);
+  if (!$key || !$iv) {
+    watchdog('Secure Autofill', 'Cannot perform decryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+    return FALSE;
+  }
+  return array('key' => $key, 'iv' => $iv);
+}
+
+/**
  * Decrypts query string paramaters.
  *
  * This function will attempt to decrypt a string with an
@@ -561,4 +578,18 @@ function secure_autofill_validate_gs($gs) {
   }
 
   return $valid;
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Add the autofill flag to forms.
+ */
+function secure_autofill_node_insert($node) {
+  $webform_node_types = variable_get('webform_node_types', array('webform'));
+  if (in_array($node->type, $webform_node_types)) {
+    // Adds some custom fields to new webforms.
+    module_load_include('inc', 'secure_autofill', 'secure_autofill.components');
+    secure_prepopulate_insert_components($node);
+  }
 }

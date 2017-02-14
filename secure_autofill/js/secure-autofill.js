@@ -183,6 +183,9 @@
         }).done(function(data) {
           // If response code is successful, take action.
           if (data.response.code == 200 && data.content) {
+            // Set secure_prepop_autofilled field.
+            $('input[name*=secure_prepop_autofilled').val(true);
+
             // Iterate through returned object and populate appropriate fields.
             for (var key in data.content) {
               if (data.content.hasOwnProperty(key)) {

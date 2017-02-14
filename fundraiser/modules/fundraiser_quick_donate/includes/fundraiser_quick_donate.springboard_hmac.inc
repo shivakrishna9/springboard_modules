@@ -115,16 +115,6 @@ function _fundraiser_quick_donate_springboard_hmac_check_user($goto_nid, $payloa
       // Execute the log-in.
       user_login_finalize($form_state);
     }
-    else {
-      // User no longer exists.
-      $cookie = springboard_cookie_get_cookie();
-      if (isset($cookie['profile']) && !empty($cookie['profile'])) {
-        $_SESSION['secure_prepopulate_values'][$goto_nid] = $cookie['profile'];
-        // Since the rest of the validation involves card data, which the user
-        // will need to re-enter, just redirect them now.
-        drupal_goto('node/' . $goto_nid);
-      }
-    }
   }
 
   return $user;

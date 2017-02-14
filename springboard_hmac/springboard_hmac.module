@@ -342,7 +342,7 @@ function springboard_hmac_parse_payload($payload) {
  *    The secure key, or false.
  */
 function springboard_hmac_get_key() {
-  $kv = secure_prepopulate_get_key_and_vector();
+  $kv = secure_autofill_get_key_and_vector();
   if (!empty($kv)) {
     return $kv['key'] . $kv['iv'];
   }
