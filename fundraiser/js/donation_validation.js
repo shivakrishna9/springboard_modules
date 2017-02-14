@@ -95,8 +95,18 @@
             }
           },
           highlight: function(element) {
-            $(element).addClass('key-validate');
-            $(element).closest('.control-group').removeClass('success').addClass('error');
+            $element = $(element);
+            if ($element.attr('name') == 'submitted[donation][amount]') {
+              var $error = $element.next('label.error');
+              if ($error.length) {
+                $error.detach().appendTo('#edit-submitted-donation-amount');
+              }
+              $element.parent('.control-group').removeClass('success').addClass('error').siblings('.control-group').removeClass('success').addClass('error');
+            }
+            else {
+              $(element).addClass('key-validate');
+              $(element).closest('.control-group').removeClass('success').addClass('error');
+            }
           },
           success: function(element) {
             $(element).text('OK').addClass('valid').closest('.control-group').removeClass('error').addClass('success');
@@ -237,6 +247,26 @@
               }
             });
           });
+        }
+
+        var $recurring_other_amount = $('input[name*="other_amount"][type!="hidden"]');
+        if (!$other_amount.length && !$recurring_other_amount.length) {
+          $('input[name="submitted[donation][amount]"]:first').each(function() {
+            $(this).rules('add', {
+              required: function(element) {
+                return $('input[name="submitted[donation][amount]"]:checked').length == 0;
+              },
+              messages: {
+                required: "This field is required",
+              },
+            });
+          });
+
+          $('input[name="submitted[donation][amount]"]').change(function() {
+            if ($(this).filter(':checked').length) {
+              $(this).parent('.control-group').removeClass('error').addClass('success').siblings('.control-group').removeClass('error').addClass('success');
+            }
+          })
         }
 
         // Focus and Blur conditional functions for non-recurring other amount.
