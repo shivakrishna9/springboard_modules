@@ -38,7 +38,8 @@
           user_hash: gsHash
         }).done(function(data) {
           // If response code is successful, take action.
-          if (data.response.code == 200) {
+          if (data.response.code == 200 && data.content) {
+
             // Parse amounts and defaults into their appropriate fields.
             if (typeof(data.content.amounts) !== 'undefined') {
               // Find and replace amount.
@@ -84,8 +85,6 @@
                   $('#edit-submitted-donation-amount .form-item input').attr('checked', false);
                   // Now set ours.
                   $(amounts[i]).attr('checked', 'checked');
-                  // No need to continue.
-                  break;
                 }
               }
             }
@@ -134,8 +133,6 @@
                   $('#edit-submitted-donation-recurring-amount .form-item input').attr('checked', false);
                   // Now set ours.
                   $(amounts[i]).attr('checked', 'checked');
-                  // No need to continue.
-                  break;
                 }
               }
             }
