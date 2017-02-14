@@ -4570,12 +4570,12 @@ function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
 }
 
 /**
- * Implements hook_fundraiser_commerce_cardonfile_used_by().
+ * Implements hook_fundraiser_commerce_cardonfile_used_for().
  *
  * Used to inform fundraiser_commerce_cardonfile if the card is used for Quick
  * Donations.
  */
-function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) {
+function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_for($card_id) {
   $results = _fundraiser_sustainers_get_payment_info_for_card_id($card_id);
 
   if (empty($results)) {

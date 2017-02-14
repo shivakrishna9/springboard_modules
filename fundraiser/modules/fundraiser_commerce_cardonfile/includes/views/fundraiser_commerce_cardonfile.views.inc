@@ -9,13 +9,13 @@
  * Implements hook_views_data_alter().
  */
 function fundraiser_commerce_cardonfile_views_data_alter(&$data) {
-  $data['commerce_cardonfile']['used_by'] = array(
-    'title' => t('Used by'),
+  $data['commerce_cardonfile']['used_for'] = array(
+    'title' => t('Used for'),
     'help' => t('What this card is used for, i.e. quick donations or recurring donations.'),
     'field' => array(
-      'title' => t('Used By'),
+      'title' => t('Used For'),
       'help' => t('Display which fundraiser modules use this card.'),
-      'handler' => 'fundraiser_commerce_cardonfile_handler_field_used_by',
+      'handler' => 'fundraiser_commerce_cardonfile_handler_field_used_for',
     ),
   );
 
@@ -94,13 +94,13 @@ function fundraiser_commerce_cardonfile_views_default_views_alter(&$views) {
   $handler->display->display_options['fields']['commerce_cardonfile_profile']['field'] = 'commerce_cardonfile_profile';
   $handler->display->display_options['fields']['commerce_cardonfile_profile']['label'] = 'Billing Information';
   if (module_exists('fundraiser_commerce_cardonfile')) {
-    /* Field: Commerce Card on File: Used By */
-    $handler->display->display_options['fields']['used_by']['id'] = 'used_by';
-    $handler->display->display_options['fields']['used_by']['table'] = 'commerce_cardonfile';
-    $handler->display->display_options['fields']['used_by']['field'] = 'used_by';
-    $handler->display->display_options['fields']['used_by']['element_type'] = 'div';
-    $handler->display->display_options['fields']['used_by']['element_label_type'] = 'span';
-    $handler->display->display_options['fields']['used_by']['hide_empty'] = TRUE;
+    /* Field: Commerce Card on File: Used For */
+    $handler->display->display_options['fields']['used_for']['id'] = 'used_for';
+    $handler->display->display_options['fields']['used_for']['table'] = 'commerce_cardonfile';
+    $handler->display->display_options['fields']['used_for']['field'] = 'used_for';
+    $handler->display->display_options['fields']['used_for']['element_type'] = 'div';
+    $handler->display->display_options['fields']['used_for']['element_label_type'] = 'span';
+    $handler->display->display_options['fields']['used_for']['hide_empty'] = TRUE;
   }
   /* Field: Commerce Card on File: Operations links */
   $handler->display->display_options['fields']['operations']['id'] = 'operations';
