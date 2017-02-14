@@ -200,12 +200,15 @@
                   // TODO handle select fields, radios, and checkboxes.
                 }
 
-                // Use first name in welcome message
+                // Set welcome message from drupal.settings.
                 if (key === "first_name" && showWelcome === true && nid) {
                   var firstName = data.content[key];
-                  var markup = "<div id='welcome-back'>";
-                  markup += "<span class='welcome-back-name'>Welcome back, <span class='welcome-back-name'>" + firstName + "</span>. ";
-                  markup += "Not " + firstName + "? <a href='https://" +  window.location.hostname + "/secure-autofill/not-me/" + nid + "'>Click here</span></div>";
+                  var clearLink = "https://" +  window.location.hostname + "/secure-autofill/not-me/" + nid;
+                  var markup = Drupal.settings.secure_autofill.secure_autofill_not_me;
+                  // Replace FIRSTNAME with first name.
+                  markup = markup.replace(/FIRSTNAME/g, firstName);
+                  // Replace NOTME with appropriate link.
+                  markup = markup.replace("NOTME", "https://" +  window.location.hostname + "/secure-autofill/not-me/" + nid);
                   $('form.webform-client-form').before(markup);
                 }
               }

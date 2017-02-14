@@ -193,10 +193,9 @@ function secure_autofill_js_callback_get_values($af, $user_hash) {
  */
 function secure_autofill_form_alter(&$form, &$form_state, $form_id) {
   if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type) && arg(4) != 'edit') {
-    // Attach ask amount handler.
-    $form['#attached']['js'][] = drupal_get_path('module', 'secure_autofill') . '/js/secure-autofill.js';
-    // Attach jquery cookie.
+    // Attach ask amount handler and cookie library at beginning of array so our js gets run first.
     $form['#attached']['library'][] = array('system', 'jquery.cookie');
+    array_unshift($form['#attached']['js'], drupal_get_path('module', 'secure_autofill') . '/js/secure-autofill.js');
     // Bypass amount field validation so we can inject our values.
     if (isset($form['submitted']['donation']['amount'])) {
       $form['submitted']['donation']['amount']['#webform_validated'] = TRUE;
@@ -204,6 +203,9 @@ function secure_autofill_form_alter(&$form, &$form_state, $form_id) {
     if (isset($form['submitted']['donation']['recurring_amount'])) {
       $form['submitted']['donation']['recurring_amount']['#webform_validated'] = TRUE;
     }
+
+    // Add drupal.setting for secure autofill 'not me' message.
+    drupal_add_js(array('secure_autofill' => array('secure_autofill_not_me' => variable_get('secure_autofill_not_me', ''))), 'setting');
 
     // Add form validate handler to ensure only numeric and 'other' values can be entered into 'amount'.
     $form['#validate'][] = "secure_autofill_donation_amount_validate";
@@ -474,6 +476,11 @@ function secure_autofill_clear_cookies($nid) {
   if (isset($_COOKIE['gs-'. $nid])) {
     unset($_COOKIE['gs-'. $nid]);
     setcookie('gs-'. $nid, '', time() - 3600, '/'); // empty value and old timestamp
+  }
+  // Unset user hash.
+  if (isset($_COOKIE['gs-'. $nid .'-hash'])) {
+    unset($_COOKIE['gs-'. $nid .'-hash']);
+    setcookie('gs-'. $nid .'-hash', '', time() - 3600, '/'); // empty value and old timestamp
   }
 }
 

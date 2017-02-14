@@ -5,6 +5,15 @@
  */
 
 /**
+ * Implements hook_install().
+ */
+function secure_autofill_install() {
+  // TODO copy secure prepop vars and settings to secure autofill vars/settings
+  // TODO uninstall secure prepop, dynamic gift strings
+  // TODO ensure RR catches springboard cookie path change
+}
+
+/**
  * Implements hook_requirements().
  */
 function secure_autofill_requirements($phase) {

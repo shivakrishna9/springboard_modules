@@ -68,6 +68,14 @@ function secure_autofill_admin_settings($form, &$form_state) {
     ),
   );
 
+  // Custom "not me" message.
+  $form['secure_autofill_not_me'] = array(
+    '#type' => 'textarea',
+    '#title' => t("'Not Me' Message"),
+    '#description' => t("Enter custom message for 'Not Me.' FIRSTNAME will be replaced by the first name from the secure autofill string. NOTME will be replaced by the appropriate link."),
+    '#default_value' => variable_get('secure_autofill_not_me', ''),
+  );
+
   return system_settings_form($form);
 }
 
