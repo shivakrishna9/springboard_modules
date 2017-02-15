@@ -1,0 +1,5 @@
+name = ACLU NGOC Trim
+description = Trim user profile fields after succesfully syncing to Salesforce
+core = 7.x
+configure = admin/config/salesforce_ngoc_trim
+dependencies[] = salesforce_ngoc
