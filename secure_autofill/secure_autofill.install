@@ -8,12 +8,60 @@
  * Implements hook_install().
  */
 function secure_autofill_install() {
-  // TODO copy secure prepop vars and settings to secure autofill vars/settings
-  $secure_secure_autofill_vars = array(
+  // Copy secure prepop vars and settings to secure autofill vars/settings.
+  $secure_autofill_vars = array(
+      'secure_prepopulate_key' => 'secure_autofill_key',
+      'secure_prepopulate_iv' => 'secure_autofill_iv',
+      'secure_prepopulate_toggle_expiration' => 'secure_autofill_toggle_expiration',
+      'secure_prepopulate_expired_date_limit' => 'secure_autofill_expired_date_limit',
+      'dynamic_gift_strings_never_expire' => 'secure_autofill_dynamic_gift_strings_never_expire',
       ''
     );
-  // TODO uninstall secure prepop, dynamic gift strings
+
+  foreach($secure_autofill_vars AS $old => $new) {
+    if (variable_get($old, FALSE)) {
+      // Copy old settings to new.
+      variable_set($new, variable_get($old));
+      variable_del($key);
+    }
+  }
+
+  // Remove vars that don't exist in secure_autofill.
+  variable_del('secure_prepopulate_precedence');
+  variable_del('dynamic_gift_strings_send_alert');
+  variable_del('dynamic_gift_strings_alert_email');
+
+  // Remove system table entries for secure prepop, dynamic gift strings.
+  $modules = array(
+    'secure_prepopulate',
+    'dynamic_gift_strings'
+  );
+  db_delete('system')
+    ->condition('name', $modules, 'IN')
+    ->condition('type', 'module')
+    ->execute();
+
   // TODO ensure RR catches springboard cookie path change
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function secure_autofill_uninstall() {
+  $secure_autofill_vars = array(
+    'secure_autofill_key',
+    'secure_autofill_iv',
+    'secure_autofill_toggle_expiration',
+    'secure_autofill_expired_date_limit',
+    'secure_autofill_dynamic_gift_strings_never_expire',
+    'secure_autofill_not_me',
+  );
+  // Delete secure autofill vars.
+  foreach ($secure_autofill_vars AS $var) {
+    if (variable_get($var, FALSE)) {
+      variable_delete($var);
+    }
+  }
 }
 
 /**
