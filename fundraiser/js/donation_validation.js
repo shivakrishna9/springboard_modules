@@ -3,6 +3,7 @@
     attach: function (context, settings) {
       var clearElement = function($selector) {
         $selector
+          .val('')
           .removeClass('valid')
           .next('label')
             .remove()
@@ -245,7 +246,6 @@
             $('input[name*="[other_amount]"]').focus();
           }
           else {
-            $('input[name*="[other_amount]"]').val('');
             clearElement($('input[name*="[other_amount]"]'));
           }
         });
