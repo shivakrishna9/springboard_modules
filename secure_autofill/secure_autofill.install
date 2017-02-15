@@ -22,7 +22,7 @@ function secure_autofill_install() {
     if (variable_get($old, FALSE)) {
       // Copy old settings to new.
       variable_set($new, variable_get($old));
-      variable_del($key);
+      variable_del($old);
     }
   }
 
