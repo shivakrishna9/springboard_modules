@@ -10,6 +10,7 @@ dependencies[] = ctools
 dependencies[] = entityreference
 dependencies[] = file_entity
 dependencies[] = inline_entity_form
+dependencies[] = views
 
 files[] = tests/page_wrappers.test
 files[] = tests/page_wrappers.ruleset.test
@@ -17,3 +18,4 @@ files[] = page_wrappers.install
 files[] = page_wrappers.module
 files[] = page_wrappers.admin.inc
 files[] = includes/page_wrappers_file.inline_entity_form.inc
+files[] = includes/page_wrappers.views_default.inc

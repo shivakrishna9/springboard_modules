@@ -18,6 +18,12 @@ function page_wrappers_install() {
   _page_wrappers_create_fields();
   _page_wrappers_create_file_entities();
 
+  // disable unecessary file entities
+  $disable_entities = array('document', 'audio', 'video');
+  foreach ($disable_entities as $type) {
+    file_type_disable($type);
+  }
+
   // Prepare the Page Wrappers directories.
   $tpl_dir = PAGE_WRAPPERS_TPL_DIR;
   $css_dir = PAGE_WRAPPERS_CSS_DIR;
@@ -174,11 +180,19 @@ function _page_wrappers_create_fields() {
 
     // css filefield
     'css_file_entity' => array(
-      'field_name' => 'sb_page_wrappers_css',
       'active' => 1,
       'cardinality' => -1,
       'deleted' => 0,
       'entity_types' => array(),
+      'field_name' => 'sb_page_wrappers_css',
+      'foreign keys' => array(
+        'file_managed' => array(
+          'columns' => array(
+            'target_id' => 'fid',
+          ),
+          'table' => 'file_managed',
+        ),
+      ),
       'indexes' => array(
         'target_id' => array(
           0 => 'target_id',
@@ -187,18 +201,17 @@ function _page_wrappers_create_fields() {
       'locked' => 0,
       'module' => 'entityreference',
       'settings' => array(
-        'handler' => 'base',
+        'handler' => 'views',
         'handler_settings' => array(
           'behaviors' => array(
             'views-select-list' => array(
               'status' => 0,
             ),
           ),
-          'sort' => array(
-            'type' => 'none',
-          ),
-          'target_bundles' => array(
-            'page_wrappers_asset_css' => 'page_wrappers_asset_css',
+          'view' => array(
+            'args' => array(),
+            'display_name' => 'entityreference_1',
+            'view_name' => 'pw_asset_autocomplete',
           ),
         ),
         'target_type' => 'file',
@@ -244,7 +257,16 @@ function _page_wrappers_create_fields() {
           'module' => 'inline_entity_form',
           'settings' => array(
             'fields' => array(),
-            'type_settings' => array(),
+            'type_settings' => array(
+              'allow_clone' => 0,
+              'allow_existing' => 1,
+              'allow_new' => 1,
+              'delete_references' => 0,
+              'label_plural' => 'stylesheets',
+              'label_singular' => 'stylesheet',
+              'match_operator' => 'CONTAINS',
+              'override_labels' => 1,
+            ),
           ),
           'type' => 'inline_entity_form',
           'weight' => 31,
@@ -254,11 +276,19 @@ function _page_wrappers_create_fields() {
 
     // javascript filefield
     'js_filefield' => array(
-      'field_name' => 'sb_page_wrappers_js',
       'active' => 1,
       'cardinality' => -1,
       'deleted' => 0,
       'entity_types' => array(),
+      'field_name' => 'sb_page_wrappers_js',
+      'foreign keys' => array(
+        'file_managed' => array(
+          'columns' => array(
+            'target_id' => 'fid',
+          ),
+          'table' => 'file_managed',
+        ),
+      ),
       'indexes' => array(
         'target_id' => array(
           0 => 'target_id',
@@ -267,18 +297,17 @@ function _page_wrappers_create_fields() {
       'locked' => 0,
       'module' => 'entityreference',
       'settings' => array(
-        'handler' => 'base',
+        'handler' => 'views',
         'handler_settings' => array(
           'behaviors' => array(
             'views-select-list' => array(
               'status' => 0,
             ),
           ),
-          'sort' => array(
-            'type' => 'none',
-          ),
-          'target_bundles' => array(
-            'page_wrappers_asset_js' => 'page_wrappers_asset_js',
+          'view' => array(
+            'args' => array(),
+            'display_name' => 'entityreference_2',
+            'view_name' => 'pw_asset_autocomplete',
           ),
         ),
         'target_type' => 'file',
@@ -319,15 +348,29 @@ function _page_wrappers_create_fields() {
           ),
           'user_register_form' => FALSE,
         ),
+        'type' => 'inline_entity_form',
+        'weight' => 31,
         'widget' => array(
           'active' => 1,
           'module' => 'inline_entity_form',
           'settings' => array(
             'fields' => array(),
-            'type_settings' => array(),
+            'match_operator' => 'CONTAINS',
+            'path' => '',
+            'size' => 60,
+            'type_settings' => array(
+              'allow_clone' => 0,
+              'allow_existing' => 1,
+              'allow_new' => 1,
+              'delete_references' => 0,
+              'label_plural' => 'scripts',
+              'label_singular' => 'script',
+              'match_operator' => 'CONTAINS',
+              'override_labels' => 1,
+            ),
           ),
           'type' => 'inline_entity_form',
-          'weight' => 31,
+          'weight' => 32,
         ),
       ),
     ),
