@@ -1,0 +1,178 @@
+<?php
+/**
+ * @file
+ * Secure Autofill install/schema hooks.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function secure_autofill_install() {
+  // Copy secure prepop vars and settings to secure autofill vars/settings.
+  $secure_autofill_vars = array(
+      'secure_prepopulate_key' => 'secure_autofill_key',
+      'secure_prepopulate_iv' => 'secure_autofill_iv',
+      'secure_prepopulate_toggle_expiration' => 'secure_autofill_toggle_expiration',
+      'secure_prepopulate_expired_date_limit' => 'secure_autofill_expired_date_limit',
+      'dynamic_gift_strings_never_expire' => 'secure_autofill_dynamic_gift_strings_never_expire',
+      ''
+    );
+
+  foreach($secure_autofill_vars AS $old => $new) {
+    if (variable_get($old, FALSE)) {
+      // Copy old settings to new.
+      variable_set($new, variable_get($old));
+      variable_del($key);
+    }
+  }
+
+  // Remove vars that don't exist in secure_autofill.
+  variable_del('secure_prepopulate_precedence');
+  variable_del('dynamic_gift_strings_send_alert');
+  variable_del('dynamic_gift_strings_alert_email');
+
+  // Remove system table entries for secure prepop, dynamic gift strings.
+  $modules = array(
+    'secure_prepopulate',
+    'dynamic_gift_strings'
+  );
+  db_delete('system')
+    ->condition('name', $modules, 'IN')
+    ->condition('type', 'module')
+    ->execute();
+
+  // Remove secure prepopulate schema.
+  db_drop_table('secure_prepopulate_synonyms');
+  db_drop_table('secure_prepopulate_expired');
+
+  // TODO ensure RR catches springboard cookie path change
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function secure_autofill_uninstall() {
+  $secure_autofill_vars = array(
+    'secure_autofill_key',
+    'secure_autofill_iv',
+    'secure_autofill_toggle_expiration',
+    'secure_autofill_expired_date_limit',
+    'secure_autofill_dynamic_gift_strings_never_expire',
+    'secure_autofill_not_me',
+  );
+  // Delete secure autofill vars.
+  foreach ($secure_autofill_vars AS $var) {
+    if (variable_get($var, FALSE)) {
+      variable_delete($var);
+    }
+  }
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function secure_autofill_requirements($phase) {
+  $severity = REQUIREMENT_ERROR;
+  $status = 'missing';
+  // Check for mcrypt extension.
+  if (extension_loaded("mcrypt")) {
+    $severity = REQUIREMENT_OK;
+    $status = 'installed';
+  }
+  $requirements = array(
+    array(
+      'title' => 'Secure Autofill',
+      'description' => t('Secure Autofill requires that PHP Mcrypt extension be installed on the web server.'),
+      'severity' => $severity,
+      'value' => 'PHP Mcrypt extension ' . $status,
+    ),
+  );
+  return $requirements;
+}
+
+/**
+ * Implements hook_schema().
+ */
+function secure_autofill_schema() {
+  $schema = array();
+  $schema['secure_autofill_expired'] = array(
+    'description' => 'Expired Autofill strings',
+    'fields' => array(
+      'hash' => array(
+        'description' => 'The encrypted string',
+        'type' => 'varchar',
+        'length' => '800',
+        'not null' => FALSE,
+      ),
+      'userhash' => array(
+        'description' => 'Unique per-user hash',
+        'type' => 'varchar',
+        'length' => '16',
+        'not null' => FALSE,
+      ),
+      'expire_date' => array(
+        'description' => 'When it expired',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+    ),
+  );
+  return $schema;
+}
+
+/**
+ * Add the secure preopoulate autofill field to existing webforms.
+ */
+function secure_autofill_update_7002(&$sandbox) {
+
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(nid) FROM {webform}')->fetchField();
+    $sandbox['messages'] = array();
+    $sandbox['current_node'] = -1;
+  }
+
+  $limit = 25;
+
+  $nodes = db_select('webform', 'n')
+    ->fields('n', array('nid'))
+    ->orderBy('n.nid', 'ASC')
+    ->where('n.nid > :nid', array(':nid' => $sandbox['current_node']))
+    ->extend('PagerDefault')
+    ->limit($limit)
+    ->execute();
+
+  foreach ($nodes as $node) {
+    $sandbox['progress']++;
+    $sandbox['current_node'] = $node->nid;
+
+    $cid = db_query('select wc.cid from {webform_component} wc
+      WHERE wc.nid = :nid AND wc.form_key = :key',
+      array(':nid' => $node->nid, ':key' => 'sba_action_is_multistep')
+    )->fetchAssoc();
+
+    if (!$cid) {
+      $field = array(
+        'nid' => $node->nid,
+        'form_key' => 'secure_prepop_autofilled',
+        'pid' => 0,
+        'name' => t('Autofilled'),
+        'type' => 'hidden',
+        'value' => 0,
+        'weight' => 13,
+        'email' => 1,
+        'extra' => array(
+          'description' => '',
+          'hidden_type' => 'hidden',
+        ),
+      );
+      webform_component_insert($field);
+    }
+  }
+
+  $sandbox['#finished'] = ($sandbox['progress'] >= $sandbox['max']) ? TRUE : ($sandbox['progress'] / $sandbox['max']);
+
+  if ($sandbox['#finished']) {
+    return t('Autofill field has been added to existing webforms.');
+  }
+}
