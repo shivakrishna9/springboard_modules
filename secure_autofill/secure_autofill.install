@@ -41,6 +41,10 @@ function secure_autofill_install() {
     ->condition('type', 'module')
     ->execute();
 
+  // Remove secure prepopulate schema.
+  db_drop_table('secure_prepopulate_synonyms');
+  db_drop_table('secure_prepopulate_expired');
+
   // TODO ensure RR catches springboard cookie path change
 }
 
