@@ -143,72 +143,13 @@ function sb_social_salesforce_genmap_map_fields_alter(&$fields, $context) {
 }
 
 /**
- * Implements hook_salesforce_queue_process_items_alter().
+ * Implements hook_salesforce_queue_create_item_alter().
  */
-function sb_social_salesforce_queue_process_items_alter(&$items, $queue) {
-  if (!empty($items)) {
-    foreach ($items as $delta => $item) {
-      // Remove donation/submission or user item
-      // from the queue if it has an originating share that hasn't
-      // yet synced. Most likely, the share will sync later in this run,
-      // and this item will sync next time.
-      if (in_array($item->module, array('webform', 'salesforce_donation', 'user'))) {
-        foreach ($item->sobject->fields as $name => $value) {
-          if (is_string($value) && substr($value, 0, 33) == '[Social_Share__c:sb_social_share:') {
-            // Has the referenced share been synced?
-            $share_id = (int) substr($value, 33, -1);
-            $sfid = db_select('salesforce_sync_map', 'm')
-              ->fields('m', array('sfid'))
-              ->condition('object_type', 'Social_Share__c')
-              ->condition('delta', 'sb_social_share')
-              ->condition('drupal_id', $share_id)
-              ->execute()
-              ->fetchField();
-            if (!$sfid) {
-              // It can't sync yet, so remove this item from processing
-              // and leave it in the queue.
-              unset($items[$delta]);
-              // Log a warning message.
-              watchdog(
-                'sb_social',
-                "Skipped syncing %sf_type from Drupal ID %drupal_id because share ID %share_id hasn't synced yet.",
-                array(
-                  '%sf_type' => $item->object_type,
-                  '%drupal_id' => $item->drupal_id,
-                  '%share_id' => $share_id,
-                ),
-                WATCHDOG_WARNING
-              );
-            }
-          }
-        }
-      }
-      // Remove a social share item from the queue if it doesn't have
-      // a Contact_sharer__c value and this field is required in Salesforce.
-      else if ($item->delta == 'sb_social_share' && empty($item->sobject->fields['Contact_sharer__c'])) {
-        // Look up the social share Salesforce mapping.
-        $mapping = _sb_social_salesforce_get_share_mapping();
-        if ($mapping) {
-          foreach ($mapping->field_mappings as $field_mapping) {
-            // Is the Contact_sharer__c field required by Salesforce
-            // -- that is, non-nillable?
-            if ($field_mapping['salesforce_field']['name'] == 'Contact_sharer__c' && !$field_mapping['salesforce_field']['nillable']) {
-              // It can't sync w/o a required value, so remove this item from
-              // processing and from the SF queue.
-              unset($items[$delta]);
-              $queue->deleteItem($item);
-              // Log a warning message.
-              watchdog(
-                'sb_social',
-                "Skipped syncing social share ID %share_id and removed it from the queue. Anonymous shares can't be synced because Contact_sharer__c is required by SF.",
-                array('%share_id' => $item->drupal_id),
-                WATCHDOG_WARNING
-              );
-            }
-          }
-        }
-      }
-    }
+function sb_social_salesforce_queue_create_item_alter(&$item) {
+  // If Originating Social Share is mapped but the value is 0, remove the field
+  // from the queue item. We can't sync a social share value for an anon user.
+  if (isset($item['sobject']->fields['Originating_Social_Share__c']) && $item['sobject']->fields['Originating_Social_Share__c'] == 0) {
+    unset($item['sobject']->fields['Originating_Social_Share__c']);
   }
 }
 
