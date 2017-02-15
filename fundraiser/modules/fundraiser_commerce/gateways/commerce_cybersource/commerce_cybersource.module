@@ -1840,10 +1840,17 @@ function commerce_cybersource_update_customer_profile_request($payment_method, $
       $card_type = $pane_values['card_data']->card_type;
       $request->card->cardType = commerce_cybersource_cc_type_code($card_type);
     }
+
   // Add the CVV data if included.
   if (isset($pane_values['credit_card']['code'])) {
     $request->card->cvNumber = $pane_values['credit_card']['code'];
   }
+
+  // Do not update the profile if card type is unavailable:
+  if (!isset($request->card->cardType) || empty($request->card->cardType)) {
+    return FALSE;
+  }
+
   return commerce_cybersource_soap_api_request($payment_method, $request);
 }
 

@@ -103,6 +103,18 @@ function commerce_cybersource_fundraiser_commerce_charge($payment_method, $donat
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
+  // Trigger an address update if the same user creates another sustainer series:
+  static $update_payment_processed = FALSE;
+  if (!$update_payment_processed) {
+    $update_payment_processed = TRUE;
+    if (isset($donation->data['cardonfile']) && (!isset($donation->reference_charge) || $donation->reference_charge === FALSE)) {
+      $donation->update_payment = TRUE;
+    } 
+    else {
+      $donation->update_payment = FALSE;
+    }
+  }
+
   // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.
   $result = commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
