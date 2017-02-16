@@ -113,7 +113,7 @@ function fundraiser_ocd_node_load($nodes, $types) {
   }
 
   foreach ($nodes as $nid => $node) {
-    _fundraiser_ocd_attach_ocd_donate_fields($nodes[$nid]);
+    _fundraiser_ocd_attach_ocd_fields($nodes[$nid]);
   }
 }
 
