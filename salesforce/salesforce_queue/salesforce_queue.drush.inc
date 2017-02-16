@@ -32,6 +32,16 @@ function salesforce_queue_drush_command() {
     ),
     'aliases' => array('sfqp'),
   );
+  $items['salesforce-queue-increment-ids'] = array(
+    'description' => dt('Set auto-incrementing Drupal IDs.'),
+    'arguments' => array(
+      'id' => dt('ID value to set across tables'),
+    ),
+    'examples' => array(
+      'Standard example' => 'drush salesforce-increment-ids 10000',
+    ),
+    'aliases' => array('sfqincid'),
+  );
   return $items;
 }
 
@@ -56,4 +66,31 @@ function drush_salesforce_queue_process($queue = 'salesforce_queue') {
 
   // Log to the command line with an OK status.
   drush_log('Running salesforce-queue-process', 'ok');
+}
+
+/**
+ * Callback function for drush salesforce-increment-ids.
+ *
+ * Set AUTO_INCREMENT for IDs on commerce_order, webform_submissions, sequences
+ * (used to set uid value for the users table), commerce_cardonfile, and
+ * sb_social_shares. These sometimes need to be increased to some greater
+ * arbitrary value when multiple development sites access the same SF instance
+ * and the Drupal IDs collide.
+ *
+ * @param int $id
+ *   The ID to set the auto-incrementing fields to.
+ */
+function drush_salesforce_queue_increment_ids($id = 10000) {
+  $tables = array(
+    'commerce_order',
+    'webform_submissions',
+    'sequences',
+    'commerce_cardonfile',
+    'sb_social_shares',
+  );
+  foreach ($tables as $table) {
+    $sql = "ALTER TABLE {$table} AUTO_INCREMENT = $id";
+    db_query($sql);
+    drush_log("Updated table $table", 'ok');
+  }
 }
