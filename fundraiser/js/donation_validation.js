@@ -259,7 +259,7 @@
             $('input[name*="[recurring_other_amount]"]').focus();
           }
           else {
-            $('input[name*="[recurring_other_amount]"]').clearEle();
+            clearElement($('input[name*="[recurring_other_amount]"]'));
           }
         });
 
