@@ -27,7 +27,7 @@ function secure_prepopulate_insert_components($node) {
       'value' => 0,
       'weight' => 13,
       'email' => 1,
-      '#extra' => array(
+      'extra' => array(
         'description' => '',
         'hidden_type' => 'hidden',
       ),

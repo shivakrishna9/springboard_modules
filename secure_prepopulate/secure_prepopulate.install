@@ -117,7 +117,7 @@ function secure_prepopulate_update_7002(&$sandbox) {
         'value' => 0,
         'weight' => 13,
         'email' => 1,
-        '#extra' => array(
+        'extra' => array(
           'description' => '',
           'hidden_type' => 'hidden',
         ),
