@@ -229,7 +229,7 @@ function salesforce_ngoc_poll_batch_upload() {
   watchdog('salesforce_ngoc', 'Polling job complete. :ngoc_sync_map_records batch upload objects queried for changes. :changed_records changed records found.',
     array(
       ':ngoc_sync_map_records' => count($ngoc_sync_map_records),
-      ':changed_records' => count($changed_records)
+      ':changed_records' => count($changed_records),
     ),
     WATCHDOG_NOTICE, l('Batch Upload Report', 'springboard/reports/integration-reports/batch-upload'));
 }
