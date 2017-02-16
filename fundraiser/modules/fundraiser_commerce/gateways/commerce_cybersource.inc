@@ -97,54 +97,11 @@ function commerce_cybersource_fundraiser_commerce_charge($payment_method, $donat
   $order = commerce_order_load($donation->did);
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
-
   $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
 
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
   
-  $address_fields = array(
-    'first_name',
-    'last_name',
-    'address',
-    'address_line_2',
-    'city',
-    'country',
-    'state',
-    'zip',
-  );
-
-  // If this donor made another donation prior to this one, check for updated address field values and trigger an
-  // update of the donor's Cybersource profile if any field is different:
-  if (isset($donation->uid) && isset($donation->did) && isset($donation->donation) && is_array($donation->donation))  {
-    $previous_did = db_query("SELECT did FROM {fundraiser_donation} WHERE uid = :uid AND did != :current_did ORDER BY did DESC LIMIT 1",
-      array(':uid' => $donation->uid, ':current_did' => $donation->did))
-      ->fetchField();
-    if ($previous_did) {
-      $previous_donation = fundraiser_donation_load($previous_did);
-      if (isset($previous_donation->donation) && is_array($previous_donation->donation)) {
-        $address_fields = array(
-          'first_name',
-          'last_name',
-          'address',
-          'address_line_2',
-          'city',
-          'country',
-          'state', 
-          'zip',
-        );
-        foreach ($address_fields as $address_field) {
-          $current_field_val = isset($donation->donation[$address_field]) ? $donation->donation[$address_field] : '';
-          $previous_field_val = isset($previous_donation->donation[$address_field]) ? $previous_donation->donation[$address_field] : '';
-          if ($current_field_val != $previous_field_val) {
-            $donation->update_payment = TRUE;
-            break;
-          }
-        }
-      }
-    }
-  }
-
   // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.
   $result = commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
