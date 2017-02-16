@@ -529,52 +529,54 @@ function _page_wrappers_create_file_entities() {
             'type' => 'text_textfield',
             'weight' => 0,
           ),
-          'page_wrappers_asset_js' => array(
-            'bundle' => 'page_wrappers_asset_js',
-            'default_value' => NULL,
-            'deleted' => 0,
-            'description' => 'Enter a title for this file that will make it easy to search for. If you leave this field blank, the name of the file you upload will be used.',
-            'display' => array(
-              'default' => array(
-                'label' => 'none',
-                'settings' => array(),
-                'type' => 'hidden',
-                'weight' => 1,
-              ),
-              'preview' => array(
-                'label' => 'none',
-                'settings' => array(),
-                'type' => 'hidden',
-                'weight' => 0,
-              ),
-              'teaser' => array(
-                'label' => 'none',
-                'settings' => array(),
-                'type' => 'hidden',
-                'weight' => 0,
-              ),
+        ),
+
+        'page_wrapper_asset_js' => array(
+          'bundle' => 'page_wrappers_asset_js',
+          'default_value' => NULL,
+          'deleted' => 0,
+          'description' => 'Enter a title for this file that will make it easy to search for. If you leave this field blank, the name of the file you upload will be used.',
+          'display' => array(
+            'default' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 1,
             ),
-            'entity_type' => 'file',
-            'field_name' => 'field_pw_asset_title',
-            'label' => 'Title',
-            'required' => 0,
-            'settings' => array(
-              'text_processing' => 0,
-              'user_register_form' => FALSE,
-            ),
-            'widget' => array(
-              'active' => 1,
-              'module' => 'text',
-              'settings' => array(
-                'size' => 60,
-              ),
-              'type' => 'text_textfield',
+            'preview' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
               'weight' => 0,
             ),
+            'teaser' => array(
+              'label' => 'none',
+              'settings' => array(),
+              'type' => 'hidden',
+              'weight' => 0,
+            ),
+          ),
+          'entity_type' => 'file',
+          'field_name' => 'field_pw_asset_title',
+          'label' => 'Title',
+          'required' => 0,
+          'settings' => array(
+            'text_processing' => 0,
+            'user_register_form' => FALSE,
+          ),
+          'widget' => array(
+            'active' => 1,
+            'module' => 'text',
+            'settings' => array(
+              'size' => 60,
+            ),
+            'type' => 'text_textfield',
+            'weight' => 0,
           ),
         ),
       ),
     ),
+
     'pw_asset_description' => array(
       'active' => 1,
       'cardinality' => 1,
