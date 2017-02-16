@@ -60,7 +60,7 @@ function fundraiser_commerce_cardonfile_views_pre_render(&$view) {
   foreach ($view->result as $key => $result) {
     // If this card isn't being used for one-click donate or for a recurring
     // donation unset it.
-    if (empty($result->used_by)) {
+    if (empty($result->used_for)) {
       unset($view->result[$key]);
       continue;
     }
