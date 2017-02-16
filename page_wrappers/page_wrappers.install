@@ -377,13 +377,13 @@ function _page_wrappers_create_fields() {
 
     // html template
     'html_template' => array(
-      'field_name' => 'sb_page_wrappers_html_template',
+      'field_name' => 'page_wrappers_html_template',
       'type' => 'text_with_summary',
       'cardinality' => 1,
       'settings' => array(),
       'entity_types' => array('node'),
       '_instance' => array(
-        'field_name' => 'sb_page_wrappers_html_template',
+        'field_name' => 'page_wrappers_html_template',
         'entity_type' => 'node',
         'bundle' => 'page_wrapper',
         'required' => TRUE,

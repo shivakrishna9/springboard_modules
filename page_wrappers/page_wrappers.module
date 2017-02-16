@@ -1,7 +1,7 @@
 <?php
 
 // @TODO this could be an admin page if needed.
-define('PAGE_WRAPPERS_DIR', 'public://page_wrappers');
+define('PAGE_WRAPPERS_DIR', 'page_wrappers');
 define('PAGE_WRAPPERS_CSS_DIR', '/styles');
 define('PAGE_WRAPPERS_JS_DIR',  '/scripts');
 define('PAGE_WRAPPERS_TPL_DIR', '/tpl');
@@ -82,7 +82,8 @@ function page_wrappers_views_api() {
  */
 function page_wrappers_theme_registry_alter(&$theme_registry) {
   $theme_registry_copy = $theme_registry;
-  _theme_process_registry($theme_registry_copy, 'phptemplate', 'theme_engine', 'pow', PAGE_WRAPPERS_DIR . PAGE_WRAPPERS_TPL_DIR);
+  $public = variable_get('file_public_path',  'sites/default/files');
+  _theme_process_registry($theme_registry_copy, 'phptemplate', 'theme_engine', 'pow', $public . '/' . PAGE_WRAPPERS_DIR . PAGE_WRAPPERS_TPL_DIR);
   $theme_registry += array_diff_key($theme_registry_copy, $theme_registry);
   $hooks = array('page');
   foreach ($hooks as $h) {
@@ -388,7 +389,7 @@ function page_wrappers_node_delete($node) {
   // remove the template from any nodes that are assigned to it
   if ($node->type == 'page_wrapper') {
     $template = _page_wrappers_template_filename($node->nid);
-    $path = PAGE_WRAPPERS_DIR . PAGE_WRAPPERS_TPL_DIR . '/' . $template;
+    $path = 'public://' . PAGE_WRAPPERS_DIR . PAGE_WRAPPERS_TPL_DIR . '/' . $template;
     file_unmanaged_delete($path);
     db_delete('node_page_wrappers')
       ->condition('wrapper_nid', $node->nid)
@@ -709,7 +710,7 @@ function page_wrappers_file_insert($file) {
 
   //rename js files to remove .txt extension, do not do this on clone process
   if (arg(2) != 'clone' && isset($file->source)) {
-    $dir = PAGE_WRAPPERS_DIR;
+    $dir = 'public://' . PAGE_WRAPPERS_DIR;
     $filename = $file->filename;
     if(strpos($file->source, 'sb_page_wrappers_js_und_') === 0) {
       $filename = substr($filename, 0, strlen($filename) - 4);
@@ -953,7 +954,7 @@ function _page_wrappers_cached_form_node($form_build_id) {
  *   Filenane or FALSE.
  */
 function _page_wrappers_create_template($node) {
-  $full_path = PAGE_WRAPPERS_DIR . PAGE_WRAPPERS_TPL_DIR;
+  $full_path = 'public://' . PAGE_WRAPPERS_DIR . PAGE_WRAPPERS_TPL_DIR;
   // See if a template file already exists for this node.
   $filename =  _page_wrappers_template_filename($node->nid);
 
@@ -1083,7 +1084,7 @@ function _page_wrappers_tokens($content) {
  *   The template filename.
  */
 function _page_wrappers_template_exists($template) {
-  $path = PAGE_WRAPPERS_DIR . PAGE_WRAPPERS_TPL_DIR . '/' . $template;
+  $path = 'public://' . PAGE_WRAPPERS_DIR . PAGE_WRAPPERS_TPL_DIR . '/' . $template;
 
   if (file_exists($path)) {
     return TRUE;
