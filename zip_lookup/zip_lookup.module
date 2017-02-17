@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function zip_lookup_menu() {
+  $items = array();
+  $items['zip_lookup/autopop-city-state-by-zip'] = array(
+      'title' => t('Autopop City and State'),
+      'page callback' => '_zip_lookup_find_city_and_state_by_zip',
+      'access arguments' => array('access content'),
+      'delivery callback' => 'drupal_json_output',
+      'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Menu callback for zipcode lookup.
+ */
+function _zip_lookup_find_city_and_state_by_zip() {
+  $ret = array("city" => "", "state_id" => "");
+  $zipcode = $_POST['zip'];
+  if (preg_match('/^[0-9]{5}$/', $zipcode)) {
+    $result = db_query("SELECT zips.city AS city, zips.state AS state_id FROM {zipcodes} zips where zips.zip = :zip AND zips.city != '' AND zips.state != ''", array(':zip' => $zipcode));
+    $resultObj = $result->fetch();
+    $ret["city"] = $resultObj->city;
+    $ret["state_id"] = $resultObj->state_id;
+  }
+  return $ret;
+
+}
+
+/**
+ * Implements hook_form_FORM_ID_form_alter().
+ * Add ziplookup javascript to donation forms.
+ */
+function zip_lookup_form_webform_client_form_alter(&$form, &$form_state) {
+  if (fundraiser_is_donation_type($form['#node']->type)) {
+    drupal_add_js(drupal_get_path('module', 'zip_lookup') . '/js/zip_lookup.js');
+  }
+}

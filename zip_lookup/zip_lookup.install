@@ -1,0 +1,107 @@
+<?php
+/**
+ * @file
+ * zip_lookup install functions.
+ */
+
+ /**
+  * Implements hook_schema().
+  */
+function zip_lookup_schema() {
+  $schema['zipcodes'] = array(
+    'description' => t('Table containing city, state, postal codes.'),
+    'fields' => array(
+      'zid' => array(
+        'description' => t('Zip code id.'),
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'city' => array(
+        'description' => t('City name.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'state' => array(
+        'description' => t('State/province.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'zip' => array(
+        'description' => t('Postal code.'),
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => '0',
+      ),
+    ),
+    'indexes' => array(
+      'zip' => array('zip'),
+    ),
+    'primary key' => array('zid'),
+  );
+  return $schema;
+}
+
+/***
+ * helper function for future updates.
+ */
+function _zip_lookup_load_from_csv(&$sandbox) {
+  $data = &drupal_static(__FUNCTION__);
+  if (!$data) {
+    $data = file(drupal_get_path('module', 'zip_lookup') . '/data/zipcodes.csv', FILE_IGNORE_NEW_LINES);
+  }
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_line'] = 0;
+    $sandbox['max'] = count($data);
+    $sandbox['messages'] = array();
+  }
+  $limit = 200;
+  for ($i = 0; $i < $limit; $i++) {
+    $line = explode(',', $data[$sandbox['current_line']]);
+    if (count($line) == 3) {
+      $record = array(
+        'city' => preg_replace('/[\^"|"$]/', '', $line[0]),
+        'zip' => $line[1],
+        'state' => preg_replace('/[\^"|"$]/', '', $line[2])
+      );
+      drupal_write_record('zipcodes', $record);
+    }
+    $sandbox['current_line']++;
+    $sandbox['progress']++;
+  }
+  $sandbox['#finished'] = ($sandbox['progress'] >= $sandbox['max']) ? TRUE : ($sandbox['progress'] / $sandbox['max']);
+
+}
+
+/**
+ * Implements hook_enable().
+ * Populate zip code database.
+ */
+function zip_lookup_enable() {
+  $populated = variable_get('zip_lookup_populated', FALSE);
+  if (!$populated) {
+    $data = fopen(drupal_get_path('module', 'zip_lookup') . '/data/zipcodes.csv', 'rb');
+    $keys = array('city', 'zip', 'state');
+    if ($data) {
+      while ($line = fgetcsv($data)) {
+        $row = array_combine($keys, $line);
+        drupal_write_record('zipcodes', $row);
+      }
+      fclose($data);
+      variable_set('zip_lookup_populated', TRUE);
+    }
+  }
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function zip_lookup_uninstall() {
+  variable_del('zip_lookup_populated');
+}

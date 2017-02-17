@@ -1,0 +1,3 @@
+name = Zip code lookup
+description = Lookup and populate city/state fields from a zipcode
+core = 7.x
