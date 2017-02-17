@@ -10,6 +10,112 @@ define('CYBERSOURCE_TXN_MODE_PRODUCTION', 'production');
 define('CYBERSOURCE_TXN_MODE_TEST', 'test');
 
 
+function commerce_cybersource_node_view($node, $view_mode, $langcode) {
+  if ($view_mode != 'full' || $node->nid != 239) {
+    return;
+  }
+  $test_mode = TRUE;
+
+   
+  $access_token_endpoint = 'https://auth' . ($test_mode ? 'test' : '') . '.ic3.com/apiauth/v1/oauth/token';
+  $access_token_payload = array(
+    'platform' => 1,
+    'client_id' => '6ryWQT1Z3O',
+    'grant_type' => 'client_credentials',
+    'client_secret' => '0be9ef7e8024744ae0eaeaaddb25e627',
+    'merchant_id' => 'jacksonriver_cybersource',
+    'client_type' => 'confidential',
+  );
+
+
+
+  // Step #1 - Fetch the OAuth access_token needed for subsequent requests:
+  dpm('Step #1 - Begin OAuth token request...');
+  $access_token_endpoint = 'https://auth' . ($test_mode ? 'test' : '') . '.ic3.com/apiauth/v1/oauth/token';
+  $access_token_payload = array(
+    'platform' => 1,
+    'client_id' => '6ryWQT1Z3O',
+    'grant_type' => 'client_credentials',
+    'client_secret' => '0be9ef7e8024744ae0eaeaaddb25e627',
+    'merchant_id' => 'jacksonriver_cybersource',
+    'client_type' => 'confidential',
+  );
+  
+
+  $headers = array();
+  $headers = array(
+    'Authorization' => 'Oauth',
+    'Cache-Control' => 'no-cache',
+    'Content-type' => 'application/x-www-form-urlencoded',
+  );
+  
+  $response = drupal_http_request($access_token_endpoint, array('headers' => $headers, 'method' => 'POST', 'data' => http_build_query($access_token_payload, '', '&')));
+  if ($response->code == 200 && isset($response->data)) {
+    $response = json_decode($response->data);
+  } 
+  if (isset($response->access_token) && !empty($response->access_token)) {
+    $access_token = $response->access_token;
+  }
+
+  if (isset($access_token)) {
+    dpm('Access token acquired: ' . $access_token);
+  }
+
+  // Step #2 - "POST Batch Payload" - Fetch one endpoint per subscription ID from which updated account data can be fetched:
+  dpm('Step #2 - Fetch status endpoint');
+  if (!isset($access_token)) {
+    dpm('Access token not available; aborting.');
+    return;
+  }
+  $subscription_id = '9909000149393434';
+  $batch_payload_endpoint = 'https://api.accountupdater' . ($test_mode ? 'test' : '') . '.cybersource.com/v1/batch';
+  $batch_payload_params = array(
+    'notification_email' => 'josh.estep@jacksonriver.com',
+    'included' => array('tokens' => array($subscription_id)),
+  );
+
+
+  $batch_payload_options = array(
+    'headers' => array(
+      'Authorization' => 'Bearer ' . $access_token,
+      'Content-Type' => 'application/json',
+    ),
+    'method' => 'POST',
+    'data' => json_encode($batch_payload_params),
+  );
+
+  $batch_payload_data = drupal_http_request($batch_payload_endpoint, $batch_payload_options);
+
+  dpm($batch_payload_data);
+  if (!isset($batch_payload_data->data)) {
+    return FALSE;
+  }
+  $batch_payload_data = json_decode($batch_payload_data->data);
+  if (isset($batch_payload_data->_links->status[0]->href)) {
+    $status_endpoint = $batch_payload_data->_links->status[0]->href;
+    dpm('Status endpoint acquired: ' . $status_endpoint);
+  }
+
+  if (!isset($status_endpoint)) {
+    dpm('No status endpoint returned; aborting.');
+  }
+
+
+  // Step #3 - Fetch account status from the end point provided in the previous response:
+  dpm('Step #3 - Account updater request...');
+
+  $account_info_request_options = array(
+    'headers' => array(
+      'Authorization' => 'Bearer ' . $access_token,
+      'Content-Type' => 'application/x-www-form-urlencoded',
+    ),
+    'method' => 'GET',
+  );
+  $account_info_data = drupal_http_request($status_endpoint, $account_info_request_options);
+  drupal_set_message('<pre>' . print_r($account_info_data, 1)  . '</pre>');
+  
+}
+
 /**
  * Implements hook_menu().
  */
