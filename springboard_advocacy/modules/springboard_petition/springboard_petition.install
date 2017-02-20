@@ -166,6 +166,48 @@ function springboard_petition_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'first_name' => array(
+        'description' => 'Signer first name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'last_name' => array(
+        'description' => 'Signer last name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'mail' => array(
+        'description' => 'Signer last name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'zip' => array(
+        'description' => 'Signer zip code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'city' => array(
+        'description' => 'Signer city.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'state' => array(
+        'description' => 'Signer state.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
     ),
     'primary key' => array('sid'),
   );
@@ -460,6 +502,28 @@ function springboard_petition_update_7006() {
             'visibility' => TRUE,
           ))
         ->execute();
+    }
+  }
+}
+
+/**
+ * Add Signer info to opt in table.
+ */
+function springboard_petition_update_7007() {
+  $fields = array(
+    'first_name',
+    'last_name',
+    'mail',
+    'zip',
+    'city',
+    'state',
+  );
+  $schema = module_invoke('springboard_petition', 'schema');
+  if(db_table_exists('springboard_petition_opt_in') !== FALSE) {
+    foreach ($fields as $field) {
+      if (db_field_exists('springboard_petition_opt_in', $field) == FALSE) {
+        db_add_field('springboard_petition_opt_in', $field, $schema['springboard_petition_opt_in']['fields'][$field]);
+      }
     }
   }
 }

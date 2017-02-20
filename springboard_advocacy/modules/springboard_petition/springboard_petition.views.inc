@@ -126,6 +126,27 @@ function springboard_petition_views_data() {
       'handler' => 'views_handler_sort_date',
     ),
   );
+  $data['springboard_petition_opt_in']['first_name'] = array(
+    'title' => t('Petition user first name'),
+    'help' => t('Signer\'s first name.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+  );
+  $data['springboard_petition_opt_in']['last_name'] = array(
+    'title' => t('Petition user last name'),
+    'help' => t('Signer\'s last name.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+  );
+  $data['springboard_petition_opt_in']['state'] = array(
+    'title' => t('Petition user state'),
+    'help' => t('Signer\'s state.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+  );
 
   return $data;
 }

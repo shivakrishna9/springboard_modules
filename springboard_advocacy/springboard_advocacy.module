@@ -655,7 +655,7 @@ function springboard_advocacy_springboard_admin_alias_patterns() {
  * @param int $sid
  *   Submission ID.
  */
-function springboard_advocacy_log_opt_in($nid, $uid, $opt_in, $sid) {
+function springboard_advocacy_log_opt_in($nid, $uid, $data, $opt_in, $sid) {
 
   db_delete('springboard_action_opt_in')
     ->condition('sid', $sid, '=')
@@ -667,6 +667,12 @@ function springboard_advocacy_log_opt_in($nid, $uid, $opt_in, $sid) {
     'uid' => $uid,
     'opt_in' => $opt_in ? 1 : 0,
     'created' => time(),
+    'first_name' => $data['sbp_first_name'],
+    'last_name' => $data['sbp_last_name'],
+    'mail' => $data['mail'],
+    'city' => $data['sbp_city'],
+    'state' => $data['sbp_state'],
+    'zip' => $data['sbp_zip'],
   );
 
   drupal_write_record('springboard_action_opt_in', $record);
@@ -690,8 +696,37 @@ function springboard_advocacy_get_opt_in_uid($node, $submission) {
     $sid = $submission->sid;
     $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
     $uid = $result->fetchField();
-    springboard_advocacy_log_opt_in($node->nid, $uid, TRUE, $sid);
+    $data = springboard_advocacy_submission_signer_data($node->nid, $submission);
+    springboard_advocacy_log_opt_in($node->nid, $uid, $data, TRUE, $sid);
   }
+}
+
+function springboard_advocacy_submission_signer_data($nid, $submission) {
+  $signer_fields = array(
+    'sbp_first_name',
+    'sbp_last_name',
+    'mail',
+    'sbp_city',
+    'sbp_state',
+    'sbp_zip',
+  );
+  $data = array();
+  foreach ($signer_fields as $form_key) {
+    $cid = springboard_advocacy_webform_get_cid_by_form_key($nid, $form_key);
+    $data[$form_key] = $submission->data[$cid]['value'][0];
+  }
+  return $data;
+}
+
+function springboard_advocacy_webform_get_cid_by_form_key($nid, $form_key) {
+  $result = db_query('SELECT cid from {webform_component} ' .
+    'WHERE nid = :nid ' .
+    'AND form_key = :form_key',
+    array(
+      ':nid' => $nid,
+      ':form_key' => $form_key,
+    ))->fetchField();
+  return $result;
 }
 
 /**

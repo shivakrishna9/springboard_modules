@@ -117,5 +117,26 @@ function fundraiser_recent_donors_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
+  $data['fundraiser_donor_opt_in']['first_name'] = array(
+    'title' => t('Donor user first name'),
+    'help' => t('Donor\'s first name.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+  );
+  $data['fundraiser_donor_opt_in']['last_name'] = array(
+    'title' => t('Donor user last name'),
+    'help' => t('Donor\'s last name.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+  );
+  $data['fundraiser_donor_opt_in']['state'] = array(
+    'title' => t('Donor user state'),
+    'help' => t('Donor\'s state.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+  );
   return $data;
 }

@@ -34,6 +34,48 @@ function fundraiser_recent_donors_schema() {
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE),
+      'first_name' => array(
+        'description' => 'Signer first name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'last_name' => array(
+        'description' => 'Signer last name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'mail' => array(
+        'description' => 'Signer last name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'zip' => array(
+        'description' => 'Signer zip code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'city' => array(
+        'description' => 'Signer city.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'state' => array(
+        'description' => 'Signer state.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
     ),
     'primary key' => array('did'),
   );
@@ -74,4 +116,26 @@ function fundraiser_recent_donors_enable() {
     ->condition('type', 'module')
     ->condition('name', 'fundraiser_recent_donors')
     ->execute();
+}
+
+/**
+ * Add donor info to opt in table.
+ */
+function fundraiser_recent_donors_update_7001() {
+  $fields = array(
+    'first_name',
+    'last_name',
+    'mail',
+    'zip',
+    'city',
+    'state',
+  );
+  $schema = module_invoke('fundraiser_recent_donors', 'schema');
+  if(db_table_exists('fundraiser_donor_opt_in') !== FALSE) {
+    foreach ($fields as $field) {
+      if (db_field_exists('fundraiser_donor_opt_in', $field) == FALSE) {
+        db_add_field('fundraiser_donor_opt_in', $field, $schema['fundraiser_donor_opt_in']['fields'][$field]);
+      }
+    }
+  }
 }

@@ -25,7 +25,7 @@ function springboard_advocacy_requirements($phase) {
 
   if ($phase == 'runtime' && !empty($lib['installed'])) {
     $requirements['springboard_advocacy']['severity'] = REQUIREMENT_OK;
-  } 
+  }
   elseif($phase == 'runtime') {
     $requirements['springboard_advocacy']['severity'] = REQUIREMENT_ERROR;
     $requirements['springboard_advocacy']['description'] = 'Springboard Advocacy library not installed';
@@ -105,6 +105,48 @@ function springboard_advocacy_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
+      ),
+      'first_name' => array(
+        'description' => 'Signer first name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'last_name' => array(
+        'description' => 'Signer last name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'mail' => array(
+        'description' => 'Signer last name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'zip' => array(
+        'description' => 'Signer zip code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'city' => array(
+        'description' => 'Signer city.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'state' => array(
+        'description' => 'Signer state.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
       ),
     ),
     'primary key' => array('sid'),
@@ -260,3 +302,26 @@ function springboard_advocacy_update_7011() {
     db_create_table('springboard_action_opt_in_block', $schema['springboard_action_opt_in_block']);
   }
 }
+
+/**
+ * Add Signer info to opt in table.
+ */
+function springboard_advocacy_update_7012() {
+  $fields = array(
+    'first_name',
+    'last_name',
+    'mail',
+    'zip',
+    'city',
+    'state',
+  );
+  $schema = module_invoke('springboard_advocacy', 'schema');
+  if(db_table_exists('springboard_action_opt_in') !== FALSE) {
+    foreach ($fields as $field) {
+      if (db_field_exists('springboard_action_opt_in', $field) == FALSE) {
+        db_add_field('springboard_action_opt_in', $field, $schema['springboard_action_opt_in']['fields'][$field]);
+      }
+    }
+  }
+}
+

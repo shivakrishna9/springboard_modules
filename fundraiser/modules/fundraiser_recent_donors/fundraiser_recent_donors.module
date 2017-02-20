@@ -140,13 +140,31 @@ function _fundraiser_recent_donors_donation_form_submit($form, &$form_state) {
     )
   );
   foreach ($did_query as $did_data) {
+    $data = fundraiser_recent_donors_submission_signer_data($flattened_values);
     _fundraiser_recent_donors_insert_donor_optin(
       $form_state['values']['details']['sid'],
       $form_state['values']['details']['nid'],
-      $did_data->did
+      $did_data->did,
+      $data
     );
     return;
   }
+}
+
+function fundraiser_recent_donors_submission_signer_data($submission) {
+  $donor_fields = array(
+    'first_name',
+    'last_name',
+    'mail',
+    'city',
+    'state',
+    'zip',
+  );
+  $data = array();
+  foreach ($donor_fields as $form_key) {
+    $data[$form_key] = isset($submission[$form_key]) && !empty($submission[$form_key]) ? $submission[$form_key] : NULL;
+  }
+  return $data;
 }
 
 /**
@@ -161,10 +179,12 @@ function fundraiser_recent_donors_commerce_paypal_ipn_process($order, $payment_m
     // Track this donation's opt-in if the opt-in box was checked:
     if (isset($donation->submission_data[FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY])
       && !empty($donation->submission_data[FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY])) {
+      $data = fundraiser_recent_donors_submission_signer_data($donation->submisson_data);
       _fundraiser_recent_donors_insert_donor_optin(
         $donation->sid,
         $donation->nid,
-        $donation->did
+        $donation->did,
+        $data
       );      
     }
   }
@@ -488,19 +508,25 @@ function _fundraiser_recent_donors_set_node_opt_in_data($nid, $is_enabled, $min_
  * @param $donation_timestamp
  *   Timestamp of when the donation was made.
  */
-function _fundraiser_recent_donors_insert_donor_optin($sid, $nid, $did, $donation_timestamp = FALSE) {
+function _fundraiser_recent_donors_insert_donor_optin($sid, $nid, $did, $data, $donation_timestamp = FALSE) {
   $donation_timestamp = !$donation_timestamp ? time() : $donation_timestamp;
 
   $exists = db_query("SELECT did FROM {fundraiser_donor_opt_in} WHERE did = :did", array(':did' => $did))
    ->fetchField();
 
   if (!$exists) {
-    db_query("INSERT INTO {fundraiser_donor_opt_in} VALUES (:sid, :nid, :did, :created)", 
+    db_query("INSERT INTO {fundraiser_donor_opt_in} VALUES (:sid, :nid, :did, :created, :first_name, :last_name, :mail, :city, :state, :zip)", 
       array(
         ':sid' => $sid,
         ':nid' => $nid,
         ':did' => $did,
         ':created' => $donation_timestamp,
+        ':first_name' => $data['first_name'],
+        ':last_name' => $data['last_name'],
+        ':mail' => $data['mail'],
+        ':city' => $data['city'],
+        ':state' => $data['state'],
+        ':zip' => $data['zip'],
       )
     );
   }
