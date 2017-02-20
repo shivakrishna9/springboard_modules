@@ -168,13 +168,13 @@ function springboard_cookie_sb_social_share_event_save($share_data) {
 }
 
 /**
- * Implements hook_springboard_quick_donate_optin_create().
+ * Implements hook_springboard_ocd_optin_create().
  */
-function springboard_cookie_springboard_quick_donate_optin_create($account, $donation, $card) {
+function springboard_cookie_springboard_ocd_optin_create($account, $donation, $card_id) {
   springboard_cookie_tag_client(array(
-    'quick_donate' => array(
+    'ocd' => array(
       'optin_date' => time(),
-      'card_id' => $card->card_id,
+      'card_id' => $card_id,
     ),
   ));
 }
