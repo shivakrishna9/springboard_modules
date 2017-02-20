@@ -707,16 +707,16 @@ function theme_page_wrappers_node_assignments($variables) {
  * Implements hook_file_insert().
  */
 function page_wrappers_file_insert($file) {
-
   //rename js files to remove .txt extension, do not do this on clone process
-  if (arg(2) != 'clone' && isset($file->source)) {
+  if (arg(2) != 'clone' && isset($file->source) && strpos($file->uri, 'temporary://') !== 0) {
     $dir = 'public://' . PAGE_WRAPPERS_DIR;
     $filename = $file->filename;
-    if(strpos($file->source, 'sb_page_wrappers_js_und_') === 0) {
+
+    if(strpos($file->source, 'sb_page_wrappers_js') === 0) {
       $filename = substr($filename, 0, strlen($filename) - 4);
       $dir .= PAGE_WRAPPERS_JS_DIR;
     }
-    else if(strpos($file->source, 'sb_page_wrappers_css_und_') === 0) {
+    else if(strpos($file->source, 'sb_page_wrappers_css') === 0) {
       $dir .= PAGE_WRAPPERS_CSS_DIR;
     }
     else {
