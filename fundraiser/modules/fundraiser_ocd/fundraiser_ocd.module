@@ -319,11 +319,11 @@ function fundraiser_ocd_fundraiser_field_info_alter(&$fields) {
 /**
  * Implements hook_fundraiser_commerce_cardonfile_update_billing_cardid_alter().
  */
-function fundraiser_quick_donate_fundraiser_commerce_cardonfile_update_billing_card_alter(&$card) {
-  // Ensure we use the correct card_id for quick donation records.
-  $qd = _fundraiser_quick_donate_get_payment_info_for_card_id($card->card_id, FALSE);
+function fundraiser_ocd_fundraiser_commerce_cardonfile_update_billing_card_alter(&$card) {
+  // Ensure we use the correct card_id for one-click donation records.
+  $ocd = _fundraiser_ocd_get_payment_info_for_card_id($card->card_id, FALSE);
   if (!empty($qd)) {
-    $card = commerce_cardonfile_load($qd['card_id']);
+    $card = commerce_cardonfile_load($ocd['card_id']);
   }
 }
 
@@ -420,13 +420,13 @@ function fundraiser_ocd_fundraiser_update_billing_form__fundraiser_ocd__alter(&$
   // feature.
   if (!empty($form['#donation']->gateway['gateway_details']['settings']['cardonfile'])) {
     $gateway_type = $form['#donation']->data['payment_method'];
-    $enabled = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
+    $enabled = db_query('SELECT card_id FROM {fundraiser_ocd_cardonfile} WHERE card_id = :card_id AND status = 1', array(
       ':card_id' => $card->card_id,
     ))->fetchField();
 
-    $form['payment_fields'][$gateway_type]['quickdonate'] = array(
+    $form['payment_fields'][$gateway_type]['ocd'] = array(
       '#type' => 'checkbox',
-      '#title' => '&nbsp;' . t('Use this card for Quick Donate'),
+      '#title' => '&nbsp;' . t('Use this card for One Click Donate'),
       '#default_value' => !!$enabled,
     );
   }
@@ -634,8 +634,8 @@ function fundraiser_ocd_entity_presave($entity, $type) {
 function fundraiser_ocd_entity_delete($entity, $type) {
   if ($type == 'commerce_cardonfile') {
     $donation = fundraiser_donation_get_donations_by_uid($entity->uid, 1, 'DESC', NULL, $entity->card_id);
-    fundraiser_quick_donate_opt_out_card($entity->uid, $donation, $entity);
-    db_delete('fundraiser_quick_donate_cardonfile')->condition('card_id', $entity->card_id)->execute();
+    fundraiser_ocd_opt_out_card($entity->uid, $donation, $entity);
+    db_delete('fundraiser_ocd_cardonfile')->condition('card_id', $entity->card_id)->execute();
   }
 }
 
