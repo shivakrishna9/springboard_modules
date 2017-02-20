@@ -190,7 +190,6 @@ function springboard_group_springboard_group_node_form_validate($form, &$form_st
  * springboard group OG widget.
  */
 function springboard_group_form_node_form_alter(&$form, &$form_state) {
-
   $fields = og_get_group_audience_fields('node', $form['#node']->type, 'node', 'springboard_group');
   if (!empty($fields)) {
 
@@ -222,6 +221,11 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
     springboard_group_load_ajax_validation_handlers($form, $form_state);
 
     $form['#validate'][] = 'springboard_group_node_form_validate';
+
+    // Add the available group-related tokens to the Page Wrappers body description
+    if($form_state['node']->type == 'page_wrapper') {
+      $form['page_wrappers_html_template'][$language][0]['#description'] .= ' <div class="sb-og-tokens-message">Group field values may be utilized with the following tokens: [springboard_groups:group_names], [springboard_groups:field_sb_group_address], [springboard_groups:field_sb_group_logo], [springboard_groups:field_sb_group_cname], [springboard_groups:field_sb_group_cemail]</div>';
+    }
   }
 }
 
