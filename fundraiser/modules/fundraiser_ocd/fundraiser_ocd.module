@@ -4,7 +4,7 @@
  * Module file for fundraiser_ocd.
  */
 
-define('fundraiser_ocd_DEFAULT_FORM_PREFIX', 'fundraiser_ocd_default_form_');
+define('FUNDRAISER_OCD_DEFAULT_FORM_PREFIX', 'fundraiser_ocd_default_form_');
 
 require_once 'includes/fundraiser_ocd.fundraiser.inc';
 require_once 'includes/fundraiser_ocd.node_form.inc';
@@ -508,8 +508,8 @@ function _fundraiser_ocd_set_new_ocd_cof(&$form, &$form_state) {
         ':uid' => $values['uid'],
       ))->fetchField();
 
-      // If the user isn't currently opted into any one-click donation forms, select
-      // one from {fundraiser_ocd}.
+      // If the user isn't currently opted into any one-click donation forms,
+      // select one from {fundraiser_ocd}.
       if (empty($nid)) {
         $nid = db_query('SELECT fundraiser_nid FROM {fundraiser_ocd} LIMIT 1')->fetchField();
       }
@@ -552,6 +552,7 @@ function _fundraiser_ocd_set_new_ocd_cof(&$form, &$form_state) {
         ':card_id' => $form_state['card']->card_id,
       ));
     }
+  }
 
   if (!empty($did)) {
     $donation = fundraiser_donation_get_donation($did);
@@ -578,7 +579,7 @@ function fundraiser_ocd_get_default_card($uid) {
  *
  * @param int $uid
  *   The user's uid.
- * @param object|int $card
+ * @param object|int $card_id
  *   The card object or the card's id.
  *
  * @throws \Exception
@@ -664,8 +665,9 @@ function fundraiser_ocd_webform_user_send_mail_alter(&$options) {
     return;
   }
 
-  // Since this is coming from the webform_user module, and if this is a One Click
-  // Donation, set the email to send regardless of what the node's settings are.
+  // Since this is coming from the webform_user module, and if this is a One
+  // Click Donation, set the email to send regardless of what the node's
+  // settings are.
   if (isset($params['form_state']['values']['submitted_tree']['payment_information'])) {
     $payment_info = $params['form_state']['values']['submitted_tree']['payment_information'];
     if (isset($payment_info['payment_method']) && isset($payment_info['payment_fields'][$payment_info['payment_method']])) {
