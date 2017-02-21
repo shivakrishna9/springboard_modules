@@ -29,7 +29,7 @@ function salesforce_ocd_salesforce_genmap_map_fields_alter(&$fields, $context) {
     // Add the card on file id to the opportunity if it was a one-click donate
     // transaction.
     if (isset($context['object']->data['is_ocd'])) {
-      $fields['ocd_Token_Id__c'] = $context['object']->data['cardonfile'];
+      $fields['Quick_Donate_Token_Id__c'] = $context['object']->data['cardonfile'];
     }
   }
 }
@@ -70,7 +70,7 @@ function salesforce_ocd_queue_subscription_item($account, $donation, $card_on_fi
 
   // Create a quick donate subscription object and queue it up.
   $sobject = new stdClass();
-  $sobject->type = 'ocd_Subscription__c';
+  $sobject->type = 'One_Click_Donate_Subscription__c';
   $sobject->fields = array(
     'Payment_Token_Id__c' => $card_id,
     'Payment_Method__c' => $card_on_file->payment_method,
@@ -93,7 +93,7 @@ function salesforce_ocd_queue_subscription_item($account, $donation, $card_on_fi
     'drupal_id' => $card_id,
     'module' => 'salesforce_ocd',
     'delta' => 'commerce_cardonfile',
-    'object_type' => 'ocd_Subscription__c',
+    'object_type' => 'One_Click_Donate_Subscription__c',
     'operation' => $operation,
     'sobject' => $sobject,
   );
