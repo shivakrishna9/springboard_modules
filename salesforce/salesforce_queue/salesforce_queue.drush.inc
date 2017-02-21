@@ -35,10 +35,11 @@ function salesforce_queue_drush_command() {
   $items['salesforce-queue-increment-ids'] = array(
     'description' => dt('Set auto-incrementing Drupal IDs.'),
     'arguments' => array(
-      'id' => dt('ID value to set across tables'),
+      'id' => dt('Optional ID value to set across tables. Defaults to random value.'),
     ),
     'examples' => array(
-      'Standard example' => 'drush salesforce-increment-ids 10000',
+      'Standard example' => 'drush salesforce-increment-ids',
+      'Argument example' => 'drush salesforce-increment-ids 10000',
     ),
     'aliases' => array('sfqincid'),
   );
@@ -78,9 +79,13 @@ function drush_salesforce_queue_process($queue = 'salesforce_queue') {
  * and the Drupal IDs collide.
  *
  * @param int $id
- *   The ID to set the auto-incrementing fields to.
+ *   The ID to set the auto-incrementing fields to. Defaults to a random value.
  */
-function drush_salesforce_queue_increment_ids($id = 10000) {
+function drush_salesforce_queue_increment_ids($id = NULL) {
+  // If no id specificed, pick a random one within the range of mysql int(10).
+  if (is_null($id)) {
+    $id = rand(100, 4294967000);
+  }
   $tables = array(
     'commerce_order',
     'webform_submissions',
@@ -91,6 +96,6 @@ function drush_salesforce_queue_increment_ids($id = 10000) {
   foreach ($tables as $table) {
     $sql = "ALTER TABLE {$table} AUTO_INCREMENT = $id";
     db_query($sql);
-    drush_log("Updated table $table", 'ok');
+    drush_log("Updated table $table AUTO_INCREMENT value to $id", 'ok');
   }
 }
