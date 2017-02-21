@@ -187,7 +187,7 @@ function _fundraiser_ocd_get_nid($payload) {
  *   The nid of the default form for the gateway instance or FALSE.
  */
 function fundraiser_ocd_get_default_form_for_gateway($gateway_id) {
-  $default_data = variable_get(fundraiser_ocd_DEFAULT_FORM_PREFIX . $gateway_id, array());
+  $default_data = variable_get(FUNDRAISER_OCD_DEFAULT_FORM_PREFIX . $gateway_id, array());
   if (!empty($default_data)) {
     $default_data = unserialize($default_data);
     return $default_data['nid'];
