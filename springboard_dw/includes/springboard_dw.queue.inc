@@ -12,7 +12,7 @@ function springboard_dw_process_queue() {
 
   $callback = 'springboard_dw_export_item';
 
-  $end = time() + 60;
+  $end = time() + variable_get('springboard_dw_api_queue_processing_time', 60);
 
   // Get an instance of the Drupal data warehouse queue.
   $queue = DrupalQueue::get('springboard_dw_export');
