@@ -405,7 +405,7 @@ function _fundraiser_ocd_check_ocd_default($form, $form_state) {
     ->execute();
 
   $user = user_load($donation->uid);
-  module_invoke_all('fundraiser_ocd_optin_update', $user, $donation, $card->card_id, $new_card->card_id);
+  module_invoke_all('fundraiser_ocd_optin_update', $user, $donation, $card, $new_card);
 }
 
 /**
@@ -556,7 +556,7 @@ function _fundraiser_ocd_set_new_ocd_cof(&$form, &$form_state) {
 
   if (!empty($did)) {
     $donation = fundraiser_donation_get_donation($did);
-    module_invoke_all('fundraiser_ocd_update_card', $user, $donation, $form_state['card']->card_id);
+    module_invoke_all('fundraiser_ocd_update_card', $user, $donation, $form_state['card']);
   }
 }
 
@@ -584,15 +584,14 @@ function fundraiser_ocd_get_default_card($uid) {
  *
  * @throws \Exception
  */
-function fundraiser_ocd_opt_out_card($uid, $card_id) {
+function fundraiser_ocd_opt_out_card($uid, $card) {
   // See if the user currently has a default card.
   $default_card = fundraiser_ocd_get_default_card($uid);
   if (is_numeric($card)) {
     $card = commerce_cardonfile_load($card);
   }
-  $card_id = $card->card_id;
 
-  if ($default_card && $default_card == $card_id) {
+  if ($default_card && $default_card == $card->card_id) {
     // Update the user, setting the opt-out date.
     $account = user_load($uid);
     $account->field_ocd_opt_out = array(
@@ -608,7 +607,7 @@ function fundraiser_ocd_opt_out_card($uid, $card_id) {
 
     user_save($account);
     // Invoke one-click donate opt-out hook.
-    module_invoke_all('fundraiser_ocd_optout', $card_id, $uid);
+    module_invoke_all('fundraiser_ocd_optout', $card, $uid);
   }
 }
 

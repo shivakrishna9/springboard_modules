@@ -7,18 +7,18 @@
 /**
  * Implements hook_fundraiser_ocd_optin_create().
  */
-function salesforce_ocd_fundraiser_ocd_optin_create($account, $donation, $card_id) {
-  salesforce_ocd_optin($account, $donation, $card_id);
+function salesforce_ocd_fundraiser_ocd_optin_create($account, $donation, $card) {
+  salesforce_ocd_optin($account, $donation, $card);
 }
 
 /**
  * Implements hook_fundraiser_ocd_optin_update().
  */
-function salesforce_ocd_fundraiser_ocd_optin_update($account, $donation, $old_card_id, $new_card_id) {
+function salesforce_ocd_fundraiser_ocd_optin_update($account, $donation, $old_card, $new_card) {
   // When an optin is updated, e.g., the current card is replaced.
   // Add a new one-click donate subscription object and opt out of the old one.
-  salesforce_ocd_optin($account, $donation, $new_card_id);
-  salesforce_ocd_optout($old_card_id);
+  salesforce_ocd_optin($account, $donation, $new_card);
+  salesforce_ocd_optout($account, $donation, $old_card);
 }
 
 /**
@@ -66,6 +66,10 @@ function salesforce_ocd_optout($account, $donation, $card) {
  * Generates and queues a new one-click donate subscription object.
  */
 function salesforce_ocd_queue_subscription_item($account, $donation, $card_on_file, $operation = 'CREATE', $optout = FALSE) {
+  if (is_numeric($card_on_file)) {
+    $card_on_file = commerce_cardonfile_load($card_on_file);
+  }
+
   $card_id = $card_on_file->card_id;
 
   // Create a one-click donate subscription object and queue it up.
