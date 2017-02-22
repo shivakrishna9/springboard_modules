@@ -29,10 +29,4 @@ function secure_autofill_insert_components($node) {
       'hidden_type' => 'hidden',
     ),
   );
-
-  // Add the component to the Webform.
-  // Don't insert field if cloning.
-  if (!isset($node->map) || (isset($node->map) && !in_array($field['form_key'], $node->map))) {
-    webform_component_insert($field);
-  }
 }
