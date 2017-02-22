@@ -1459,6 +1459,11 @@ function fundraiser_webform_node_delete($node) {
  * submission display page. Also break down donations consisting of multiple amounts.
  */
 function fundraiser_webform_webform_submission_render_alter(&$renderable) {
+  // Only perform this check on donation enable form types.
+  if (!fundraiser_is_donation_type($renderable['#node']->type)) {
+    return;
+  }
+
   $donation = _fundraiser_webform_get_donation_by_sid($renderable['#submission']->sid);
   if (empty($donation)) {
     return;

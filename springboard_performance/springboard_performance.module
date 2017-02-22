@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * @file
+ * springboard_performance.module
+ * Experimental performance tweaks for Springboard
+ */
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function springboard_performance_entity_info_alter(&$entity_info) {
+  // Disable field cache on all entities.
+  foreach ($entity_info as $type => $info) {
+    if (isset($entity_info[$type]['field cache'])) {
+      // Explicitly disable field cache on this entity.
+      $entity_info[$type]['field cache'] = FALSE;
+    }
+  }
+}

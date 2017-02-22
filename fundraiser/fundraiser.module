@@ -1580,8 +1580,6 @@ function _fundraiser_donation_form_js_validation_config($node) {
  */
 function fundraiser_donation_form(&$form, &$form_state) {
   $node = $form['#node'];
-  // Load any custom configuration options.
-  $config = db_query('SELECT * FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
 
   // Attach the js files.
   $path = drupal_get_path('module', 'fundraiser');
@@ -1622,8 +1620,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
     );
   }
   else {
-    // Prevent caching on this form, this will keep the back button operational.
-    drupal_add_http_header('Cache-Control', 'no-cache, no-store, must-revalidate, post-check=0, pre-check=0');
     $form['#attributes']['class'][] = 'fundraiser-donation-form';
     // Add validation and submit routines for fundraiser to get called during submission.
     // Otherwise, do nothing, rely on the glue modules to provide the form we need to the user.
@@ -1757,10 +1753,12 @@ function _fundraiser_donation_submit_to_process($form, $form_state, $donation) {
   $did = $donation->did;
   // Caching form values are provided ONLY for the purpose of handling redirect submissions.
   // It is intended to allow redirects to pick back up with form submission after returning to site.
-  cache_set('fundraiser-form-id-' . $did, $form_state['values']['form_build_id'], 'cache', strtotime('+15 minutes'));
-  // Cache the CURRENT version of the forms as well, as they have been processed up to this point.
-  cache_set('fundraiser-form-' . $did, $form, 'cache_form', strtotime('+15 minutes'));
-  cache_set('fundraiser-form-state-' . $did, $form_state, 'cache_form', strtotime('+15 minutes'));
+  if ($donation->gateway['gateway_details']['offsite']) {
+    cache_set('fundraiser-form-id-' . $did, $form_state['values']['form_build_id'], 'cache', strtotime('+15 minutes'));
+    // Cache the CURRENT version of the forms as well, as they have been processed up to this point.
+    cache_set('fundraiser-form-' . $did, $form, 'cache_form', strtotime('+15 minutes'));
+    cache_set('fundraiser-form-state-' . $did, $form_state, 'cache_form', strtotime('+15 minutes'));
+  }
   // The created donation information should be at at $donation->donation, ready to process.
   fundraiser_donation_process($donation);
 }
@@ -1770,10 +1768,12 @@ function _fundraiser_donation_submit_to_process($form, $form_state, $donation) {
  * Provided for other modules to use as needed for redirection style processes.
  */
 function _fundraiser_donation_submit_after_process($donation) {
-  // Clear caches.
-  cache_clear_all('fundraiser-form-id-' . $donation->did, 'cache');
-  cache_clear_all('fundraiser-form-' . $donation->did, 'cache_form');
-  cache_clear_all('fundraiser-form-state-' . $donation->did, 'cache_form');
+  if ($donation->gateway['gateway_details']['offsite']) {
+    // Clear caches.
+    cache_clear_all('fundraiser-form-id-' . $donation->did, 'cache');
+    cache_clear_all('fundraiser-form-' . $donation->did, 'cache_form');
+    cache_clear_all('fundraiser-form-state-' . $donation->did, 'cache_form');
+  }
 
   // Finish donation processing.
   if (!isset($donation->result['message'])) {
@@ -1812,8 +1812,6 @@ function fundraiser_donation_comment($donation, $comment, $variables = array(), 
   if (variable_get('fundraiser_log_comments', 0)) {
     watchdog('fundraiser_comment', $comment, $variables, $severity, $link);
   }
-  // Allow other modules to respond to the cancel. Including Ubercart, etc.
-  module_invoke_all('fundraiser_donation_comment', $donation, $comment, $variables, $severity, $link);
 }
 
 /**
@@ -1917,7 +1915,6 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   // The additional fields $donation->additional, ready to process.
   // For now, our creation system is responsible for creating a did.
   // Track the did, nid, uid internally so we can keep things in order.
-  $fundraiser_node = node_load($donation->nid);
   $donation_record = array('did' => $donation->did);
   if (isset($donation->nid) && !empty($donation->nid)) {
     $donation_record['nid'] = $donation->nid;

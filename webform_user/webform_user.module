@@ -569,7 +569,15 @@ function webform_user_webform_submit($form, &$form_state) {
       if ($skip_user_check) {
         $submission->webform_user_skip_user_check = TRUE;
       }
-      webform_submission_update($node, $submission);
+      //webform_submission_update($node, $submission);
+      
+      db_update('webform_submissions')
+        ->fields(array(
+          'uid' => $account->uid,
+        ))
+        ->condition('sid', $submission->sid)
+        ->execute();
+      
       // Save webform user fields in user session for the existing user.
       if (_webform_user_is_webform_user_session_store()) {
         _webform_user_session_set($node->nid, $map);
@@ -601,7 +609,16 @@ function webform_user_webform_submit($form, &$form_state) {
       if ($skip_user_check) {
         $submission->webform_user_skip_user_check = TRUE;
       }
-      webform_submission_update($node, $submission);
+      //webform_submission_update($node, $submission);
+      
+      db_update('webform_submissions')
+        ->fields(array(
+          'uid' => $account->uid,
+        ))
+        ->condition('sid', $submission->sid)
+        ->execute();
+      
+
       // Save webform user fields in user session.
       if (_webform_user_is_webform_user_session_store()) {
         _webform_user_session_set($node->nid, $map);
@@ -858,22 +875,30 @@ function webform_user_node_delete($node) {
  * Implements hook_node_load().
  */
 function webform_user_node_load($nodes, $types) {
-  $webform_users = db_query('SELECT * FROM {webform_user} WHERE nid IN (:nids)',
-    array(':nids' => array_keys($nodes)));
-  $maps = db_query('SELECT nid, cid, map_id FROM {webform_user_component_map} WHERE nid IN (:nids)',
-    array(':nids' => array_keys($nodes)));
-  foreach ($webform_users as $webform_user) {
-    $webform_user = (array) $webform_user;
-    $nodes[$webform_user['nid']]->is_webform_user = $webform_user['is_webform_user'];
-    $nodes[$webform_user['nid']]->send_new_user_email = $webform_user['send_new_user_email'];
-    $map = array();
-    foreach ($maps as $row) {
-      $row = (array) $row;
-      if ($row['nid'] == $webform_user['nid']) {
-        $map[$row['cid']] = $row['map_id'];
-      }
+  $has_types = FALSE;
+  foreach ($types as $type) {
+    if (_webform_user_is_webform_user_node_type($type)) {
+      $has_types = TRUE;
     }
-    $nodes[$webform_user['nid']]->map = $map;
+  }
+  if ($has_types) {
+    $webform_users = db_query('SELECT * FROM {webform_user} WHERE nid IN (:nids)',
+      array(':nids' => array_keys($nodes)));
+    $maps = db_query('SELECT nid, cid, map_id FROM {webform_user_component_map} WHERE nid IN (:nids)',
+      array(':nids' => array_keys($nodes)));
+    foreach ($webform_users as $webform_user) {
+      $webform_user = (array) $webform_user;
+      $nodes[$webform_user['nid']]->is_webform_user = $webform_user['is_webform_user'];
+      $nodes[$webform_user['nid']]->send_new_user_email = $webform_user['send_new_user_email'];
+      $map = array();
+      foreach ($maps as $row) {
+        $row = (array) $row;
+        if ($row['nid'] == $webform_user['nid']) {
+          $map[$row['cid']] = $row['map_id'];
+        }
+      }
+      $nodes[$webform_user['nid']]->map = $map;
+    }
   }
 }
 
@@ -1477,76 +1502,83 @@ function _webform_user_save_profile_map($account, &$map, &$form, &$form_state) {
  *   category_name - human readable profile field value.
  */
 function _webform_user_get_profile_fields() {
-  $fields = array();
-  // Add the e-mail field first.
-  $mail_field = array(
-    'name' => 'mail',
-    'title' => t('E-mail address'),
-    'type' => 'email',
-    'mandatory' => 1,
-    'weight' => 0,
-    'explanantion' => '',
-    'options' => NULL,
-  );
-  $fields[] = $mail_field;
-
-  // Grab settings from profile2 module AND from fields manually added on
-  // profile. These are standard fields types.
-  $entity_types = array('user');
-  if (module_exists('profile2')) {
-    // Add profile2 values.
-    $entity_types[] = 'profile2';
+  if ($cache = cache_get('webform_user_profile_fields')) {
+    $fields = $cache->data;
   }
-  $results = db_query('SELECT i.id, i.field_name, i.data, c.data as extra, c.type FROM {field_config_instance} i ' .
-    'INNER JOIN {field_config} c ON i.field_name = c.field_name ' .
-    'WHERE entity_type IN (:types) AND i.deleted = 0',
-    array(':types' => $entity_types)
-  );
-  foreach ($results as $result) {
-    $field = array();
-    $result->data = unserialize($result->data);
-    $result->extra = unserialize($result->extra);
-    $field['name'] = $result->field_name;
-    $field['title'] = $result->data['label'];
-    // TODO Map types to types webform understands.
-    $field['type'] = $result->type;
-    // UNLESS the display is hidden. Then we need to override this to HIDE the
-    // field.
-    if (!empty($result->data['display']['default']['type']) && $result->data['display']['default']['type'] == 'hidden') {
-      $field['type'] = 'hidden';
+  else {
+    $fields = array();
+    // Add the e-mail field first.
+    $mail_field = array(
+      'name' => 'mail',
+      'title' => t('E-mail address'),
+      'type' => 'email',
+      'mandatory' => 1,
+      'weight' => 0,
+      'explanantion' => '',
+      'options' => NULL,
+    );
+    $fields[] = $mail_field;
+
+    // Grab settings from profile2 module AND from fields manually added on
+    // profile. These are standard fields types.
+    $entity_types = array('user');
+    if (module_exists('profile2')) {
+      // Add profile2 values.
+      $entity_types[] = 'profile2';
     }
-    $field['mandatory'] = $result->data['required'] ? $result->data['required'] : 0;
-    $field['weight'] = $result->data['widget']['weight'];
-    $field['explanantion'] = $result->data['description'];
-    $field['options'] = isset($result->extra['settings']['allowed_values']) ? $result->extra['settings']['allowed_values'] : NULL;
-    // FOR NOW: field groups are only coming in from afield group module for
-    // these values. Leave it alone.
-    $field['category_key'] = NULL;
-    $field['category_name'] = NULL;
-    $fields[] = $field;
-  }
+    $results = db_query('SELECT i.id, i.field_name, i.data, c.data as extra, c.type FROM {field_config_instance} i ' .
+      'INNER JOIN {field_config} c ON i.field_name = c.field_name ' .
+      'WHERE entity_type IN (:types) AND i.deleted = 0',
+      array(':types' => $entity_types)
+    );
+    foreach ($results as $result) {
+      $field = array();
+      $result->data = unserialize($result->data);
+      $result->extra = unserialize($result->extra);
+      $field['name'] = $result->field_name;
+      $field['title'] = $result->data['label'];
+      // TODO Map types to types webform understands.
+      $field['type'] = $result->type;
+      // UNLESS the display is hidden. Then we need to override this to HIDE the
+      // field.
+      if (!empty($result->data['display']['default']['type']) && $result->data['display']['default']['type'] == 'hidden') {
+        $field['type'] = 'hidden';
+      }
+      $field['mandatory'] = $result->data['required'] ? $result->data['required'] : 0;
+      $field['weight'] = $result->data['widget']['weight'];
+      $field['explanantion'] = $result->data['description'];
+      $field['options'] = isset($result->extra['settings']['allowed_values']) ? $result->extra['settings']['allowed_values'] : NULL;
+      // FOR NOW: field groups are only coming in from afield group module for
+      // these values. Leave it alone.
+      $field['category_key'] = NULL;
+      $field['category_name'] = NULL;
+      $fields[] = $field;
+    }
 
-  // And or grab settings from D7 profile module.
-  if (function_exists('_profile_get_fields')) {
-    $categories = _user_categories();
-    foreach ($categories as $category) {
-      $profile_fields = _profile_get_fields($category['name'], FALSE);
-      foreach ($profile_fields as $profile_field) {
-        $field = array();
-        $field['name'] = $profile_field->name;
-        $field['title'] = $profile_field->title;
-        // TODO Map types to types webform understands.
-        $field['type'] = $profile_field->type;
-        $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
-        $field['weight'] = $profile_field->weight;
-        $field['explanantion'] = isset($profile_field->explanantion) ? $profile_field->explanantion : '';
-        $field['options'] = isset($profile_field->options) ? $profile_field->options : NULL;
-        $field['category_key'] = isset($category['name']) ? $category['name'] : NULL;
-        $field['category_name'] = isset($category['title']) ? $category['title'] : NULL;
-        $fields[] = $field;
+    // And or grab settings from D7 profile module.
+    if (function_exists('_profile_get_fields')) {
+      $categories = _user_categories();
+      foreach ($categories as $category) {
+        $profile_fields = _profile_get_fields($category['name'], FALSE);
+        foreach ($profile_fields as $profile_field) {
+          $field = array();
+          $field['name'] = $profile_field->name;
+          $field['title'] = $profile_field->title;
+          // TODO Map types to types webform understands.
+          $field['type'] = $profile_field->type;
+          $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
+          $field['weight'] = $profile_field->weight;
+          $field['explanantion'] = isset($profile_field->explanantion) ? $profile_field->explanantion : '';
+          $field['options'] = isset($profile_field->options) ? $profile_field->options : NULL;
+          $field['category_key'] = isset($category['name']) ? $category['name'] : NULL;
+          $field['category_name'] = isset($category['title']) ? $category['title'] : NULL;
+          $fields[] = $field;
+        }
       }
     }
+    cache_set('webform_user_profile_fields', $fields, 'cache');
   }
+
   return $fields;
 }
 
