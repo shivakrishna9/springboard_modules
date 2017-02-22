@@ -29,7 +29,7 @@ function salesforce_ocd_salesforce_genmap_map_fields_alter(&$fields, $context) {
     // Add the card on file id to the opportunity if it was a one-click donate
     // transaction.
     if (isset($context['object']->data['is_ocd'])) {
-      $fields['OCDonate_Token_Id__c'] = $context['object']->data['cardonfile'];
+      $fields['OCDonate_Originating_Subscription__c'] = sprintf('[One_Click_Donate_Subscription__c:commerce_cardonfile:%d]', $context['object']->data['cardonfile']);
     }
   }
 }
