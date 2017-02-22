@@ -429,7 +429,7 @@ function _commerce_sage_payments_fundraiser_commerce_update_eft($donation, $card
   $cardonfile_fields = _fundraiser_commerce_sage_payments_cardonfile_fields($donation);
 
   // Bank account info isn't updated, so check if we have new account #
-  if ($cardonfile_fields != $card_data->card_number) {
+  if (!empty($cardonfile_fields['card_number']) && $cardonfile_fields['card_number'] != $card_data->card_number) {
     $pane_values['bank_account'] = $donation->donation['payment_fields']['bank account'];
 
     // Build a payment details array for the bank account.

@@ -329,6 +329,10 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
   // Pull the new credit card values from the donation.
   $pane_values = commerce_litle_pane_values($donation);
 
+  if (empty($pane_values['echeck']['routingNum']) || empty($pane_values['echeck']['accNum'])) {
+    return $card_data;
+  }
+
   // Load the card on file values for this donation.
   $cardonfile_fields = commerce_litle_cardonfile_fields($donation);
 
@@ -448,7 +452,6 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
       }
     }
     elseif ($donation->donation['payment_method'] == 'bank account') {
-
       $routing_number = $pane_values['echeck']['routingNum'];
       $account_number = $pane_values['echeck']['accNum'];
       $response = commerce_litle_eheck_vault_cardonfile_register_token($payment_method, $routing_number, $account_number, $donation->did);
