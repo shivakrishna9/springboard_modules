@@ -137,7 +137,6 @@ function commerce_authnet_echeck_fundraiser_commerce_charge($method_instance, $d
     if (!empty($card_data) && $donation->status <> 'failed') {
       // If the next recurring series entry doesn't exist, create one.
       if (_fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) < 1) {
-
         // Move card expiration date ahead one month.
         $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
 
@@ -191,8 +190,8 @@ function commerce_authnet_echeck_fundraiser_commerce_expire($submission_fields) 
   }
   else {
     // TODO this is causing a problem on billing updates, wherein future orders are deleted
-    // If no expiration date given, use current date + 1 month
-    $expire_time = strtotime("now + 1 month");
+    // If no expiration date given, use current date + 2 years
+    $expire_time = strtotime("now + 2 years");
 
     $expires['month'] = date('m', $expire_time);
     $expires['year'] = date('Y', $expire_time);
@@ -412,8 +411,11 @@ function _commerce_authnet_echeck_fundraiser_commerce_authnet_cim_cardonfile_upd
 function commerce_authnet_echeck_pane_values($donation) {
   $pane_values = array();
 
-  if (isset($donation) && isset($donation->donation['payment_fields']['bank account'])) {
+  if (!empty($donation->donation['payment_fields']['bank account'])) {
     $pane_values['bank account'] = $donation->donation['payment_fields']['bank account'];
+    if (empty($pane_values['bank account']['acct_name'])) {
+      $pane_values['bank account']['acct_name'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
+    }
   }
 
   return $pane_values;

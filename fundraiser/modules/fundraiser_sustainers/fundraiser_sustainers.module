@@ -2368,8 +2368,20 @@ function fundraiser_sustainers_donation_payment_info($next_donation, $master_did
 
   // Use next donation in case it has differnt info than the master donation.
   if (!empty($cardonfile) && module_exists('commerce_cardonfile')) {
-    $number = '**** **** **** '  . $cardonfile->card_number;
-    $type = t('Card');
+    $bank_types = array(
+      'dda',
+      'checking',
+      'routing',
+      'bank',
+    );
+    if (in_array(strtolower($cardonfile->card_type), $bank_types) && strlen($cardonfile->card_number) == 3) {
+      $number = '************' . $cardonfile->card_number;
+      $type = t('Bank Account');
+    }
+    else {
+      $number = '**** **** **** '  . $cardonfile->card_number;
+      $type = t('Card');
+    }
   }
 
   // Gather further donation data.
