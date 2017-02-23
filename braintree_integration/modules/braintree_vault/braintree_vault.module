@@ -528,13 +528,21 @@ function braintree_vault_braintree_transaction_sale_complete($context) {
  * payment method they used.
  */
 function braintree_vault_commerce_braintree_web_submit_transaction_sale_success($result, $card) {
-  if (!empty($result->transaction->creditCard['token']) && $result->transaction->paymentInstrumentType != 'paypal_account') {
+  if (!empty($result->transaction->creditCard['token'])) {
     $data = array(
       'customer_id' => $result->transaction->customer['id'],
       'uid' => $card->uid,
     );
     $data['payment_method_token'] = $result->transaction->creditCard['token'];
-    $data['unique_identifier'] = $result->transaction->creditCard['uniqueNumberIdentifier'];
+    if ($result->transaction->paymentInstrumentType == 'paypal_account') {
+      $data['unique_identifier'] = $result->transaction->paypal['paymentId'];
+    }
+    elseif ($result->transaction->paymentInstrumentType == 'apple_pay_card') {
+      $data['unique_identifier'] = $result->transaction->applePay['token'];
+    }
+    else {
+      $data['unique_identifier'] = $result->transaction->creditCard['uniqueNumberIdentifier'];
+    }
     $data['card_id'] = $card->card_id;
     braintree_vault_add_payment_method_record($data);
   }
