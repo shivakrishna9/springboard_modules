@@ -697,17 +697,3 @@ function springboard_p2p_update_7010(&$sandbox) {
     return t('springboard_p2p_personal_campaign_action table donor_names updated.');
   }
 }
-
-/**
- * Change the field_data_field_p2p_campaign_progress table's field_p2p_campaign_progress_amount column from
- * unsigned int to decimal in order to accurately track non-whole-number refunds and donations; previously,
- * the "ceiling" of a decimal donation was being used.
- */
-function springboard_p2p_update_7011() {
-  if (db_field_exists('field_data_field_p2p_campaign_progress', 'field_p2p_campaign_progress_amount')) {
-    db_query("ALTER TABLE {field_data_field_p2p_campaign_progress} MODIFY field_p2p_campaign_progress_amount DECIMAL (10,2);");
-  }
-  else {
-    drupal_set_message('Type for column field_p2p_campaign_progress_amount could not be updated because it does not exist.');
-  }
-}
