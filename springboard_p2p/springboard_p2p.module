@@ -1721,6 +1721,38 @@ function springboard_p2p_fundraiser_donation_post_create($donation) {
 }
 
 /**
+ * Implements hook_fundraiser_donation_refund_success().
+ *
+ * Updates p2p campaign data to reflect a donation being refunded.
+ */
+function springboard_p2p_fundraiser_refund_success($refund) {
+  if (isset($refund->donation->sid) && isset($refund->amount) && $refund->amount > 0) {
+    // Get the p2p_personal_campaign node ID:
+    $personal_campaign_data = springboard_p2p_get_personal_campaign_action_by_sid($refund->donation->sid);
+    if (isset($personal_campaign_data['personal_campaign_nid']) && is_numeric($personal_campaign_data['personal_campaign_nid'])) {
+      $pc_nid = $personal_campaign_data['personal_campaign_nid'];
+
+      // Subtract the refund from the total amount donated for this personal campaign:
+      $amount_modifier = $refund->amount * -1;
+      springboard_p2p_update_personal_campaign_amount_progress($pc_nid, $amount_modifier);
+
+      // If this is a full refund then also decrement the submissions count:
+      if (isset($refund->donation->amount) && isset($refund->donation->refunds) && is_array($refund->donation->refunds)) {
+        $total_amount_refunded = $refund->amount;
+        foreach ($refund->donation->refunds as $previous_refund) {
+          if (isset($previous_refund->amount)) {
+            $total_amount_refunded += $previous_refund->amount;
+          }
+        }
+        if ($refund->donation->amount == $total_amount_refunded) {
+          springboard_p2p_update_personal_campaign_submissions_progress($pc_nid, FALSE);
+        }
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_form_alter().
  *
  * Adds extra data to a p2p enabled form if a personal campaign ID is passed in.
@@ -2220,8 +2252,21 @@ function springboard_p2p_fundraiser_donation_success($donation) {
  */
 function springboard_p2p_update_personal_campaign_amount_progress($nid, $amount) {
   $personal_campaign = node_load($nid);
-  $personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['amount'] += $amount;
-  node_save($personal_campaign);
+  $current_progress = 0;
+  if (isset($personal_campaign->language)
+    && isset($personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['amount'])) {
+    $current_progress = $personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['amount'];
+  }
+
+  // Prevent a negative value, as the column is unsigned:
+  $current_progress += $amount;
+  if ($current_progress >= 0) {
+    $personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['amount'] = $current_progress;
+    node_save($personal_campaign);
+  }
+  else {
+    watchdog('springboard_p2p', 'Error adjusting campaign progress due to negative value: ' . $current_progress);
+  }
 }
 
 /**
@@ -2230,10 +2275,21 @@ function springboard_p2p_update_personal_campaign_amount_progress($nid, $amount)
  * @param int $nid
  *   The node ID of the personal campaign.
  */
-function springboard_p2p_update_personal_campaign_submissions_progress($nid) {
+function springboard_p2p_update_personal_campaign_submissions_progress($nid, $increment = TRUE) {
   $personal_campaign = node_load($nid);
-  ++$personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'];
-  node_save($personal_campaign);
+  $current_submissions = 0;
+  if (isset($personal_campaign->language)
+    && isset($personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'])) {
+    $current_submissions = $personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'];
+  }
+  $current_submissions += ($increment ? 1 : -1);
+  if ($current_submissions >= 0) {
+    $personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'] = $current_submissions;
+    node_save($personal_campaign);
+  }
+  else {
+    watchdog('springboard_p2p', 'Error adjusting campaign progress due to negative value: ' . $current_submissions);
+  }
 }
 
 /**
