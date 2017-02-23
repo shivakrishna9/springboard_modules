@@ -528,7 +528,7 @@ function braintree_vault_braintree_transaction_sale_complete($context) {
  * payment method they used.
  */
 function braintree_vault_commerce_braintree_web_submit_transaction_sale_success($result, $card) {
-  if (!empty($result->transaction->creditCard['token'])) {
+  if (!empty($result->transaction->creditCard['token']) && $result->transaction->paymentInstrumentType != 'paypal_account') {
     $data = array(
       'customer_id' => $result->transaction->customer['id'],
       'uid' => $card->uid,
