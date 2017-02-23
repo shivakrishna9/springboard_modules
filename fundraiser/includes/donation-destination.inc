@@ -376,7 +376,7 @@ class FundraiserDonationDestination extends MigrateDestination {
       $recurring_donation = array(
         'did' => $donation->did,
         'master_did' => $donation->did,
-        'next_charge' => $row->recurring_start_date < time() ? time() : $row->recurring_start_date,
+        'next_charge' => $row->recurring_start_date,
         'sustainer_key' => $sustainer_key,
       );
 
@@ -394,7 +394,7 @@ class FundraiserDonationDestination extends MigrateDestination {
         'did' => $donation->did,
         'uid' => $donation->uid,
         'amount' => $donation->donation['amount'],
-        'installments' => _fundraiser_sustainers_calculate_installments($donation)+1, // +1 because the function assumes the start date is now!
+        'installments' => _fundraiser_sustainers_calculate_installments($donation),
       );
 
       db_insert('fundraiser_sustainers_series')
