@@ -148,20 +148,33 @@ function page_wrappers_preprocess_page(&$vars) {
       // hook_css_alter function.
       if (isset($wrapper_node->sb_page_wrappers_css) && count($wrapper_node->sb_page_wrappers_css)) {
         $field_items = field_get_items('node', $wrapper_node, 'sb_page_wrappers_css');
-
+        $entities = array();
         foreach ($field_items as $item) {
-          $options['weight'] = 20;
-          drupal_add_css($item['entity']->uri, array('weight' => 20));
+          $entities[] = $item['target_id'];
+        }
+        if(!empty($entities)) {
+          $files = entity_load('file', $entities);
+          foreach($files as $file) {
+              $options['weight'] = 20;
+              drupal_add_css($file->uri, array('weight' => 20));
+            }
         }
       }
 
       // If there's a js file add it.
       if (isset($wrapper_node->sb_page_wrappers_js) && count($wrapper_node->sb_page_wrappers_js)) {
-
         $field_items = field_get_items('node', $wrapper_node, 'sb_page_wrappers_js');
 
+        $entities = array();
         foreach ($field_items as $item) {
-          drupal_add_js($item['entity']->uri, array('weight' => 20));
+          $entities[] = $item['target_id'];
+        }
+        if(!empty($entities)) {
+          $files = entity_load('file', $entities);
+          foreach($files as $file) {
+            $options['weight'] = 20;
+            drupal_add_js($file->uri, $options);
+          }
         }
       }
 
