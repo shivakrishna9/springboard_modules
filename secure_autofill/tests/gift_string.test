@@ -8,7 +8,7 @@
 /**
  * Tests decrypting a gift string into the ask amounts on the page.
  */
-class GiftStringTestCase extends DynamicGiftStringsTestSetup {
+class GiftStringTestCase extends SecureAutofillDynamicGiftStringsTestSetup {
 
   /**
    * Test info.
@@ -16,8 +16,8 @@ class GiftStringTestCase extends DynamicGiftStringsTestSetup {
   public static function getInfo() {
     return array(
       'name' => 'Dynamic Gift String standard string test',
-      'description' => 'Tests the gift string decyrption and amount field updates.',
-      'group' => 'Secure Prepopulate',
+      'description' => 'Tests the gift string decryption and amount field updates.',
+      'group' => 'Secure Autofill',
     );
   }
 

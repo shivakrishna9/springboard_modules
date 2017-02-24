@@ -2,21 +2,21 @@
 /**
  * Administration tests for my module.
  */
-class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
+class SecureAutofillUnitTestCase extends DrupalWebTestCase {
 
   /**
    * Implements getInfo().
    */
   public static function getInfo() {
     return array(
-      'name' => t('Secure pre-populate unit tests'),
-      'description' => t('Tests secure prepopulate encryption and decryption.'),
-      'group' => t('Secure Prepopulate'),
+      'name' => t('Secure Autofill unit tests'),
+      'description' => t('Tests secure autofill encryption and decryption.'),
+      'group' => t('Secure Autofill'),
     );
   }
 
   public function setUp() {
-    parent::setUp(array('secure_prepopulate'));
+    parent::setUp(array('secure_autofill'));
   }
 
   /**
@@ -29,9 +29,9 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
       $this->setVariables($case['variables']);
       $query_string = $this->constructQueryString($case['decrypted']);
 
-      $encrypted = secure_prepopulate_encrypt($query_string);
+      $encrypted = secure_autofill_encrypt($query_string);
 
-      $this->assertIdentical($case['encrypted'], $encrypted, 'secure_prepopulate_encrypt() returns expected values.');
+      $this->assertIdentical($case['encrypted'], $encrypted, 'secure_autofill_encrypt() returns expected values.');
     }
   }
 
@@ -44,7 +44,7 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
     foreach ($data as $case) {
       $this->setVariables($case['variables']);
 
-      $decrypted = secure_prepopulate_decrypt_qs($case['encrypted']);;
+      $decrypted = secure_autofill_decrypt_qs($case['encrypted']);;
 
       foreach ($case['decrypted'] as $key => $value) {
         $this->assertEqual($decrypted[$key], $value, 'Decrypted ' . $key . ' field equals expected value of  ' . $value);
@@ -57,7 +57,7 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
    */
   public function testCron() {
     $expire_days = 30;
-    variable_set('secure_prepopulate_expired_date_limit', $expire_days);
+    variable_set('secure_autofill_expired_date_limit', $expire_days);
 
     // Create dummy entries.
     foreach (range(0, (2 * $expire_days)) as $num) {
@@ -65,7 +65,7 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
         'hash' => md5($num),
         'expire_date' => (REQUEST_TIME - ($num * 24 * 60 * 60)),
       );
-      drupal_write_record('secure_prepopulate_expired', $row);
+      drupal_write_record('secure_autofill_expired', $row);
     }
 
     // Run cron. Everything older than 30 days should be deleted.
@@ -73,7 +73,7 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
 
     // Verify entries were removed.
     $max_date = REQUEST_TIME - ($expire_days * 24 * 60 * 60);
-    $expired_count = db_select('secure_prepopulate_expired', 's')
+    $expired_count = db_select('secure_autofill_expired', 's')
       ->fields('s', array('hash'))
       ->condition('expire_date', $max_date, '<')
       ->execute()
@@ -81,7 +81,7 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
     $this->assertEqual(0, $expired_count);
 
     // Verify the other entries weren't removed.
-    $not_expired_count = db_select('secure_prepopulate_expired', 's')
+    $not_expired_count = db_select('secure_autofill_expired', 's')
       ->fields('s', array('hash'))
       ->condition('expire_date', $max_date, '>')
       ->execute()
@@ -100,13 +100,13 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
 
     $cases[] = array(
       'variables' => array(
-        'secure_prepopulate_iv' => 'cae023134cfcbf45',
-        'secure_prepopulate_key' => '7576586e4a5cb0611e3a1f080a30615a',
+        'secure_autofill_iv' => 'cae023134cfcbf45',
+        'secure_autofill_key' => '7576586e4a5cb0611e3a1f080a30615a',
       ),
       'decrypted' => array(
-        'first_name' => 'Allen',
-        'last_name' => 'Freeman',
-        'email' => 'allen.freeman@example.com',
+        'first_name' => 'Joe',
+        'last_name' => 'Tester',
+        'email' => 'joe.tester@example.com',
         'address' => '12345 Test Dr',
         'address_line_2' => 'Apt 2',
         'city' => 'Springfield',
@@ -114,13 +114,13 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
         'state' => 'IL',
         'zip' => '55555',
       ),
-      'encrypted' => '7vGjVvf/xlO/nVEq8FtS+/VAjjZGbAYBHddPjrpNCN5twzqjTrOf4W/RV5MEdvbpGAZ1c5wjBeIjljD8a9A5O2iQuxjk/lVnUWBO8Vg+WRCqH0basvWtivCxQg060w4vaDEZvoBcgzkkODZ9om4pR5psjwL1Q2wtcZQxmBoOsED8UTtjo73ufEOmXR411N93bIEMiJMJnS3Wb97F2FKCRA==',
+      'encrypted' => 'zbvnX+74laMyfiPCl4gqK7f2xvm64YloiOGBc1PPUAeqzdMQmanWTIeiR8LkU1NMBZcN8ocqpMW/qdkXHQ3oLHleoGPAMymIRMKv67JPg7unz4DJse6DbClZpdoyUrgtCz6Ff3O7VAnKGkeRb9ZEf/+0ZPhAzD68r2CaEHuWMWqyIDCk2hMFCSGAHyzEcbdMLY4XfziQeMZn0u9g+SlmWA==',
     );
 
     $cases[] = array(
       'variables' => array(
-        'secure_prepopulate_iv' => '1234567890123456',
-        'secure_prepopulate_key' => '12345678901234561234567890123456',
+        'secure_autofill_iv' => '1234567890123456',
+        'secure_autofill_key' => '12345678901234561234567890123456',
       ),
       'decrypted' => array(
         'first_name' => 'Euro',
@@ -132,8 +132,8 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
 
     $cases[] = array(
       'variables' => array(
-        'secure_prepopulate_iv' => '2QzFjpkYq8CsscZM',
-        'secure_prepopulate_key' => 'P4FLWBTjp2]ciKEMuy2h2rpemofXJLKf',
+        'secure_autofill_iv' => '2QzFjpkYq8CsscZM',
+        'secure_autofill_key' => 'P4FLWBTjp2]ciKEMuy2h2rpemofXJLKf',
       ),
       'decrypted' => array(
         'first_name' => 'Gary',

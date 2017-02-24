@@ -1778,6 +1778,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     // Update the gateway's stored data.
     // Gateways that allow recurring donation will have an update callback.
     $update_callback = isset($donation->gateway['update callback']) && function_exists($donation->gateway['update callback']) ? $donation->gateway['update callback'] : FALSE;
+
     // If we're in a sustainer update, and this is the first record update the
     // stored payment information.
     if (empty($donation->sustainer_update) || (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first)) && $update_callback) {
@@ -1787,11 +1788,6 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
         $old_card_id = $card_data->card_id;
         $card_data = $update_callback($donation, $card_data);
         drupal_alter('fundraiser_commerce_donation_update_card_update', $donation, $card_data);
-
-        $payment_method = $donation->data['payment_method'];
-
-        $exp_month_changed = !empty($donation->data['payment_fields'][$payment_method]) && !empty($donation->donation['payment_fields'][$payment_method]) && $donation->data['payment_fields']['credit']['card_expiration_month'] != $donation->donation['payment_fields']['credit']['card_expiration_month'];
-        $exp_year_changed = !empty($donation->data['payment_fields'][$payment_method]) && !empty($donation->donation['payment_fields'][$payment_method]) && $donation->data['payment_fields']['credit']['card_expiration_year'] != $donation->donation['payment_fields']['credit']['card_expiration_year'];
 
         if (!empty($donation->update_other_orders)) {
           // If set to update other donations, update other donations with the
@@ -1820,8 +1816,14 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
               commerce_order_save($related_order);
             }
 
+            $payment_method = $donation->data['payment_method'];
+            if ($payment_method == 'credit') {
+              $exp_month_changed = !empty($donation->data['payment_fields'][$payment_method]) && !empty($donation->donation['payment_fields'][$payment_method]) && $donation->data['payment_fields']['credit']['card_expiration_month'] != $donation->donation['payment_fields']['credit']['card_expiration_month'];
+              $exp_year_changed = !empty($donation->data['payment_fields'][$payment_method]) && !empty($donation->donation['payment_fields'][$payment_method]) && $donation->data['payment_fields']['credit']['card_expiration_year'] != $donation->donation['payment_fields']['credit']['card_expiration_year'];
+            }
+
             // Update other recurring donations.
-            if (!empty($result['master_did']) && empty($masters_done[$result['master_did']]) && (!empty($card_data) || $exp_month_changed || $exp_year_changed)) {
+            if (!empty($result['master_did']) && empty($masters_done[$result['master_did']]) && (!empty($card_data) || ($payment_method == 'credit' && ($exp_month_changed || $exp_year_changed)))) {
               $masters_done[$result['master_did']] = fundraiser_donation_get_donation($result['master_did']);
               $source_donation = fundraiser_donation_get_donation($result['did']);
               fundraiser_sustainers_update_billing_info_create_new_donations($masters_done[$result['master_did']], $source_donation, $donation->donation);

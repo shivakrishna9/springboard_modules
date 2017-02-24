@@ -1,0 +1,595 @@
+<?php
+
+/**
+ * @file
+ * This module provides functionality for pre-populating forms from
+ *   an encrypted query string parameter without bootstrapping drupal
+ *   or busting cache.
+ */
+
+/**
+ * Implements hook_implements_alter().
+ */
+function secure_autofill_module_implements_alter(&$implementations, $hook) {
+  // We need these hooks to run last.
+  $hooks = array(
+    'form_alter'
+  );
+
+  if (in_array($hook, $hooks) && isset($implementations['secure_autofill'])) {
+    $group = $implementations['secure_autofill'];
+    unset($implementations['secure_autofill']);
+    $implementations['secure_autofill'] = $group;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function secure_autofill_permission() {
+  return array(
+    'administer secure autofill' => array(
+      'title' => t('Administer Secure Autofill'),
+      'description' => t('Administer Secure Autofill settings.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_cron().
+ */
+function secure_autofill_cron() {
+  // Cleanup the secure_autofill_expired table.
+  $max_days = variable_get('secure_autofill_expired_date_limit', 30);
+  $max_date = REQUEST_TIME - ($max_days * 24 * 60 * 60);
+  db_delete('secure_autofill_expired')
+    ->condition('expire_date', $max_date, '<')
+    ->execute();
+}
+
+/**
+ * Implements hook_menu().
+ */
+function secure_autofill_menu() {
+  $items = array();
+  $items['admin/config/system/secure-autofill'] = array(
+    'title' => 'Secure Autofill',
+    'description' => 'Secure Autofill settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_autofill_admin_settings'),
+    'access arguments' => array('administer secure autofill'),
+    'file' => 'secure_autofill.admin.inc',
+  );
+  $items['admin/config/system/secure-autofill/settings'] = array(
+    'title' => 'Secure Autofill',
+    'description' => 'Secure Autofill settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_autofill_admin_settings'),
+    'access arguments' => array('administer secure autofill'),
+    'file' => 'secure_autofill.admin.inc',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+  );
+  $items['admin/config/system/secure-autofill/token_generator'] = array(
+    'title' => 'Token Generator',
+    'description' => 'Generate query string tokens for testing or use',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_autofill_token_generator'),
+    'access arguments' => array('administer secure autofill'),
+    'file' => 'secure_autofill.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/config/system/secure-autofill/test-generator'] = array(
+    'title' => 'Test Generator',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_autofill_test_url_generator_form'),
+    'access arguments' => array('administer secure autofill'),
+    'file' => 'secure_autofill.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 9999,
+  );
+  // Callback for clearing gs/af cookies.
+  $items['secure-autofill/not-me/%'] = array(
+    'title' => 'Not me',
+    'page callback' => 'secure_autofill_clear',
+    'page arguments' => array(2),
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_js_info().
+ */
+function secure_autofill_js_info() {
+  $callbacks['get_amounts'] = array(
+      'methods' => array('POST'),
+      'token' => FALSE,
+    );
+  $callbacks['get_values'] = array(
+    'methods' => array('POST'),
+    'token' => FALSE,
+  );
+  return $callbacks;
+}
+
+/**
+ * Implements MODULE_js_callback_CALLBACK().
+ *
+ * Callback for decrypting a dynamic gift string.
+ */
+function secure_autofill_js_callback_get_amounts($gs, $user_hash) {
+  $json = array();
+
+  // Ensure that the gift string variable was provided.
+  if (!isset($gs) || !isset($user_hash)) {
+    drupal_set_message(t('You must provide a gift string and user hash.'), 'error');
+    $json['content'] = FALSE;
+  }
+  elseif (secure_autofill_is_expired($gs, $user_hash)) {
+    // Don't decrypt expired strings.
+    drupal_set_message(t('Gift string is expired.'), 'error');
+    $json['content'] = FALSE;
+  }
+  else {
+    // Decrypt gs per dynamic gift strings.
+    $raw_qs = secure_autofill_decrypt($gs);
+    $parsed_qs = secure_autofill_parse_qs($raw_qs);
+    // Ensure amounts are valid.
+    $valid = secure_autofill_validate_gs($parsed_qs);
+    if ($valid) {
+      $json['content'] = $parsed_qs;
+    }
+    else {
+      drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+      watchdog("Secure Autofill", "Gift string is invalid.", NULL, WATCHDOG_ERROR);
+      $json['content'] = FALSE;
+    }
+    // see if we need to expire the query string
+    $never_expire = secure_autofill_variable_get('secure_autofill_dynamic_gift_strings_never_expire', 1);
+    if (!$never_expire) {
+      secure_autofill_expire($gs, $user_hash);
+    }
+  }
+
+  return $json;
+}
+
+/**
+ * Implements MODULE_js_callback_CALLBACK().
+ *
+ * Callback for decrypting a secure prepopulate string.
+ */
+function secure_autofill_js_callback_get_values($af, $user_hash) {
+  $json = array();
+
+  // Ensure that the gift string variable was provided.
+  if (!isset($af) || !isset($user_hash)) {
+    drupal_set_message(t('You must provide a query string and user hash.'), 'error');
+    $json['content'] = FALSE;
+  }
+  elseif (secure_autofill_is_expired($af, $user_hash)) {
+    // Don't decrypt expired strings.
+    drupal_set_message(t('Query string is expired.'), 'error');
+    $json['content'] = FALSE;
+  }
+  else {
+    // Decrypt af.
+    $raw_qs = secure_autofill_decrypt($af);
+    $json['content'] = secure_autofill_parse_qs($raw_qs);
+    // Expire string.
+    secure_autofill_expire($af, $user_hash);
+  }
+
+  return $json;
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Add secure_autofill js to donation forms, bypass amount validation.
+ */
+function secure_autofill_form_alter(&$form, &$form_state, $form_id) {
+  if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type) && arg(4) != 'edit') {
+    // Attach ask amount handler and cookie library at beginning of array so our js gets run first.
+    $form['#attached']['library'][] = array('system', 'jquery.cookie');
+    array_unshift($form['#attached']['js'], drupal_get_path('module', 'secure_autofill') . '/js/secure-autofill.js');
+    // Bypass amount field validation so we can inject our values.
+    if (isset($form['submitted']['donation']['amount'])) {
+      $form['submitted']['donation']['amount']['#webform_validated'] = TRUE;
+    }
+    if (isset($form['submitted']['donation']['recurring_amount'])) {
+      $form['submitted']['donation']['recurring_amount']['#webform_validated'] = TRUE;
+    }
+
+    // Add drupal.setting for secure autofill 'not me' message.
+    drupal_add_js(array('secure_autofill' => array('secure_autofill_not_me' => variable_get('secure_autofill_not_me', ''))), 'setting');
+
+    // Add form validate handler to ensure only numeric and 'other' values can be entered into 'amount'.
+    $form['#validate'][] = "secure_autofill_donation_amount_validate";
+
+    // Add the submit handler.
+    $form['#submit'][] = 'secure_autofill_submit';
+  }
+}
+
+/**
+ * Validate handler for amounts.
+ */
+function secure_autofill_donation_amount_validate($form, &$form_state) {
+  // Ensure that donation amount is set and numeric or 'other'.
+  // First, filter XSS and get our values from form_state.
+  $donation_amount = filter_xss($form_state['values']['submitted']['donation']['amount']);
+  $recurring_amount = filter_xss($form_state['values']['submitted']['donation']['recurring_amount']);
+  $recurring_selection = $form_state['values']['submitted']['donation']['recurs_monthly'];
+
+  // Ensure that amount is set for recurring and one-time donations.
+  if (
+    ($form['#node']->recurring_setting == 'always' && empty($recurring_amount))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
+      && (is_array($recurring_selection) ? $recurring_selection['recurs'] === 'recurs'
+        : $recurring_selection == 'recurs') && empty($recurring_amount))
+  ) {
+    // No recurring amount was selected with dual ask., throw error.
+    form_set_error('recurring_amount', t('You must select a recurring donation amount.'));
+  }
+  elseif (
+    ($form['#node']->recurring_setting == 'always' && empty($donation_amount))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && !$form['#node']->recurring_dual_ask_amounts
+      && (is_array($recurring_selection) ? $recurring_selection['recurs'] === 'recurs'
+        : $recurring_selection == 'recurs') && empty($donation_amount))
+  ) {
+    // No recurring amount was selected without dual ask, throw error.
+    form_set_error('amount', t('You must select a recurring donation amount.'));
+  }
+  elseif (
+    ($form['#node']->recurring_setting == 'never' && empty($donation_amount))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && (is_array($recurring_selection) ? $recurring_selection['recurs'] === 0
+        : $recurring_selection == 'NO_RECURR') && empty($donation_amount)
+    )
+  ) {
+    // No amount was selected for one-time donation, throw error.
+    form_set_error('amount', t('You must select a donation amount.'));
+  }
+  elseif (
+    ($form['#node']->recurring_setting == 'always' && (!is_numeric($recurring_amount) || $recurring_amount != 'other'))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
+      && (is_array($recurring_selection) ? !empty($recurring_selection['recurs'])
+        : $recurring_selection == 'recurs') && (!is_numeric($recurring_amount) && $recurring_amount != 'other')
+    )
+    ) {
+    // Bad amount format for recurring with dual ask.
+    form_set_error('recurring_amount', t('You must provide a recurring donation amount in the correct format.'));
+  }
+  elseif (
+    ($form['#node']->recurring_setting == 'always' && (!is_numeric($donation_amount) || $donation_amount != 'other'))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && !$form['#node']->recurring_dual_ask_amounts
+      && (is_array($recurring_selection) ? !empty($recurring_selection['recurs'])
+        : $recurring_selection == 'recurs') && (!is_numeric($donation_amount) && $donation_amount != 'other')
+    )
+    ) {
+    // Bad amount format for recurring without dual ask.
+    form_set_error('recurring_amount', t('You must provide a recurring donation amount in the correct format.'));
+  }
+  elseif (
+    ($form['#node']->recurring_setting == 'never' && (!is_numeric($donation_amount) || $donation_amount != 'other'))
+    || (
+      $form['#node']->recurring_setting == 'user_choice' && (is_array($recurring_selection) ? $recurring_selection['recurs'] === 0
+        : $recurring_selection == 'NO_RECURR') && (!is_numeric($donation_amount) && $donation_amount != 'other')
+    )
+  ) {
+    // Bad amount format for one-time.
+    form_set_error('amount', t('You must provide a donation amount in the correct format.'));
+  }
+}
+
+/**
+ * Encrypt an input string (128 bit AES) using the configured key and initialization vector.
+ *
+ * @param $input
+ *   The string to encrypt.
+ *
+ * @return string
+ *   The encrypted string.
+ */
+function secure_autofill_encrypt($input) {
+  // The 128 bit key to use to decrypt the string.
+  $key = secure_autofill_variable_get('secure_autofill_key', NULL);
+  // The initialization vector to use to decrypt the string.
+  $iv = secure_autofill_variable_get('secure_autofill_iv', NULL);
+  if (!$key || !$iv) {
+    drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+    watchdog('Secure Autofill', 'Cannot perform decryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+    return FALSE;
+  }
+  $kv = array('key' => $key, 'iv' => $iv);
+  $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+  $input = _secure_autofill_pkcs5_pad($input, $size);
+  $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
+  mcrypt_generic_init($descriptor, $kv['key'], $kv['iv']);
+  $cipher = mcrypt_generic($descriptor, $input);
+  mcrypt_generic_deinit($descriptor);
+  mcrypt_module_close($descriptor);
+  $cipher = base64_encode($cipher);
+  return $cipher;
+}
+
+
+/**
+ * Decrypt an input string (128 bit AES) using the configured key and initialization vector.
+ *
+ * @param $input
+ *   The string to decrypt.
+ *
+ * @return string
+ *   The decrypt string.
+ */
+function secure_autofill_decrypt($cipher) {
+  // The 128 bit key to use to decrypt the string.
+  $key = secure_autofill_variable_get('secure_autofill_key', NULL);
+  // The initialization vector to use to decrypt the string.
+  $iv = secure_autofill_variable_get('secure_autofill_iv', NULL);
+  if (!$key || !$iv) {
+    drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+    watchdog('Secure Autofill', 'Cannot perform decryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+    return FALSE;
+  }
+  $kv = array('key' => $key, 'iv' => $iv);
+  $cipher = base64_decode($cipher);
+  $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
+  mcrypt_generic_init($descriptor, $kv['key'], $kv['iv']);
+  $decrypted_data = mdecrypt_generic($descriptor, $cipher);
+  mcrypt_generic_deinit($descriptor);
+  mcrypt_module_close($descriptor);
+  // Account for some PHP AES shortcomings.
+  $decrypted_data = _secure_autofill_pkcs5_unpad($decrypted_data);
+  $decrypted_data = rtrim($decrypted_data);
+  return $decrypted_data;
+}
+
+/**
+ * Get the SPP key and vector.
+ *
+ * @return array|bool
+ *   The key and vector in an array, or FALSE
+ */
+function secure_autofill_get_key_and_vector() {
+  // The 128 bit key to use to decrypt the string.
+  $key = variable_get('secure_autofill_key', NULL);
+  // The initialization vector to use to decrypt the string.
+  $iv = variable_get('secure_autofill_iv', NULL);
+  if (!$key || !$iv) {
+    watchdog('Secure Autofill', 'Cannot perform decryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+    return FALSE;
+  }
+  return array('key' => $key, 'iv' => $iv);
+}
+
+/**
+ * Decrypts query string paramaters.
+ *
+ * This function will attempt to decrypt a string with an
+ * AES Key and IV that have been preconfigued.
+ *
+ * @param $cipher
+ *   The cipher text to decrypt.
+ */
+function secure_autofill_decrypt_qs($cipher) {
+  $raw_qs = secure_autofill_decrypt($cipher);
+  return secure_autofill_parse_qs($raw_qs);
+}
+
+/**
+ * Helper function, Parses the decrypted query string into an array.
+ *
+ * @param $qs
+ *   The query string to parse in key/value pair format.
+ */
+function secure_autofill_parse_qs($qs) {
+  $result = array();
+  $segments = explode('&', $qs);
+  // Loop over each field in the segement and extract the key/value pairs.
+  if (count($segments)) {
+    foreach ($segments as $segment) {
+      $key_value = explode('=', $segment);
+      if (isset($key_value[1])) {
+        $result[$key_value[0]] = $key_value[1];
+      } else {
+        // No key given, so fall back to numeric index.
+        $result[] = $key_value[0];
+      }
+    }
+  }
+  return $result;
+}
+
+/**
+ * Helper function, gets variables without bootstrap.
+ *
+ * @param $name
+ *   The var name to get.
+ * @param $default
+ *   The var to return if $name is not found.
+ */
+function secure_autofill_variable_get($name, $default = NULL) {
+  // Use db_query here for performance reasons, see https://www.drupal.org/node/310075.
+  $result = db_query("SELECT value FROM {variable} WHERE name = :name", array(":name" => $name))->fetchField();
+
+  return isset($result) ? unserialize($result) : $default;
+}
+
+/**
+ * Helper function, for padding text to PKCS5 specification.
+ *
+ * @param $text
+ *   The text to pad.
+ * @param $blocksize
+ *   The size of the PKCS5 blocksize to use.
+ */
+function _secure_autofill_pkcs5_pad($text, $blocksize) {
+  $pad = $blocksize - (strlen($text) % $blocksize);
+  return $text . str_repeat(chr($pad), $pad);
+}
+
+/**
+ * Helper function, to unpad PKCS5 padded text.
+ *
+ * @param $text
+ *   The text to unpad.
+ */
+function _secure_autofill_pkcs5_unpad($text) {
+  // Mcrypt adds bad characters at the end of the string. Remove them.
+  $pad = ord($text{strlen($text) -1});
+  if ($pad > strlen($text)) {
+    return FALSE;
+  }
+  return substr($text, 0, -1 * $pad);
+}
+
+/**
+ * Submit handler for forms that have been prepopulated.
+ */
+function secure_autofill_submit(&$form, &$form_state) {
+  $node = $form['#node'];
+  secure_autofill_clear_cookies($node->nid);
+}
+
+/**
+ * Callback for clearing node specific prepopulate values.
+ *
+ * @param $nid
+ * The nid of the node who's prepopulate data should be cleared.
+ */
+function secure_autofill_clear($nid) {
+  drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+  secure_autofill_clear_cookies($nid);
+  drupal_goto('node/' . $nid);
+}
+
+/**
+ * Helper function, Clears the gs/af cookies.
+ *
+ * @param $nid
+ *   The id of the node who's prepopulated data should be cleared.
+ */
+function secure_autofill_clear_cookies($nid) {
+  // Unset secure prepopulate hash.
+  if (isset($_COOKIE['af-'. $nid])) {
+    unset($_COOKIE['af-'. $nid]);
+    setcookie('af-'. $nid, '', time() - 3600, '/'); // empty value and old timestamp
+  }
+  // Unset user hash.
+  if (isset($_COOKIE['af-'. $nid .'-hash'])) {
+    unset($_COOKIE['af-'. $nid .'-hash']);
+    setcookie('af-'. $nid .'-hash', '', time() - 3600, '/'); // empty value and old timestamp
+  }
+  // Unset gift string hash.
+  if (isset($_COOKIE['gs-'. $nid])) {
+    unset($_COOKIE['gs-'. $nid]);
+    setcookie('gs-'. $nid, '', time() - 3600, '/'); // empty value and old timestamp
+  }
+  // Unset user hash.
+  if (isset($_COOKIE['gs-'. $nid .'-hash'])) {
+    unset($_COOKIE['gs-'. $nid .'-hash']);
+    setcookie('gs-'. $nid .'-hash', '', time() - 3600, '/'); // empty value and old timestamp
+  }
+}
+
+/**
+ * Helper function, Determines if an encrypted query string has already been used.
+ *
+ * @param $qs
+ *   The query string to examine.
+ * @param $user_hash
+ *   The unique user hash, used to ensure that users can still have their values decrypted for an otherwise expired string.
+ */
+function secure_autofill_is_expired($qs, $user_hash) {
+  $result = db_query("SELECT COUNT(hash) FROM {secure_autofill_expired} WHERE hash = :hash AND userhash <> :userhash", array(':hash' => $qs, ":userhash" => $user_hash))->fetchField();
+  // if no results it's a new query string or user has the unique hash that allows them to continue using it.
+  if ($result == 0) {
+    return FALSE;
+  }
+  drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+  watchdog('Secure Autofill', 'Attempted use of encrypted query string @q', array('@q' => $qs), WATCHDOG_NOTICE);
+  return TRUE;
+}
+
+/**
+ * Helper function, expires query string so it cannot be used more than once.
+ *
+ * @param $qs
+ *   The hash to expire.
+ * @param $user_hash
+ *   The unique user hash, used to ensure that users can still have their values decrypted for an otherwise expired string.
+ */
+function secure_autofill_expire($qs, $user_hash) {
+  // If the "Pre-populated tokens never expire" setting is enabled then do not set an expiration timestamp:
+  if (secure_autofill_variable_get('secure_autofill_toggle_expiration', 0)) {
+    return;
+  }
+
+  $result = db_query("SELECT COUNT(hash) FROM {secure_autofill_expired} WHERE hash = :hash AND userhash = :userhash", array(':hash' => $qs, ":userhash" => $user_hash))->fetchField();
+  // If no results, create an entry.
+  if ($result == 0) {
+    $record = new stdClass();
+    $record->hash = $qs;
+    $record->expire_date = REQUEST_TIME;
+    $record->userhash = $user_hash;
+    drupal_write_record('secure_autofill_expired', $record);
+  }
+}
+
+/**
+ * Helper function, validates gift string amounts. Based on _dynamic_gift_strings_parse_amounts.
+ */
+function secure_autofill_validate_gs($gs) {
+  if (!is_array($gs)) {
+    return FALSE;
+  }
+
+  $valid = TRUE;
+
+  // Validate amounts.
+  if (array_key_exists('amounts', $gs)) {
+    $amounts = explode('|', $gs['amounts']);
+    // Validate the amounts.
+    foreach ($amounts as $amount) {
+      if (!is_numeric($amount) || $amount == 0) {
+        $valid = FALSE;
+      }
+    }
+  }
+
+  // Validate amounts.
+  if (array_key_exists('recurring_amounts', $gs)) {
+    $recurring_amounts = explode('|', $gs['amounts']);
+    // Validate the amounts.
+    foreach ($recurring_amounts as $amount) {
+      if (!is_numeric($amount) || $amount == 0) {
+        $valid = FALSE;
+      }
+    }
+  }
+
+  return $valid;
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Add the autofill flag to forms.
+ */
+function secure_autofill_node_insert($node) {
+  $webform_node_types = variable_get('webform_node_types', array('webform'));
+  if (in_array($node->type, $webform_node_types)) {
+    // Adds some custom fields to new webforms.
+    module_load_include('inc', 'secure_autofill', 'secure_autofill.components');
+    secure_prepopulate_insert_components($node);
+  }
+}
