@@ -118,8 +118,9 @@ function braintree_vault_payment_method_save($payment_method, $context = array()
         $context['error'] = $error_message;
         return array(FALSE, $context);
       }
-      $token = db_query('SELECT payment_method_token FROM {braintree_vault_payment_methods} WHERE unique_identifier = :u', array(
+      $token = db_query('SELECT payment_method_token FROM {braintree_vault_payment_methods} WHERE unique_identifier = :u AND customer_id = :customer_id', array(
         ':u' => $context['result']->paymentMethod->uniqueNumberIdentifier,
+        ':customer_id' => $payment_method['customerId'],
       ))->fetchField();
       $context['result']->paymentMethod->token = $token;
     }

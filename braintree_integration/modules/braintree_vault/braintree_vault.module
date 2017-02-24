@@ -655,7 +655,7 @@ function braintree_vault_get_customer_id_by_email($email) {
  */
 function braintree_vault_commerce_braintree_web_submit_payment_method(&$customer, $new_payment_method) {
   if (!empty($customer['id'])) {
-    $customer['creditCards'] = db_query('SELECT unique_identifier FROM {braintree_vault_payment_methods} WHERE customer_id = :customer_id', array(
+    $customer['creditCards'] = db_query('SELECT DISTINCT unique_identifier FROM {braintree_vault_payment_methods} WHERE customer_id = :customer_id', array(
       ':customer_id' => $customer['id'],
     ))->fetchCol();
   }
