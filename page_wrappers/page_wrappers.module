@@ -1034,15 +1034,38 @@ function page_wrappers_format_filename($title) {
  */
 function _page_wrappers_tokens($content) {
   // First replace special Page Wrapper tokens.
-  $tokens = array('[title]', '[messages]', '[content]', '[styles]', '[scripts]', '[action-links]');
+  $tokens = array(
+    'title' => '[title]',
+    'messages' => '[messages]',
+    'body' => '[body]',
+    'webform' => '[webform]',
+    'content' => '[content]',
+    'styles' => '[styles]',
+    'scripts' => '[scripts]',
+    'action-links' => '[action-links]',
+    'tabs' => '[tabs]');
   $replaces = array(
-    '<?php if ($title): print \'<h1>\'. $title .\'</h1>\'; endif; ?>',
-    '<?php if ($show_messages && $messages): print $messages; endif; ?>',
-    '<?php if ($tabs = render($tabs)): ?><div class="tabs"><?php print $tabs; ?></div><?php endif; ?><?php print render($page["content"]); ?>',
-    '<?php print $styles; ?>',
-    '<?php print $scripts; ?>',
-    '<?php if ($action_links): ?><ul class="action-links"><?php print render($action_links); ?></ul><?php endif; ?>',
-  );
+    'title' => '<?php if ($title): print \'<h1>\'. $title .\'</h1>\'; endif; ?>',
+    'messages' => '<?php if ($show_messages && $messages): print $messages; endif; ?>',
+    'body' => '<?php print render($page_body); ?>',
+    'webform' => '<?php print render($page_webform); ?>',
+    'content' => '<?php if ($tabs = render($tabs)): ?><div class="tabs"><?php print $tabs; ?></div><?php endif; ?><?php print render($page["content"]); ?>',
+    'styles' => '<?php print $styles; ?>',
+    'scripts' => '<?php print $scripts; ?>',
+    'action-links' => '<?php if ($action_links): ?><ul class="action-links"><?php print render($action_links); ?></ul><?php endif; ?>',
+    'tabs' => '<?php if ($tabs = render($tabs)): ?><div class="tabs"><?php print $tabs; ?></div><?php endif; ?>',
+    );
+  $unset = '<?php ';
+  foreach($tokens as $name => $token) {
+    $strpos = strpos($content, $token);
+    if(in_array($token, array("[body]", "[webform]")) && strpos($content, $token) !== FALSE) {
+      $unset .= '$page_' . $name . '= $page[\'content\'][\'system_main\'][\'nodes\'][$node->nid][\''. $name . '\']; unset($page[\'content\'][\'system_main\'][\'nodes\'][$node->nid][\'' . $name . '\']);';
+    }
+  }
+  if($unset != '<?php ') {
+    $unset .= '?>';
+    $content = $unset . $content;
+  }
   $content = str_replace($tokens, $replaces, $content);
 
   // Then look for possible Token tokens.
@@ -1071,8 +1094,8 @@ function _page_wrappers_tokens($content) {
         $replacement = "<?php print token_replace('$token', $data, array('clear' => TRUE)) ?>";
         $content = str_replace($token, $replacement, $content);
       }
-    }
-  }
+    } // end foreach
+  } //end if $candidates
 
   return $content;
 }
