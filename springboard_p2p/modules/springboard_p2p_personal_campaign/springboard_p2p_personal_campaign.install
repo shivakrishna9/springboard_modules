@@ -68,11 +68,11 @@ function springboard_p2p_personal_campaign_update_7003() {
 }
 
 /**
- * Change data type for column field_p2p_campaign_progress_amount from unsigned int to decimal.
+ * Change data type for column field_p2p_campaign_progress_amount from int to float.
  */
 function springboard_p2p_personal_campaign_update_7004() {
   if (db_field_exists('field_data_field_p2p_campaign_progress', 'field_p2p_campaign_progress_amount')) {
-    db_query("ALTER TABLE {field_data_field_p2p_campaign_progress} MODIFY field_p2p_campaign_progress_amount DECIMAL (10,2);");
+    db_query("ALTER TABLE {field_data_field_p2p_campaign_progress} MODIFY field_p2p_campaign_progress_amount float unsigned;");
   }
   else {
     drupal_set_message('Type for column field_p2p_campaign_progress_amount could not be updated because it does not exist.');
