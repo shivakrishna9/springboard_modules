@@ -590,6 +590,6 @@ function secure_autofill_node_insert($node) {
   if (in_array($node->type, $webform_node_types)) {
     // Adds some custom fields to new webforms.
     module_load_include('inc', 'secure_autofill', 'secure_autofill.components');
-    secure_prepopulate_insert_components($node);
+    secure_autofill_insert_components($node);
   }
 }
