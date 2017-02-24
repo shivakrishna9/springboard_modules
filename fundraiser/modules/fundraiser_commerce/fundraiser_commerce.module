@@ -918,28 +918,6 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
       }
     }
 
-    // Data from profile.
-    if (isset($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'])) {
-      $profile = commerce_customer_profile_load($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id']);
-      $map = array(
-        'first_name' => 'first_name',
-        'last_name' => 'last_name',
-        'address' => 'thoroughfare',
-        'address_line_2' => 'premise',
-        'city' => 'locality',
-        'country' => 'country',
-        'state' => 'administrative_area',
-        'zip' => 'postal_code',
-      );
-      $field_info = _fundraiser_get_field_keys();
-      foreach ($field_info as $field_name) {
-        if (isset($map[$field_name])) {
-          $order_name = $map[$field_name];
-          $donation->donation[$field_name] = isset($profile->data[$order_name]) ?
-            $profile->data[$order_name] : $profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name];
-        }
-      }
-    }
     // Time of last update / charge.
     $donation->last_changed = $order->changed;
     // Add the order status data.
@@ -960,6 +938,40 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
       $donation->donation['payment_fields'] = isset($data['payment_fields']) ? $data['payment_fields'] : array();
       // Put data on the donation object for reference later.
       $donation->data = $data; // Data will contain any gateway payment processing information.
+    }
+  }
+
+  // Data from profile. Use the cardonfile's related profile if that exists,
+  // otherwise use the profile id set in the order.
+  if (!empty($donation->data['cardonfile'])) {
+    $profile_id = db_query('SELECT commerce_cardonfile_profile_profile_id FROM {field_data_commerce_cardonfile_profile} WHERE entity_id = :card_id', array(
+      ':card_id' => $donation->data['cardonfile']))->fetchField();
+    if (!empty($profile_id)) {
+      $profile = commerce_customer_profile_load($profile_id);
+    }
+  }
+  elseif (isset($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'])) {
+    $profile = commerce_customer_profile_load($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id']);
+  }
+
+  if (!empty($profile)) {
+    $map = array(
+      'first_name' => 'first_name',
+      'last_name' => 'last_name',
+      'address' => 'thoroughfare',
+      'address_line_2' => 'premise',
+      'city' => 'locality',
+      'country' => 'country',
+      'state' => 'administrative_area',
+      'zip' => 'postal_code',
+    );
+    $field_info = _fundraiser_get_field_keys();
+    foreach ($field_info as $field_name) {
+      if (isset($map[$field_name])) {
+        $order_name = $map[$field_name];
+        $donation->donation[$field_name] = isset($profile->data[$order_name]) ?
+          $profile->data[$order_name] : $profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name];
+      }
     }
   }
 }
