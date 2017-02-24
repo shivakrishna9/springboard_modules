@@ -1732,26 +1732,26 @@ function springboard_p2p_fundraiser_refund_success($refund) {
     if (isset($personal_campaign_data['personal_campaign_nid']) && is_numeric($personal_campaign_data['personal_campaign_nid'])) {
       $pc_nid = $personal_campaign_data['personal_campaign_nid'];
 
-      // Subtract the refund from the total amount donated for this personal campaign:
-      $amount_modifier = $refund->amount * -1;
-      springboard_p2p_update_personal_campaign_amount_progress($pc_nid, $amount_modifier);
-
-      // Determine if this is a full refund:
-      $is_full_refund = FALSE;
       if (isset($refund->donation->amount) && isset($refund->donation->refunds) && is_array($refund->donation->refunds)) {
-        $total_amount_refunded = $refund->amount;
+        // Determine if this is a full refund:
+        $is_full_refund = FALSE;
+        $previously_refunded = 0.00;
         foreach ($refund->donation->refunds as $previous_refund) {
           if (isset($previous_refund->amount)) {
-            $total_amount_refunded += $previous_refund->amount;
+            $previously_refunded += $previous_refund->amount;
           }
         }
-        if ($refund->donation->amount <= $total_amount_refunded) { // Total should not exceed the original donation amount, but checking just in case!
+        if ($refund->donation->amount <= ($refund->amount + $previously_refunded)) { // Total should not exceed the original donation amount, but checking just in case!
           $is_full_refund = TRUE;
         }
 
-        // Decrement the submissions count for this personal campaign if the full amount was refunded
-        // AND delete the action record associated with this donation.
+        // For full refunds:
+        // - Remove the original donation amount from personal campaign progress amount.
+        // - Decrement the submissions count for this personal campaign.
+        // - Delete the action record associated with this donation.
         if ($is_full_refund) {
+          $amount_modifier = ($refund->donation->amount - $previously_refunded) * -1.00;
+          springboard_p2p_update_personal_campaign_amount_progress($pc_nid, $amount_modifier);
           springboard_p2p_update_personal_campaign_submissions_progress($pc_nid, FALSE);
           db_query("DELETE FROM {springboard_p2p_personal_campaign_action} WHERE " .
             "personal_campaign_nid = :pc_nid AND sid = :sid LIMIT 1",
@@ -1761,12 +1761,16 @@ function springboard_p2p_fundraiser_refund_success($refund) {
             )
           );
         }
-        // Otherwise, update the amount for the action record association with this refund's submission:
+
+        // For partial refunds:
+        // - Subtract the refund amount from the personal campaign progress amount.
+        // - Update the amount for the action record association with this refund's submission.
         elseif (!$is_full_refund) {
+          springboard_p2p_update_personal_campaign_amount_progress($pc_nid, $refund->amount * -1.00);
           db_query("UPDATE {springboard_p2p_personal_campaign_action} " .
             "SET amount = :new_amount WHERE personal_campaign_nid = :pc_nid AND sid = :sid LIMIT 1",
             array(
-              ':new_amount' => ($refund->donation->amount - $total_amount_refunded) * 100,
+              ':new_amount' => ($refund->donation->amount - ($refund->amount + $previously_refunded)) * 100,
               ':pc_nid' => $pc_nid,
               ':sid' => $refund->donation->sid,
             )
