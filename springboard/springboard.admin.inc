@@ -194,8 +194,6 @@ function springboard_admin_config(&$form, $form_state) {
     }
     // Configure user profiles
     springboard_admin_config_profile($form, $form_state);
-    // Configure secure prepopulate synonyms
-    springboard_admin_configure_prepopulate_synonyms();
     // Configure a default fundraiser type
     springboard_admin_config_donation_form_type($form, $form_state);
     set_time_limit(300);
