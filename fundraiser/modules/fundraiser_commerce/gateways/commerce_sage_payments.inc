@@ -343,6 +343,8 @@ function _commerce_sage_payments_fundraiser_commerce_update_cc($donation, $card_
   }
 
   if ($action == 'update') {
+    $donation->old_card = clone $card_data;
+
     $card_data->card_number = $cardonfile_fields['card_number'];
     $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
     $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];

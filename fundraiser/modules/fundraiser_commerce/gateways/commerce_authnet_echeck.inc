@@ -254,6 +254,8 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
   }
 
   if ($action == 'update') {
+    $donation->old_card = clone $card_data;
+
     $card_data->card_number = $cardonfile_fields['card_number'];
 
     // We're mirroring the commerce_authnet_cim_cardonfile_update function so setup values that function uses, see that function for details

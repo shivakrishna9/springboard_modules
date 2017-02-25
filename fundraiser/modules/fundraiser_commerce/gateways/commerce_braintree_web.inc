@@ -391,6 +391,8 @@ function commerce_braintree_web_fundraiser_commerce_update($donation, $card_data
   }
 
   if ($needs_update) {
+    $donation->old_card = clone $card_data;
+
     list($success, $context) = braintree_vault_payment_method_save(array(
       'paymentMethodToken' => $card_data->remote_id,
     ), array(

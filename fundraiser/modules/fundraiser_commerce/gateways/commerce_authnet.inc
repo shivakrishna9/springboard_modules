@@ -222,6 +222,8 @@ function commerce_authnet_fundraiser_commerce_update($donation, $card_data = NUL
     }
   }
   if ($action == 'update') {
+    $donation->old_card = clone $card_data;
+
     if (!empty($cardonfile_fields['card_number'])) {
       $card_data->card_number = $cardonfile_fields['card_number'];
     }

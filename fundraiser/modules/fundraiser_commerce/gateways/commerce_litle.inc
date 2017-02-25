@@ -365,6 +365,7 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
   }
 
   if ($action == 'update') {
+    $donation->old_card = clone $card_data;
     // This is last four digits for credit cards and last three for echecks.
     $card_data->card_number = $cardonfile_fields['card_number'];
 
