@@ -329,7 +329,7 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
   // Pull the new credit card values from the donation.
   $pane_values = commerce_litle_pane_values($donation);
 
-  if (empty($pane_values['echeck']['routingNum']) || empty($pane_values['echeck']['accNum'])) {
+  if (empty($pane_values['credit_card']) && (empty($pane_values['echeck']['routingNum']) || empty($pane_values['echeck']['accNum']))) {
     return $card_data;
   }
 
