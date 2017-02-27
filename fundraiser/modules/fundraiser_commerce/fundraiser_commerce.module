@@ -1872,16 +1872,17 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 
         $masters_done = array();
 
-        if (!empty($donation->recurring) && ($exp_month_changed || $exp_year_changed)) {
+        if (!empty($donation->recurring) && ($exp_month_changed || $exp_year_changed || $card_number_changed)) {
           $masters_done[$donation->recurring->master_did] = fundraiser_donation_get_donation($donation->recurring->master_did);
           fundraiser_sustainers_update_billing_info_create_new_donations($masters_done[$donation->recurring->master_did], $donation, $donation->donation);
 
           if (!empty($donation->update_other_orders)) {
             // Select recurring donations using the same card_id.
             $results = db_query('SELECT fs.master_did AS master_did, fd.did AS did, fd.status AS status FROM {fundraiser_donation} fd LEFT JOIN {fundraiser_sustainers} fs ON fd.did = fs.did WHERE fd.card_id = :card_id ORDER BY did', array(
-              ':card_id' => $card_data->card_id,
+              ':card_id' => $old_card->card_id,
             ))->fetchAll(PDO::FETCH_ASSOC);
 
+            $updated_dids = array();
             foreach ($results as $result) {
               // If this payment isn't pending, OR if this is a donation that
               // already belongs to the sustainer donation we're updating,
@@ -1904,6 +1905,16 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
                 $source_donation = fundraiser_donation_get_donation($result['did']);
                 fundraiser_sustainers_update_billing_info_create_new_donations($masters_done[$result['master_did']], $source_donation, $donation->donation);
               }
+
+              $updated_dids[] = $result['did'];
+            }
+
+            if (!empty($updated_dids)) {
+              db_update('fundraiser_donation')
+                ->fields(array('card_id' => $card_data->card_id))
+                ->condition('did', $updated_dids, 'IN')
+                ->condition('status', 'pending_future_payment', '=')
+                ->execute();
             }
           }
         }
