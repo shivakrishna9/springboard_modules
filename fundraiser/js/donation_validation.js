@@ -230,6 +230,7 @@
               },
               amount: true,
               min: parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount),
+              max: parseFloat(99999.99),
               messages: {
                 required: "This field is required",
                 amount: "Enter a valid amount",
