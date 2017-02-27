@@ -1311,6 +1311,10 @@ function fundraiser_commerce_fundraiser_donation_after_process($donation) {
     }
 
     foreach ($results as $result) {
+      if (empty($result['master_did'])) {
+        continue;
+      }
+
       // Update other recurring donations.
       $masters_done[$result['master_did']] = fundraiser_donation_get_donation($result['master_did']);
       $source_donation = fundraiser_donation_get_donation($result['did']);
