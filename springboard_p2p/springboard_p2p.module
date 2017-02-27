@@ -893,10 +893,18 @@ function springboard_p2p_create_alias_from_title($node, $language) {
 
   $exists = springboard_p2p_personal_campaign_alias_exists($path, $language, $node->nid);
   if ($exists) {
-    $path = $path . '/' . uniqid();
+    $path = $path . '/' . springboard_p2p_gen_short_uri();
   }
 
   return $path;
+}
+
+function springboard_p2p_gen_short_uri() {
+  $uri = '';
+  for ($i = 0; $i < 8; $i++) {
+    $uri .= chr(rand(ord('a'), ord('z')));
+  }
+  return $uri;
 }
 
 /**
