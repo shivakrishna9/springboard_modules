@@ -3916,7 +3916,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   }
 
   // If the "update cardonfile" element is non-empty, add the cardonfile
-  // validation and submission handlers.
+  // validation and submission handlers are set.
   if ($data['update payment'] && $data['update cardonfile'] && !empty($form['#donation']->gateway['gateway_details']['settings']['cardonfile'])) {
     $use_cardonfile = FALSE;
     if (!empty($data['card'])) {
@@ -3927,7 +3927,10 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
       $use_cardonfile = TRUE;
     }
 
-    if ($use_cardonfile) {
+    // We only need to update the cardonfile ourselves if not set to update the
+    // billing info. Otherwise the fundraiser_update function should take care
+    // of it.
+    if ($use_cardonfile && empty($data['update billing'])) {
       // Using this instead of form_load_include because if this function isn't
       // called from a form constructor (fundraiser_sustainers), the include
       // isn't included.
@@ -4139,7 +4142,6 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($f
       drupal_set_message(t('We encountered an error attempting to update your card data. Please try again and contact us if this error persists.'), 'error');
     }
   }
-  $form_state['redirect'] = 'user/' . $card->uid . '/cards';
 }
 
 /**

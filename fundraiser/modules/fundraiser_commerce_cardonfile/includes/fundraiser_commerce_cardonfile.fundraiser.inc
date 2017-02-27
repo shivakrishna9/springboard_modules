@@ -66,6 +66,7 @@ function fundraiser_commerce_cardonfile_fundraiser_commerce_donation_update_card
 function fundraiser_commerce_cardonfile_fundraiser_commerce_sustainer_series_donation_update_alter($master, &$donation) {
   if (!empty($master->data['cardonfile'])) {
     $donation->data['cardonfile'] = $master->data['cardonfile'];
+    $donation->donation['cardonfile'] = $master->data['cardonfile'];
   }
 }
 

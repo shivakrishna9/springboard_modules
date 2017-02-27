@@ -1872,16 +1872,15 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 
         $masters_done = array();
 
-        if (!empty($donation->recurring) && ($exp_month_changed || $exp_year_changed || $card_number_changed)) {
-          $masters_done[$donation->recurring->master_did] = fundraiser_donation_get_donation($donation->recurring->master_did);
-          fundraiser_sustainers_update_billing_info_create_new_donations($masters_done[$donation->recurring->master_did], $donation, $donation->donation);
+        // If this is a recurring donation.
+        if (!empty($donation->recurring)) {
+          // Select other recurring donations using the old card_id.
+          $results = db_query('SELECT fs.master_did AS master_did, fd.did AS did, fd.status AS status FROM {fundraiser_donation} fd LEFT JOIN {fundraiser_sustainers} fs ON fd.did = fs.did WHERE fd.card_id = :card_id ORDER BY did', array(
+            ':card_id' => $old_card->card_id,
+          ))->fetchAll(PDO::FETCH_ASSOC);
 
+          // If we need to update other recurring donations.
           if (!empty($donation->update_other_orders)) {
-            // Select recurring donations using the same card_id.
-            $results = db_query('SELECT fs.master_did AS master_did, fd.did AS did, fd.status AS status FROM {fundraiser_donation} fd LEFT JOIN {fundraiser_sustainers} fs ON fd.did = fs.did WHERE fd.card_id = :card_id ORDER BY did', array(
-              ':card_id' => $old_card->card_id,
-            ))->fetchAll(PDO::FETCH_ASSOC);
-
             $updated_dids = array();
             foreach ($results as $result) {
               // If this payment isn't pending, OR if this is a donation that
@@ -1900,10 +1899,14 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 
               // If this record is a master donation which hasn't been processed
               // yet, extend its series.
-              if (!empty($result['master_did']) && empty($masters_done[$result['master_did']])) {
+              if (($exp_month_changed || $exp_year_changed) && !empty($result['master_did']) && empty($masters_done[$result['master_did']])) {
                 $masters_done[$result['master_did']] = fundraiser_donation_get_donation($result['master_did']);
                 $source_donation = fundraiser_donation_get_donation($result['did']);
-                fundraiser_sustainers_update_billing_info_create_new_donations($masters_done[$result['master_did']], $source_donation, $donation->donation);
+                $source_donation->donation['payment_fields'] = array_merge($source_donation->donation['payment_fields'], $donation->donation['payment_fields']);
+                $source_donation->data['payment_fields'] = array_merge($source_donation->data['payment_fields'], $donation->data['payment_fields']);
+                $source_donation->donation['cardonfile'] = $donation->donation['cardonfile'];
+                $source_donation->data['cardonfile'] = $donation->data['cardonfile'];
+                fundraiser_sustainers_update_billing_info_create_new_donations($masters_done[$result['master_did']], $source_donation, $source_donation->donation);
               }
 
               $updated_dids[] = $result['did'];
@@ -1917,32 +1920,20 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
                 ->execute();
             }
           }
+
+          // Extend this recurring donation.
+          $masters_done[$donation->recurring->master_did] = fundraiser_donation_get_donation($donation->recurring->master_did);
+          fundraiser_sustainers_update_billing_info_create_new_donations($masters_done[$donation->recurring->master_did], $donation, $donation->donation);
         }
 
-        if ($card_id_changed && !empty($donation->update_other_orders)) {
-          // If set to update other donations, update other donations with the
-          // same card_id to the new one.
-          // @todo This seems like a lot to do just to update the card_id. Maybe
-          // someone can find a better way?
-
+        if ($card_id_changed && !empty($donation->update_other_orders) && empty($donation->recurring)) {
           // If this isn't a recurring donation, update any other donations
           // that use this card_id.
-          if (empty($donation->sustainer_update)) {
-            db_update('fundraiser_donation')
-              ->fields(array('card_id' => $card_data->card_id))
-              ->condition('card_id', $old_card_id, '=')
-              ->condition('status', 'pending_future_payment', '=')
-              ->execute();
-          }
-          elseif (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_did)) {
-            // Otherwise, if it is a recurring donation, and this is the
-            // master record,
-            db_update('fundraiser_donation')
-              ->fields(array('card_id' => $card_data->card_id))
-              ->condition('master_did', $donation->sustainer_update_did, '=')
-              ->condition('status', 'pending_future_payment', '=')
-              ->execute();
-          }
+          db_update('fundraiser_donation')
+            ->fields(array('card_id' => $card_data->card_id))
+            ->condition('card_id', $old_card_id, '=')
+            ->condition('status', 'pending_future_payment', '=')
+            ->execute();
         }
       }
     }
@@ -2789,6 +2780,10 @@ function _fundraiser_commerce_charge_submit_form_process($success, $method_insta
  */
 function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE) {
   // If this donation has the cardonfile value set in its data array, load the card data from that
+  if (!empty($donation->donation['cardonfile']['old_card'])) {
+    return $donation->donation['cardonfile']['old_card'];
+  }
+
   if (!empty($donation->donation['cardonfile']['card'])) {
     return $donation->donation['cardonfile']['card'];
   }
