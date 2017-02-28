@@ -178,8 +178,11 @@ function secure_autofill_js_callback_get_values($af, $user_hash) {
     // Decrypt af.
     $raw_qs = secure_autofill_decrypt($af);
     $json['content'] = secure_autofill_parse_qs($raw_qs);
-    // Expire string.
-    secure_autofill_expire($af, $user_hash);
+    // Expire string if necessary.
+    $never_expire = secure_autofill_variable_get('secure_autofill_toggle_expiration', 1);
+    if (!$never_expire) {
+      secure_autofill_expire($af, $user_hash);
+    }
   }
 
   return $json;
