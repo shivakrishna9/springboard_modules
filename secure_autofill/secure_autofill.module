@@ -568,7 +568,7 @@ function secure_autofill_validate_gs($gs) {
 
   // Validate amounts.
   if (array_key_exists('recurring_amounts', $gs)) {
-    $recurring_amounts = explode('|', $gs['amounts']);
+    $recurring_amounts = explode('|', $gs['recurring_amounts']);
     // Validate the amounts.
     foreach ($recurring_amounts as $amount) {
       if (!is_numeric($amount) || $amount == 0) {
