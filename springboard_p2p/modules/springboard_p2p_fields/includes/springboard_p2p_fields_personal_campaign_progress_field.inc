@@ -82,29 +82,32 @@ class SpringboardP2pPersonalCampaignProgressField {
         $nid = $entity->field_p2p_campaign[$entity->language][0]['target_id'];
         $campaign = node_load($nid);
       }
+      if (!empty($campaign)) {
+        $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
 
-      $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+        foreach ($items as $delta => $value) {
 
-      foreach ($items as $delta => $value) {
+          $value = springboard_p2p_format_progress($items[$delta], $goal_type);
 
-        $value = springboard_p2p_format_progress($items[$delta], $goal_type);
-
-        $element[$delta]['campaign_progress'] = array(
-          '#markup' => '<div>' . $value . '</div>',
-        );
+          $element[$delta]['campaign_progress'] = array(
+            '#markup' => '<div>' . $value . '</div>',
+          );
+        }
       }
     }
     elseif ($display['type'] == 'springboard_p2p_fields_personal_campaign_progress_count') {
-      $campaign = $entity->field_p2p_campaign[$entity->language][0]['entity'];
-      $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+      if (!empty($entity->field_p2p_campaign[$entity->language][0]['entity'])) {
+        $campaign = $entity->field_p2p_campaign[$entity->language][0]['entity'];
+        $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
 
-      foreach ($items as $delta => $value) {
+        foreach ($items as $delta => $value) {
 
-        $value = springboard_p2p_format_progress($items[$delta], $goal_type, FALSE);
+          $value = springboard_p2p_format_progress($items[$delta], $goal_type, FALSE);
 
-        $element[$delta]['campaign_progress'] = array(
-          '#markup' => $value,
-        );
+          $element[$delta]['campaign_progress'] = array(
+            '#markup' => $value,
+          );
+        }
       }
     }
     elseif ($display['type'] == 'springboard_p2p_fields_personal_campaign_progress_amount') {

@@ -46,7 +46,7 @@ function springboard_p2p_personal_campaign_help_render($subtype, $conf, $panel_a
     $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
   }
 
-  if (!is_null($campaign)) {
+  if (!is_null($campaign) && !empty($campaign)) {
     // Build the content type block.
     $block = new stdClass();
     $block->title = '';

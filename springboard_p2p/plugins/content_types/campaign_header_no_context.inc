@@ -44,7 +44,7 @@ function springboard_p2p_campaign_header_no_context_render($subtype, $conf, $pan
     }
   }
 
-  if (!is_null($campaign)) {
+  if (!is_null($campaign) && !empty($campaign)) {
     // Build the content type block.
     $block = new stdClass();
     $block->title = '';

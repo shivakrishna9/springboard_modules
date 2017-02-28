@@ -402,8 +402,9 @@ function springboard_p2p_user_register_form_submit($form, &$form_state) {
     if (!empty($form_state['values']['springboard_p2p_campaign_nid'])) {
       $campaign = node_load($form_state['values']['springboard_p2p_campaign_nid']);
     }
-
-    $event->userRegistersForP2P($account, $campaign);
+    if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
+      $event->userRegistersForP2P($account, $campaign);
+    }
   }
 }
 

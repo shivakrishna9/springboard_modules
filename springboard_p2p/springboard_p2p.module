@@ -539,12 +539,14 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
     // Node edit of some variety. We'll need to load the original campaign
     // node to control visibility of conditionally editable fields.
     $language = $form['language']['#value'];
-    $campaign_node = node_load($form['field_p2p_campaign'][$language]['#default_value'][0]);
+    if (!empty($form['field_p2p_campaign'][$language]['#default_value'][0])) {
+      $campaign_node = node_load($form['field_p2p_campaign'][$language]['#default_value'][0]);
+    }
 
   }
 
   // Hide uneditable fields.
-  if ($campaign_node) {
+  if (!empty($campaign_node)) {
 
     // If the admin has set the date field as required in the campaign,
     // then make it look required.
@@ -1904,11 +1906,13 @@ function springboard_p2p_webform_client_form_validate($form, &$form_state) {
   if (!empty($form_state['values']['springboard_p2p_personal_campaign_action'])) {
     $action = $form_state['values']['springboard_p2p_personal_campaign_action'];
     $campaign = node_load($action['campaign_nid']);
-    $goal = springboard_p2p_get_goal_from_campaign($campaign);
+    if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
+      $goal = springboard_p2p_get_goal_from_campaign($campaign);
 
-    // Only override if a value is provided.
-    if (!empty($goal['campaign_id'])) {
-      $form_state['values']['submitted']['cid'] = $goal['campaign_id'];
+      // Only override if a value is provided.
+      if (!empty($goal['campaign_id'])) {
+        $form_state['values']['submitted']['cid'] = $goal['campaign_id'];
+      }
     }
   }
 }
@@ -2287,7 +2291,7 @@ function springboard_p2p_get_personal_campaign_action_by_sid($sid) {
  *   The form element for the header image.
  */
 function springboard_p2p_format_campaign_form_header($campaign) {
-  if ($campaign->type == 'p2p_campaign' && isset($campaign->field_p2p_campaign_banner) && !empty($campaign->field_p2p_campaign_banner[$campaign->language])) {
+  if (!empty($campaign) && $campaign->type == 'p2p_campaign' && isset($campaign->field_p2p_campaign_banner) && !empty($campaign->field_p2p_campaign_banner[$campaign->language])) {
 
     $display = array(
       'settings' => array(
@@ -2571,7 +2575,12 @@ function springboard_p2p_get_personal_campaign_comments($nid, $exclude_empty_com
  *   Whether the campaign has the donor roll/scroll enabled.
  */
 function springboard_p2p_campaign_should_show_donor_roll($campaign) {
-  return (bool) $campaign->field_p2p_show_donor_scroll[$campaign->language][0]['value'];
+  if (!empty($campaign)) {
+    return (bool) $campaign->field_p2p_show_donor_scroll[$campaign->language][0]['value'];
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**

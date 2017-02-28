@@ -464,7 +464,7 @@ function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_
 function springboard_p2p_personal_campaign_form_sb_social_node_settings_alter(&$form, $form_state, $form_id) {
   if (module_exists('sb_social') && $form['type']['#value'] == 'node' && is_numeric($form['id']['#value'])) {
     $node = node_load($form['id']['#value']);
-    if ($node->type == 'p2p_campaign') {
+    if (!empty($node) && $node->type == 'p2p_campaign') {
       $form['#submit'][] = 'springboard_p2p_personal_campaign_social_settings_submit';
     }
   }
@@ -555,24 +555,26 @@ function springboard_p2p_personal_campaign_node_insert($node) {
   if ($node->type == 'p2p_personal_campaign' && module_exists('sb_social')) {
     $language = $node->language;
     $campaign_node = node_load($node->field_p2p_campaign[$language][0]['target_id']);
-    $settings_id = sb_social_get_sid_by_id($campaign_node->nid, 'node');
-    $settings = sb_social_settings_load($settings_id);
-    $fb_image_fid = isset($settings['data']['facebook']['image']) ? $settings['data']['facebook']['image'] : FALSE;
+    if (!empty($campaign_node)) {
+      $settings_id = sb_social_get_sid_by_id($campaign_node->nid, 'node');
+      $settings = sb_social_settings_load($settings_id);
+      $fb_image_fid = isset($settings['data']['facebook']['image']) ? $settings['data']['facebook']['image'] : FALSE;
 
-    // Personal campaign nodes should use the personal campaign thumbnail to
-    // set opengraph image tags if no image has been set on the parent
-    // campaign.
-    //
-    // All other setting should inherit from the parent campaign.
-    if (!$fb_image_fid) {
-      $personal_campaign_thumbnail_fid = isset($node->field_p2p_campaign_images[$node->language][0]['fid']) ? $node->field_p2p_campaign_images[$node->language][0]['fid'] : '' ;
+      // Personal campaign nodes should use the personal campaign thumbnail to
+      // set opengraph image tags if no image has been set on the parent
+      // campaign.
+      //
+      // All other setting should inherit from the parent campaign.
+      if (empty($fb_image_fid)) {
+        $personal_campaign_thumbnail_fid = isset($node->field_p2p_campaign_images[$node->language][0]['fid']) ? $node->field_p2p_campaign_images[$node->language][0]['fid'] : '';
 
-      $settings['data']['facebook']['image'] = is_numeric($personal_campaign_thumbnail_fid) ? $personal_campaign_thumbnail_fid : '';
+        $settings['data']['facebook']['image'] = is_numeric($personal_campaign_thumbnail_fid) ? $personal_campaign_thumbnail_fid : '';
+      }
+      $settings['sid'] = '';
+      $settings['id'] = $node->nid;
+      $settings['type'] = 'node';
+      sb_social_settings_save($settings);
     }
-    $settings['sid'] = '';
-    $settings['id'] = $node->nid;
-    $settings['type'] = 'node';
-    sb_social_settings_save($settings);
   }
 }
 

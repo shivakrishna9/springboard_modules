@@ -43,7 +43,7 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
   }
   else {
     $campaign = node_load($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id']);
-    if (!springboard_p2p_campaign_should_show_comments($campaign)) {
+    if (!$campaign || !springboard_p2p_campaign_should_show_comments($campaign)) {
       return;
     }
   }

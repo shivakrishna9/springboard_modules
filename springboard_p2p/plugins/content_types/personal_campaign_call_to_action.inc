@@ -50,7 +50,7 @@ function springboard_p2p_personal_campaign_call_to_action_render($subtype, $conf
     $personal_campaign = $node;
   }
 
-  if (!is_null($campaign) && !is_null($personal_campaign)) {
+  if (!is_null($campaign) && !empty($campaign) && !is_null($personal_campaign)) {
     $output = array();
     $goal = springboard_p2p_get_goal_from_campaign($campaign);
 

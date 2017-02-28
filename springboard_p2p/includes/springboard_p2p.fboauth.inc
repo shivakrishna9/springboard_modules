@@ -25,8 +25,9 @@ function springboard_p2p_fb_page() {
     if (!empty($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) {
       $campaign = node_load($_GET['p2p_cid']);
     }
-
-    $event->userRegistersForP2P($user, $campaign);
+    if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
+      $event->userRegistersForP2P($user, $campaign);
+    }
 
     if (springboard_p2p_complete_profile_user_has_empty_required_fields($user)) {
       $redirect = springboard_p2p_complete_profile_get_redirect();

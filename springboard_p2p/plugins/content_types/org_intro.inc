@@ -45,7 +45,7 @@ function springboard_p2p_org_intro_render($subtype, $conf, $panel_args, $context
     $campaign = node_load($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id']);
   }
 
-  if (!is_null($campaign) && $campaign->type == 'p2p_campaign') {
+  if (!is_null($campaign) && !empty($campaign) && $campaign->type == 'p2p_campaign') {
 
     $campaign_wrapper = entity_metadata_wrapper('node', $campaign);
     $output = array();

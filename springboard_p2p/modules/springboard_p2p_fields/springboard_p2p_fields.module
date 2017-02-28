@@ -110,20 +110,22 @@ function springboard_p2p_fields_property_field_campaign_goals_get($entity, array
  * @todo This only handles a single enabled goal.
  */
 function springboard_p2p_fields_get_goal_from_entity($entity) {
-  $goal_set_id = $entity->field_p2p_campaign_goals[$entity->language][0]['goal_set_id'];
-  $goals_field = new SpringboardP2pCampaignGoalsField();
-  $goals = $goals_field->load($goal_set_id);
-  foreach ($goals as $goal) {
-    if ($goal['enabled']) {
-      return $goal;
+  if (!empty($entity)) {
+    $goal_set_id = $entity->field_p2p_campaign_goals[$entity->language][0]['goal_set_id'];
+    $goals_field = new SpringboardP2pCampaignGoalsField();
+    $goals = $goals_field->load($goal_set_id);
+    foreach ($goals as $goal) {
+      if ($goal['enabled']) {
+        return $goal;
+      }
     }
-  }
 
-  // Somewhat safe default.
-  return array(
-    'goal_type' => 'submissions',
-    'goal_value' => 0,
-  );
+    // Somewhat safe default.
+    return array(
+      'goal_type' => 'submissions',
+      'goal_value' => 0,
+    );
+  }
 }
 
 /**
