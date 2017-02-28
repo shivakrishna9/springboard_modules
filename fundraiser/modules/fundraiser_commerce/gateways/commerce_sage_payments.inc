@@ -287,10 +287,10 @@ function commerce_sage_payments_fundraiser_commerce_update($donation, $card_data
   }
 
   if ($donation->donation['payment_method'] == 'credit') {
-    _commerce_sage_payments_fundraiser_commerce_update_cc($donation, $card_data);
+    return _commerce_sage_payments_fundraiser_commerce_update_cc($donation, $card_data);
   }
   elseif ($donation->donation['payment_method'] == 'bank account') {
-    _commerce_sage_payments_fundraiser_commerce_update_eft($donation, $card_data);
+    return _commerce_sage_payments_fundraiser_commerce_update_eft($donation, $card_data);
   }
 }
 
@@ -410,6 +410,8 @@ function _commerce_sage_payments_fundraiser_commerce_update_cc($donation, $card_
       return $card_data;
     }
   }
+
+  return $card_data;
 }
 
 /**
