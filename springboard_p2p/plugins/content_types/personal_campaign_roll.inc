@@ -58,7 +58,7 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
     $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
   }
 
-  if (!empty($goal_type && $goal_type == 'amount') {
+  if (!empty($goal_type) && $goal_type == 'amount') {
     $title = 'Recent donors';
     $header = '<thead><tr><td>Name</td><td>Amount</td></tr></thead>';
   }
