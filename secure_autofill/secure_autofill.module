@@ -124,12 +124,10 @@ function secure_autofill_js_callback_get_amounts($gs, $user_hash) {
 
   // Ensure that the gift string variable was provided.
   if (!isset($gs) || !isset($user_hash)) {
-    drupal_set_message(t('You must provide a gift string and user hash.'), 'error');
     $json['content'] = FALSE;
   }
   elseif (secure_autofill_is_expired($gs, $user_hash)) {
     // Don't decrypt expired strings.
-    drupal_set_message(t('Gift string is expired.'), 'error');
     $json['content'] = FALSE;
   }
   else {
@@ -166,12 +164,10 @@ function secure_autofill_js_callback_get_values($af, $user_hash) {
 
   // Ensure that the gift string variable was provided.
   if (!isset($af) || !isset($user_hash)) {
-    drupal_set_message(t('You must provide a query string and user hash.'), 'error');
     $json['content'] = FALSE;
   }
   elseif (secure_autofill_is_expired($af, $user_hash)) {
     // Don't decrypt expired strings.
-    drupal_set_message(t('Query string is expired.'), 'error');
     $json['content'] = FALSE;
   }
   else {
